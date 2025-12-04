@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "465990078878",
+    "project_id": "app-igreja-f82a7",
+    "storage_bucket": "app-igreja-f82a7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:465990078878:android:5cf7b0f479b60d2956068f",
+        "android_client_info": {
+          "package_name": "com.appigreja.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBi2ftKTU5DfrZCLdCREYktlcYFIeymg24"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

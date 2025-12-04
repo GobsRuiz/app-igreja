@@ -6,7 +6,7 @@
 
 **Projeto:** App igreja
 **Descrição:** Visualizador de eventos  
-**Stacks:** React Native, Expo, TypeScript, Tamagui, react-native-reanimated  
+**Stacks:** React Native, Expo, TypeScript, Tamagui, react-native-reanimated, zustand, date-fns, axios, @shopify/flash-list, @gorhom/bottom-sheet,  @react-native-community/netinfo, react-native-element-dropdown
 **Arquitetura:** Feature-Based
 **Ferramentas:** 
 **Detalhes importantes:**

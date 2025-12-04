@@ -1,22 +1,20 @@
 import React, { useState } from 'react'
-import { YStack, XStack, Text, Button } from 'tamagui'
+import { YStack, Text } from 'tamagui'
 import { FlashList } from '@shopify/flash-list'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { SlidersHorizontal, Calendar } from '@tamagui/lucide-icons'
+import { Star } from '@tamagui/lucide-icons'
 import { toast } from 'sonner-native'
 
-import { useEventStore, selectFilteredEvents } from '@shared/store'
+import { useEventStore, selectFavoriteEvents } from '@shared/store'
 import { EventCard } from '@/src/components/EventCard'
 import { EventDetailModal } from '@/src/components/EventDetailModal'
-import { FilterModal } from '@/src/components/FilterModal'
 import { MapService } from '@shared/services/map-service'
 import type { Event } from '@shared/types'
 
-export default function HomePage() {
-  const filteredEvents = useEventStore(selectFilteredEvents)
+export default function FavoritesPage() {
+  const favoriteEvents = useEventStore(selectFavoriteEvents)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
 
   const handleDetailsPress = (event: Event) => {
     setSelectedEvent(event)
@@ -39,43 +37,28 @@ export default function HomePage() {
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['top']}>
       <YStack flex={1} backgroundColor="$background">
-        {/* TopBar - sem shadow */}
-        <XStack
-          paddingHorizontal="$4"
-          paddingVertical="$3"
-          alignItems="center"
-          justifyContent="space-between"
-          borderBottomWidth={1}
-          borderBottomColor="$borderColor"
-        >
-          <Text fontSize="$7" fontWeight="700" color="$color12">
-            Eventos
+        {/* Header */}
+        <YStack padding="$4">
+          <Text fontSize="$8" fontWeight="700" color="$foreground">
+            Favoritos
           </Text>
-          <Button
-            size="$3"
-            variant="outlined"
-            icon={<SlidersHorizontal size={18} />}
-            onPress={() => setIsFilterModalOpen(true)}
-          >
-            Filtros
-          </Button>
-        </XStack>
+        </YStack>
 
-        {/* Lista de Eventos */}
-        <YStack flex={1}>
-          {filteredEvents.length === 0 ? (
-            <YStack flex={1} justifyContent="center" alignItems="center" gap="$3" padding="$4">
-              <Calendar size={48} color="$color11" />
-              <Text fontSize="$5" color="$color11" textAlign="center">
-                Nenhum evento encontrado
+        {/* Lista de Favoritos */}
+        <YStack flex={1} paddingHorizontal="$4">
+          {favoriteEvents.length === 0 ? (
+            <YStack flex={1} justifyContent="center" alignItems="center" gap="$3">
+              <Star size={48} color="$mutedForeground" />
+              <Text fontSize="$5" color="$mutedForeground" textAlign="center">
+                Nenhum evento favorito
               </Text>
-              <Text fontSize="$3" color="$color11" textAlign="center">
-                Tente ajustar os filtros
+              <Text fontSize="$3" color="$mutedForeground" textAlign="center">
+                Adicione eventos aos favoritos para vê-los aqui
               </Text>
             </YStack>
           ) : (
             <FlashList
-              data={filteredEvents}
+              data={favoriteEvents}
               renderItem={({ item }) => (
                 <EventCard
                   event={item}
@@ -86,12 +69,11 @@ export default function HomePage() {
               keyExtractor={(item) => item.id}
               estimatedItemSize={200}
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ padding: 16 }}
             />
           )}
         </YStack>
 
-        {/* Modal de Detalhes */}
+        {/* Modal */}
         <EventDetailModal
           event={selectedEvent}
           isOpen={isDetailModalOpen && selectedEvent !== null}
@@ -99,12 +81,6 @@ export default function HomePage() {
             setIsDetailModalOpen(false)
             setSelectedEvent(null)
           }}
-        />
-
-        {/* Modal de Filtros */}
-        <FilterModal
-          isOpen={isFilterModalOpen}
-          onClose={() => setIsFilterModalOpen(false)}
         />
       </YStack>
     </SafeAreaView>
