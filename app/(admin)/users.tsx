@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { YStack, XStack, Card, Text, Spinner, ScrollView } from 'tamagui'
+import { YStack, XStack, Text, Spinner, ScrollView } from 'tamagui'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { User as UserIcon, Mail, Phone, Shield, Clock } from '@tamagui/lucide-icons'
+import { Badge, Card } from '@shared/ui'
 import { toast } from 'sonner-native'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -72,7 +73,7 @@ export default function UsersPage() {
           <ScrollView showsVerticalScrollIndicator={false}>
             <YStack gap="$3">
               {users.map((user) => (
-                <Card key={user.id} size="$4" bordered padding="$4" backgroundColor="$background">
+                <Card key={user.id} padding="$4" backgroundColor="$background">
                   <XStack alignItems="flex-start" gap="$3">
                     {/* Avatar/Ícone */}
                     <YStack
@@ -118,48 +119,22 @@ export default function UsersPage() {
                       {/* Role e Data de cadastro */}
                       <XStack alignItems="center" gap="$3" marginTop="$1">
                         {/* Role Badge */}
-                        <XStack
-                          paddingHorizontal="$2"
-                          paddingVertical="$1"
-                          borderRadius="$2"
-                          backgroundColor={
+                        <Badge
+                          variant={
                             user.role === 'superadmin'
-                              ? '$red2'
+                              ? 'danger'
                               : user.role === 'admin'
-                              ? '$orange2'
-                              : '$blue2'
+                              ? 'outlined'
+                              : 'info'
                           }
-                          alignItems="center"
-                          gap="$1"
+                          icon={Shield}
                         >
-                          <Shield
-                            size={12}
-                            color={
-                              user.role === 'superadmin'
-                                ? '$red10'
-                                : user.role === 'admin'
-                                ? '$orange10'
-                                : '$blue10'
-                            }
-                          />
-                          <Text
-                            fontSize="$2"
-                            color={
-                              user.role === 'superadmin'
-                                ? '$red10'
-                                : user.role === 'admin'
-                                ? '$orange10'
-                                : '$blue10'
-                            }
-                            fontWeight="600"
-                          >
-                            {user.role === 'superadmin'
-                              ? 'Super Admin'
-                              : user.role === 'admin'
-                              ? 'Admin'
-                              : 'Usuário'}
-                          </Text>
-                        </XStack>
+                          {user.role === 'superadmin'
+                            ? 'Super Admin'
+                            : user.role === 'admin'
+                            ? 'Admin'
+                            : 'Usuário'}
+                        </Badge>
 
                         {/* Data de cadastro */}
                         <XStack alignItems="center" gap="$1">

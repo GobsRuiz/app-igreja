@@ -1,6 +1,6 @@
 import React from 'react'
-import { YStack, XStack, Card, Text, Separator, Spinner } from 'tamagui'
-import { Button } from '@shared/ui'
+import { YStack, XStack, Text, Separator, Spinner } from 'tamagui'
+import { Button, Card } from '@shared/ui'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { User, LogOut, Mail, LayoutDashboard } from '@tamagui/lucide-icons'
 import { toast } from 'sonner-native'
@@ -37,7 +37,7 @@ export default function ProfilePage() {
 
         <YStack gap="$4">
           {/* Card de Informações do Usuário */}
-          <Card elevate size="$4" bordered padding="$4" gap="$4">
+          <Card padding="$4" gap="$4">
             <YStack gap="$3" alignItems="center">
               <User size={64} color="$color12" />
               <Text fontSize="$6" fontWeight="600" color="$color12">

@@ -2,14 +2,13 @@ import React, { useState, useEffect } from 'react'
 import {
   YStack,
   XStack,
-  Card,
   Text,
   Input,
   ScrollView,
   Spinner,
   Sheet,
 } from 'tamagui'
-import { Button } from '@shared/ui'
+import { Button, Card } from '@shared/ui'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import {
   Plus,
@@ -211,7 +210,7 @@ export default function CategoriesPage() {
           <ScrollView showsVerticalScrollIndicator={false}>
             <YStack gap="$3">
               {categories.map((category) => (
-                <Card key={category.id} size="$4" bordered padding="$4" backgroundColor="$background">
+                <Card key={category.id} padding="$4" backgroundColor="$background">
                   <XStack alignItems="center" justifyContent="space-between">
                     <XStack alignItems="center" gap="$3" flex={1}>
                       {/* Cor preview */}

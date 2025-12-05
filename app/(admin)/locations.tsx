@@ -2,14 +2,13 @@ import React, { useState, useEffect } from 'react'
 import {
   YStack,
   XStack,
-  Card,
   Text,
   Input,
   ScrollView,
   Spinner,
   Sheet,
 } from 'tamagui'
-import { Button } from '@shared/ui'
+import { Button, Card } from '@shared/ui'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Plus, Pencil, Trash2, X, MapPin } from '@tamagui/lucide-icons'
 import { Alert } from 'react-native'
@@ -175,7 +174,7 @@ export default function LocationsPage() {
           <ScrollView showsVerticalScrollIndicator={false}>
             <YStack gap="$3">
               {locations.map((location) => (
-                <Card key={location.id} size="$4" bordered padding="$4" backgroundColor="$background">
+                <Card key={location.id} padding="$4" backgroundColor="$background">
                   <XStack alignItems="flex-start" justifyContent="space-between">
                     <XStack alignItems="flex-start" gap="$3" flex={1}>
                       {/* Ícone */}

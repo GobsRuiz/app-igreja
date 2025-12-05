@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import {
   YStack,
   XStack,
-  Card,
   Text,
   Input,
   TextArea,
@@ -10,7 +9,7 @@ import {
   Spinner,
   Sheet,
 } from 'tamagui'
-import { Button } from '@shared/ui'
+import { Button, Card } from '@shared/ui'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Plus, Pencil, Trash2, X, Calendar, MapPin, Tag } from '@tamagui/lucide-icons'
 import { Alert, Platform } from 'react-native'
@@ -203,7 +202,7 @@ export default function AdminEventsPage() {
 
         {/* Alerta se não tiver categorias ou locais */}
         {(categories.length === 0 || locations.length === 0) && (
-          <Card backgroundColor="$yellow2" bordered padding="$3" marginBottom="$3">
+          <Card backgroundColor="$yellow2" padding="$3" marginBottom="$3">
             <Text fontSize="$3" color="$yellow11">
               ⚠️{' '}
               {categories.length === 0 && locations.length === 0
@@ -231,7 +230,7 @@ export default function AdminEventsPage() {
           <ScrollView showsVerticalScrollIndicator={false}>
             <YStack gap="$3">
               {events.map((event) => (
-                <Card key={event.id} size="$4" bordered padding="$4" backgroundColor="$background">
+                <Card key={event.id} padding="$4" backgroundColor="$background">
                   <YStack gap="$3">
                     {/* Header do card */}
                     <XStack alignItems="flex-start" justifyContent="space-between">

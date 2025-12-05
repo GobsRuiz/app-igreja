@@ -1,6 +1,6 @@
 import React from 'react'
-import { YStack, XStack, Card, Text } from 'tamagui'
-import { Button } from '@shared/ui'
+import { YStack, XStack, Text } from 'tamagui'
+import { Button, Card } from '@shared/ui'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ArrowLeft, LayoutDashboard } from '@tamagui/lucide-icons'
 import { useRouter } from 'expo-router'
@@ -37,7 +37,7 @@ export default function DashboardPage() {
 
         {/* Content */}
         <YStack gap="$4">
-          <Card elevate size="$4" bordered padding="$4">
+          <Card padding="$4">
             <Text fontSize="$6" fontWeight="600" color="$color12" marginBottom="$2">
               Bem-vindo à Área Admin
             </Text>
@@ -48,7 +48,7 @@ export default function DashboardPage() {
 
           {/* Cards de estatísticas (placeholder) */}
           <XStack gap="$3">
-            <Card flex={1} bordered padding="$4" backgroundColor="$blue2">
+            <Card flex={1} padding="$4" backgroundColor="$blue2">
               <Text fontSize="$8" fontWeight="700" color="$blue10">
                 0
               </Text>
@@ -57,7 +57,7 @@ export default function DashboardPage() {
               </Text>
             </Card>
 
-            <Card flex={1} bordered padding="$4" backgroundColor="$green2">
+            <Card flex={1} padding="$4" backgroundColor="$green2">
               <Text fontSize="$8" fontWeight="700" color="$green10">
                 0
               </Text>
@@ -67,7 +67,7 @@ export default function DashboardPage() {
             </Card>
           </XStack>
 
-          <Card bordered padding="$4" backgroundColor="$purple2">
+          <Card padding="$4" backgroundColor="$purple2">
             <Text fontSize="$8" fontWeight="700" color="$purple10">
               0
             </Text>
