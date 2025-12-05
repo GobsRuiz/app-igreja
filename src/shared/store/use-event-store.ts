@@ -1,7 +1,9 @@
 import { create } from 'zustand'
 import { z } from 'zod'
 import type { Event } from '@shared/types'
-import { mockEvents } from '@shared/data'
+import { listEvents, onEventsChange } from '@features/events/services/event.service'
+import type { Event as FirebaseEvent } from '@features/events/types/event.types'
+import { format } from 'date-fns'
 
 // ========================================
 // SCHEMAS DE VALIDAÇÃO
@@ -27,6 +29,34 @@ const RadiusSchema = z.number()
 const SearchQuerySchema = z.string()
   .max(100, 'Search query too long')
   .transform((val) => val.trim())
+
+// ========================================
+// ADAPTERS
+// ========================================
+
+/**
+ * Converte Event do Firebase para formato da UI
+ */
+function adaptFirebaseEventToUI(firebaseEvent: FirebaseEvent): Event {
+  return {
+    id: firebaseEvent.id,
+    title: firebaseEvent.title,
+    description: firebaseEvent.description,
+    date: format(firebaseEvent.date, 'yyyy-MM-dd'),
+    time: format(firebaseEvent.date, 'HH:mm'),
+    church: '', // TODO: buscar do locationId
+    address: '', // TODO: buscar do locationId
+    city: 'Taquaritinga', // TODO: buscar do locationId
+    conductor: '', // TODO: adicionar campo no Firebase
+    latitude: undefined,
+    longitude: undefined,
+    attachments: [],
+    categoryId: firebaseEvent.categoryId,
+    categoryName: undefined, // TODO: buscar do categoryId
+    isFavorite: false,
+    isNotifying: false,
+  }
+}
 
 // ========================================
 // TYPES
@@ -60,6 +90,7 @@ interface EventState {
   toggleFavorite: (eventId: string) => void
   toggleNotification: (eventId: string) => void
   refreshEvents: () => Promise<void>
+  initializeFirestoreListener: () => () => void
 
   // Selectors otimizados
   getNotifyingEvents: () => Event[]
@@ -75,14 +106,14 @@ export const useEventStore = create<EventState>((set, get) => ({
   // ========================================
   // STATE INICIAL
   // ========================================
-  allEvents: mockEvents,
-  filteredEvents: mockEvents,
-  favoriteEvents: mockEvents.filter(event => event.isFavorite),
+  allEvents: [],
+  filteredEvents: [],
+  favoriteEvents: [],
   selectedCity: 'Taquaritinga',
   selectedCategoryIds: new Set<string>(),
   searchQuery: '',
   radiusKm: 10, // TODO: filtro de raio não implementado (requer geolocation ou coordenadas de cidades)
-  isLoading: false,
+  isLoading: true,
 
   // ========================================
   // ACTIONS - FILTROS
@@ -280,15 +311,21 @@ export const useEventStore = create<EventState>((set, get) => ({
     set({ isLoading: true, error: undefined })
 
     try {
-      // TODO: Integrar com API real
-      // const response = await fetch('/api/events')
-      // const data = await response.json()
-      // const events = parseEventArray(data) // Validação com Zod
+      const { events, error } = await listEvents()
 
-      // Simulação de loading
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      if (error) {
+        set({
+          error,
+          isLoading: false
+        })
+        return
+      }
+
+      // Adaptar eventos do Firebase para formato da UI
+      const adaptedEvents = events.map(adaptFirebaseEventToUI)
 
       set({
+        allEvents: adaptedEvents,
         isLoading: false,
         error: undefined
       })
@@ -301,6 +338,36 @@ export const useEventStore = create<EventState>((set, get) => ({
         isLoading: false
       })
     }
+  },
+
+  initializeFirestoreListener: () => {
+    console.log('[EventStore] Initializing Firestore listener')
+
+    const unsubscribe = onEventsChange(
+      (events) => {
+        console.log(`[EventStore] Received ${events.length} events from Firestore`)
+
+        // Adaptar eventos do Firebase para formato da UI
+        const adaptedEvents = events.map(adaptFirebaseEventToUI)
+
+        set({
+          allEvents: adaptedEvents,
+          isLoading: false,
+          error: undefined
+        })
+
+        get().applyFilters()
+      },
+      (error) => {
+        console.error('[EventStore] Firestore listener error:', error)
+        set({
+          error: 'Erro ao sincronizar eventos',
+          isLoading: false
+        })
+      }
+    )
+
+    return unsubscribe
   },
 
   // ========================================

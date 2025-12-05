@@ -6,7 +6,9 @@
       "Bash(xargs -I {} sh -c 'echo \"\"\"\"=== {} ===\"\"\"\" && head -30 \"\"\"\"{}\"\"\"\"')",
       "Bash(cat:*)",
       "Bash(npm install:*)",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "Bash(find:*)",
+      "Bash(if not exist \"implementacoes\" mkdir implementacoes)"
     ],
     "deny": [],
     "ask": []

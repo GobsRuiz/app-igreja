@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { YStack, XStack, Text } from 'tamagui'
+import React, { useState, useEffect } from 'react'
+import { YStack, XStack, Text, Spinner } from 'tamagui'
 import { Button } from '@shared/ui'
 import { FlashList } from '@shopify/flash-list'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -18,9 +18,22 @@ import type { Event } from '@shared/types'
 
 export default function HomePage() {
   const filteredEvents = useEventStore(selectFilteredEvents)
+  const isLoading = useEventStore((state) => state.isLoading)
+  const initializeFirestoreListener = useEventStore((state) => state.initializeFirestoreListener)
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
+
+  // Initialize Firestore real-time listener
+  useEffect(() => {
+    const unsubscribe = initializeFirestoreListener()
+
+    // Cleanup listener on unmount
+    return () => {
+      console.log('[HomePage] Cleaning up Firestore listener')
+      unsubscribe()
+    }
+  }, [initializeFirestoreListener])
 
   const handleDetailsPress = (event: Event) => {
     setSelectedEvent(event)
@@ -71,7 +84,14 @@ export default function HomePage() {
 
         {/* Lista de Eventos */}
         <YStack flex={1}>
-          {filteredEvents.length === 0 ? (
+          {isLoading ? (
+            <YStack flex={1} justifyContent="center" alignItems="center" gap="$3">
+              <Spinner size="large" color="$color11" />
+              <Text fontSize="$4" color="$color11">
+                Carregando eventos...
+              </Text>
+            </YStack>
+          ) : filteredEvents.length === 0 ? (
             <YStack flex={1} justifyContent="center" alignItems="center" gap="$3" padding="$4">
               <Calendar size={48} color="$color11" />
               <Text fontSize="$5" color="$color11" textAlign="center">
