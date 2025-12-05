@@ -153,7 +153,7 @@ export default function LocationsPage() {
             Locais
           </Text>
           <Button
-            variant="success"
+            variant="primary"
             icon={Plus}
             onPress={handleOpenCreate}
           >
@@ -324,7 +324,7 @@ export default function LocationsPage() {
 
                 <Button
                   flex={1}
-                  variant="success"
+                  variant="primary"
                   onPress={handleSubmit}
                   disabled={
                     submitting ||

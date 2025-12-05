@@ -64,12 +64,15 @@ export default function UsersPage() {
             <Text fontSize="$5" color="$mutedForeground">
               Nenhum usuário cadastrado
             </Text>
+            <Text fontSize="$3" color="$mutedForeground">
+              Os usuários aparecem aqui ao se cadastrarem
+            </Text>
           </YStack>
         ) : (
           <ScrollView showsVerticalScrollIndicator={false}>
             <YStack gap="$3">
               {users.map((user) => (
-                <Card key={user.id} elevate size="$4" bordered padding="$4">
+                <Card key={user.id} size="$4" bordered padding="$4" backgroundColor="$background">
                   <XStack alignItems="flex-start" gap="$3">
                     {/* Avatar/Ícone */}
                     <YStack
