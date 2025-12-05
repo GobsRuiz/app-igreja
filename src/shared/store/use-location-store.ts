@@ -8,17 +8,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 interface LocationState {
   // State
   city: string | null
+  state: string | null // Código do estado (ex: 'SP', 'RJ')
   isLoading: boolean
   error: string | null
   lastUpdated: number | null // timestamp
 
   // Actions
-  setCity: (city: string) => void
+  setLocation: (city: string, state: string) => void
+  setCity: (city: string) => void // @deprecated - use setLocation
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
   clearError: () => void
   loadFromCache: () => Promise<void>
-  saveToCache: (city: string) => Promise<void>
+  saveToCache: (city: string, state: string) => Promise<void>
   reset: () => void
 }
 
@@ -38,6 +40,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
   // STATE INICIAL
   // ========================================
   city: null,
+  state: null,
   isLoading: false,
   error: null,
   lastUpdated: null,
@@ -46,7 +49,37 @@ export const useLocationStore = create<LocationState>((set, get) => ({
   // ACTIONS
   // ========================================
 
+  setLocation: (city, state) => {
+    // Validação básica
+    if (!city || typeof city !== 'string' || !city.trim()) {
+      console.warn('[LocationStore] Invalid city name')
+      return
+    }
+
+    if (!state || typeof state !== 'string' || !state.trim()) {
+      console.warn('[LocationStore] Invalid state code')
+      return
+    }
+
+    const sanitizedCity = city.trim()
+    const sanitizedState = state.trim().toUpperCase() // Estados sempre uppercase
+    const now = Date.now()
+
+    set({
+      city: sanitizedCity,
+      state: sanitizedState,
+      lastUpdated: now,
+      error: null,
+    })
+
+    // Salva no cache
+    get().saveToCache(sanitizedCity, sanitizedState)
+  },
+
   setCity: (city) => {
+    // @deprecated - mantido para compatibilidade
+    console.warn('[LocationStore] setCity is deprecated, use setLocation instead')
+
     // Validação básica
     if (!city || typeof city !== 'string' || !city.trim()) {
       console.warn('[LocationStore] Invalid city name')
@@ -62,8 +95,8 @@ export const useLocationStore = create<LocationState>((set, get) => ({
       error: null,
     })
 
-    // Salva no cache
-    get().saveToCache(sanitizedCity)
+    // Salva no cache (sem estado por compatibilidade)
+    get().saveToCache(sanitizedCity, '')
   },
 
   setLoading: (loading) => {
@@ -91,7 +124,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
       }
 
       const parsed = JSON.parse(cached)
-      const { city, lastUpdated } = parsed
+      const { city, state, lastUpdated } = parsed
 
       // Validação dos dados do cache
       if (!city || typeof city !== 'string') {
@@ -105,9 +138,10 @@ export const useLocationStore = create<LocationState>((set, get) => ({
 
       // Verifica se cache está válido (< 1 hora)
       if (age < CACHE_MAX_AGE) {
-        console.log('[LocationStore] Loaded city from cache:', city)
+        console.log('[LocationStore] Loaded location from cache:', city, state || '(no state)')
         set({
           city,
+          state: state || null, // Pode não ter estado em cache antigo
           lastUpdated,
           error: null,
         })
@@ -119,14 +153,15 @@ export const useLocationStore = create<LocationState>((set, get) => ({
     }
   },
 
-  saveToCache: async (city) => {
+  saveToCache: async (city, state) => {
     try {
       const data = {
         city,
+        state,
         lastUpdated: Date.now(),
       }
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-      console.log('[LocationStore] Saved city to cache:', city)
+      console.log('[LocationStore] Saved location to cache:', city, state)
     } catch (error) {
       console.error('[LocationStore] Error saving to cache:', error)
     }
@@ -135,6 +170,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
   reset: () => {
     set({
       city: null,
+      state: null,
       isLoading: false,
       error: null,
       lastUpdated: null,
@@ -154,6 +190,12 @@ export const useLocationStore = create<LocationState>((set, get) => ({
  * Uso: const city = useLocationStore(selectCity)
  */
 export const selectCity = (state: LocationState) => state.city
+
+/**
+ * Selector otimizado para estado
+ * Uso: const stateCode = useLocationStore(selectState)
+ */
+export const selectState = (state: LocationState) => state.state
 
 /**
  * Selector otimizado para loading state

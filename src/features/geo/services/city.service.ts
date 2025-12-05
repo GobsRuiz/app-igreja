@@ -127,3 +127,35 @@ export function onCitiesByStateChange(
       }
     )
 }
+
+/**
+ * Busca o código do estado de uma cidade pelo nome
+ * Útil para descobrir o estado quando só se tem o nome da cidade
+ */
+export async function getStateByCity(
+  cityName: string
+): Promise<{ state: string | null; error: string | null }> {
+  try {
+    const snapshot = await firebaseFirestore
+      .collection(COLLECTION)
+      .where('name', '==', cityName)
+      .limit(1)
+      .get()
+
+    if (snapshot.empty) {
+      console.warn('[CityService] Cidade não encontrada:', cityName)
+      return { state: null, error: 'Cidade não encontrada' }
+    }
+
+    const city = mapFirestoreCity(snapshot.docs[0])
+
+    if (!city) {
+      return { state: null, error: 'Erro ao processar cidade' }
+    }
+
+    return { state: city.state, error: null }
+  } catch (error: any) {
+    console.error('[CityService] Erro ao buscar estado da cidade:', error)
+    return { state: null, error: 'Erro ao buscar estado' }
+  }
+}

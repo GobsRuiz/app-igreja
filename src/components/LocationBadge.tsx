@@ -8,7 +8,8 @@ const DEFAULT_CITY = 'Taquaritinga'
 
 export function LocationBadge() {
   const { city, isLoading, error, detectLocation } = useUserLocation()
-  const loadFromCache = useLocationStore((state) => state.loadFromCache)
+  const state = useLocationStore((s) => s.state)
+  const loadFromCache = useLocationStore((s) => s.loadFromCache)
   const hasAttemptedAutoDetect = useRef(false)
 
   // Carrega cidade do cache ao montar
@@ -38,7 +39,10 @@ export function LocationBadge() {
   const getBadgeText = () => {
     if (isLoading) return 'Localizando...'
     if (error) return error // "Loc não encontrada" ou "Offline"
-    if (city) return city
+    if (city) {
+      // Mostra "Cidade - UF" se estado disponível, senão só cidade
+      return state ? `${city} - ${state}` : city
+    }
     return DEFAULT_CITY
   }
 

@@ -3,6 +3,7 @@ import * as Location from 'expo-location'
 import * as Haptics from 'expo-haptics'
 import { useLocationStore } from '@shared/store/use-location-store'
 import { useConnectivityStore, selectIsConnected } from '@shared/store/use-connectivity-store'
+import { getStateByCity } from '@features/geo'
 
 // ========================================
 // CONSTANTS
@@ -43,7 +44,7 @@ export function useUserLocation(): UseUserLocationReturn {
   const city = useLocationStore((state) => state.city)
   const isLoading = useLocationStore((state) => state.isLoading)
   const error = useLocationStore((state) => state.error)
-  const setCity = useLocationStore((state) => state.setCity)
+  const setLocation = useLocationStore((state) => state.setLocation)
   const setLoading = useLocationStore((state) => state.setLoading)
   const setError = useLocationStore((state) => state.setError)
   const clearError = useLocationStore((state) => state.clearError)
@@ -144,7 +145,17 @@ export function useUserLocation(): UseUserLocationReturn {
             )
 
             if (detectedCity) {
-              setCity(detectedCity)
+              // Busca qual estado pertence essa cidade
+              const { state: detectedState } = await getStateByCity(detectedCity)
+
+              if (detectedState) {
+                setLocation(detectedCity, detectedState)
+              } else {
+                // Fallback: salva só cidade se não encontrar estado
+                console.warn('[useUserLocation] Estado não encontrado para cidade:', detectedCity)
+                setLocation(detectedCity, 'SP') // Default SP
+              }
+
               setLoading(false)
               // Haptic feedback de sucesso
               Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
@@ -176,7 +187,17 @@ export function useUserLocation(): UseUserLocationReturn {
       )
 
       if (detectedCity) {
-        setCity(detectedCity)
+        // Busca qual estado pertence essa cidade
+        const { state: detectedState } = await getStateByCity(detectedCity)
+
+        if (detectedState) {
+          setLocation(detectedCity, detectedState)
+        } else {
+          // Fallback: salva só cidade se não encontrar estado
+          console.warn('[useUserLocation] Estado não encontrado para cidade:', detectedCity)
+          setLocation(detectedCity, 'SP') // Default SP
+        }
+
         // Haptic feedback de sucesso
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       } else {
@@ -206,7 +227,7 @@ export function useUserLocation(): UseUserLocationReturn {
     city,
     isConnected,
     isCacheRecent,
-    setCity,
+    setLocation,
     setLoading,
     setError,
     clearError,

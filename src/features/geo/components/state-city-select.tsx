@@ -64,6 +64,17 @@ export function StateCitySelect({
     return () => unsubscribe()
   }, [stateValue])
 
+  // Auto-seleção "Todo o estado" quando estado muda (APENAS se cidade ainda não selecionada)
+  useEffect(() => {
+    // Condições:
+    // 1. Estado preenchido
+    // 2. Cidade VAZIA (para não sobrescrever quando cascata inversa ocorre)
+    // 3. Cidades carregadas
+    if (stateValue && !cityValue && cities.length > 0) {
+      onCityChange('') // "Todo o estado"
+    }
+  }, [cities, stateValue, cityValue, onCityChange])
+
   // Handler para seleção de cidade (cascata inversa)
   const handleCityChange = (cityName: string) => {
     onCityChange(cityName)
