@@ -70,9 +70,9 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
   // Sincroniza estado local com store quando modal abre
   useEffect(() => {
     if (isOpen) {
-      // Sincroniza com localização detectada, senão usa padrões hardcoded
-      setLocalState(userState || 'SP')
-      setLocalCity(userCity || 'Taquaritinga')
+      // Sincroniza com localização detectada - se vazio, deixa vazio (placeholder)
+      setLocalState(userState || '')
+      setLocalCity(userCity || '')
 
       setLocalRadius(radiusKm)
       setLocalStartDate(startDate)
