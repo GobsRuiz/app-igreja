@@ -21,6 +21,7 @@ import {
   type Location,
   type CreateLocationData,
 } from '@features/locations'
+import { StateCitySelect } from '@features/geo'
 
 export default function LocationsPage() {
   const [locations, setLocations] = useState<Location[]>([])
@@ -265,32 +266,13 @@ export default function LocationsPage() {
                     />
                   </YStack>
 
-                  {/* Cidade */}
-                  <YStack gap="$2">
-                    <Text fontSize="$3" fontWeight="600" color="$color11">
-                      Cidade *
-                    </Text>
-                    <Input
-                      size="$4"
-                      placeholder="Ex: São Paulo"
-                      value={formData.city}
-                      onChangeText={(text) => setFormData({ ...formData, city: text })}
-                    />
-                  </YStack>
-
-                  {/* Estado */}
-                  <YStack gap="$2">
-                    <Text fontSize="$3" fontWeight="600" color="$color11">
-                      Estado *
-                    </Text>
-                    <Input
-                      size="$4"
-                      placeholder="Ex: SP"
-                      value={formData.state}
-                      onChangeText={(text) => setFormData({ ...formData, state: text })}
-                      maxLength={2}
-                    />
-                  </YStack>
+                  {/* Estado e Cidade */}
+                  <StateCitySelect
+                    stateValue={formData.state}
+                    cityValue={formData.city}
+                    onStateChange={(state) => setFormData({ ...formData, state })}
+                    onCityChange={(city) => setFormData({ ...formData, city })}
+                  />
 
                   {/* CEP */}
                   <YStack gap="$2">

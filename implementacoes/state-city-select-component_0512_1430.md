@@ -156,7 +156,9 @@ import { StateCitySelect } from '@features/geo'
 
 **Feature:** `@features/geo`
 **Componente:** `src/features/geo/components/state-city-select.tsx`
-**Uso no projeto:** `FilterModal.tsx`
+**Uso no projeto:**
+- `FilterModal.tsx` - Modal de filtros de eventos
+- `app/(admin)/locations.tsx` - Form de admin de locais
 
 ---
 
