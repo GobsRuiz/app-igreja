@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   YStack,
   XStack,
@@ -8,12 +8,12 @@ import {
   Input,
   ScrollView,
   Spinner,
+  Sheet,
 } from 'tamagui'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Plus, Edit, Trash2, X } from '@tamagui/lucide-icons'
 import { Alert } from 'react-native'
 import { toast } from 'sonner-native'
-import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import {
   onCategoriesChange,
   createCategory,
@@ -52,7 +52,7 @@ export default function CategoriesPage() {
   const [loading, setLoading] = useState(true)
 
   // Modal state
-  const bottomSheetRef = useRef<BottomSheet>(null)
+  const [sheetOpen, setSheetOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [formData, setFormData] = useState<CreateCategoryData>({
     name: '',
@@ -78,25 +78,25 @@ export default function CategoriesPage() {
     return () => unsubscribe()
   }, [])
 
-  const handleOpenCreate = useCallback(() => {
+  const handleOpenCreate = () => {
     setEditingCategory(null)
     setFormData({ name: '', color: '$blue10', icon: 'Calendar' })
-    bottomSheetRef.current?.expand()
-  }, [])
+    setSheetOpen(true)
+  }
 
-  const handleOpenEdit = useCallback((category: Category) => {
+  const handleOpenEdit = (category: Category) => {
     setEditingCategory(category)
     setFormData({
       name: category.name,
       color: category.color,
       icon: category.icon,
     })
-    bottomSheetRef.current?.expand()
-  }, [])
+    setSheetOpen(true)
+  }
 
-  const handleClose = useCallback(() => {
-    bottomSheetRef.current?.close()
-  }, [])
+  const handleClose = () => {
+    setSheetOpen(false)
+  }
 
   const handleSubmit = async () => {
     setSubmitting(true)
@@ -249,19 +249,23 @@ export default function CategoriesPage() {
           </ScrollView>
         )}
 
-        {/* BottomSheet Create/Edit */}
-        <BottomSheet
-          ref={bottomSheetRef}
-          index={-1}
-          snapPoints={['85%']}
-          enablePanDownToClose
-          backgroundStyle={{ backgroundColor: '#fff' }}
+        {/* Sheet Create/Edit */}
+        <Sheet
+          modal
+          open={sheetOpen}
+          onOpenChange={setSheetOpen}
+          snapPoints={[85]}
+          dismissOnSnapToBottom
         >
-          <BottomSheetScrollView contentContainerStyle={{ padding: 16 }}>
+          <Sheet.Overlay />
+          <Sheet.Frame padding="$4" backgroundColor="$background">
+            <Sheet.Handle />
             <YStack gap="$4">
               <Text fontSize="$7" fontWeight="700" color="$foreground">
                 {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
               </Text>
+
+              <ScrollView showsVerticalScrollIndicator={false}>
                 <YStack gap="$4">
                   {/* Nome */}
                   <YStack gap="$2">
@@ -276,49 +280,50 @@ export default function CategoriesPage() {
                     />
                   </YStack>
 
-                {/* Cor */}
-                <YStack gap="$2">
-                  <Text fontSize="$3" fontWeight="600" color="$color11">
-                    Cor
-                  </Text>
-                  <XStack gap="$2" flexWrap="wrap">
-                    {COLORS.map((color) => (
-                      <Button
-                        key={color.value}
-                        size="$3"
-                        backgroundColor={color.value}
-                        onPress={() => setFormData({ ...formData, color: color.value })}
-                        opacity={formData.color === color.value ? 1 : 0.5}
-                        borderWidth={formData.color === color.value ? 2 : 0}
-                        borderColor="$color12"
-                      >
-                        <Text color="white" fontSize="$2">
-                          {color.label}
-                        </Text>
-                      </Button>
-                    ))}
-                  </XStack>
-                </YStack>
+                  {/* Cor */}
+                  <YStack gap="$2">
+                    <Text fontSize="$3" fontWeight="600" color="$color11">
+                      Cor
+                    </Text>
+                    <XStack gap="$2" flexWrap="wrap">
+                      {COLORS.map((color) => (
+                        <Button
+                          key={color.value}
+                          size="$3"
+                          backgroundColor={color.value}
+                          onPress={() => setFormData({ ...formData, color: color.value })}
+                          opacity={formData.color === color.value ? 1 : 0.5}
+                          borderWidth={formData.color === color.value ? 2 : 0}
+                          borderColor="$color12"
+                        >
+                          <Text color="white" fontSize="$2">
+                            {color.label}
+                          </Text>
+                        </Button>
+                      ))}
+                    </XStack>
+                  </YStack>
 
-                {/* Ícone */}
-                <YStack gap="$2">
-                  <Text fontSize="$3" fontWeight="600" color="$color11">
-                    Ícone
-                  </Text>
-                  <XStack gap="$2" flexWrap="wrap">
-                    {ICONS.map((icon) => (
-                      <Button
-                        key={icon}
-                        size="$3"
-                        variant={formData.icon === icon ? undefined : 'outlined'}
-                        onPress={() => setFormData({ ...formData, icon })}
-                      >
-                        {icon}
-                      </Button>
-                    ))}
-                  </XStack>
+                  {/* Ícone */}
+                  <YStack gap="$2">
+                    <Text fontSize="$3" fontWeight="600" color="$color11">
+                      Ícone
+                    </Text>
+                    <XStack gap="$2" flexWrap="wrap">
+                      {ICONS.map((icon) => (
+                        <Button
+                          key={icon}
+                          size="$3"
+                          variant={formData.icon === icon ? undefined : 'outlined'}
+                          onPress={() => setFormData({ ...formData, icon })}
+                        >
+                          {icon}
+                        </Button>
+                      ))}
+                    </XStack>
+                  </YStack>
                 </YStack>
-              </YStack>
+              </ScrollView>
 
               <XStack gap="$3" marginTop="$4">
                 <Button
@@ -342,8 +347,8 @@ export default function CategoriesPage() {
                 </Button>
               </XStack>
             </YStack>
-          </BottomSheetScrollView>
-        </BottomSheet>
+          </Sheet.Frame>
+        </Sheet>
       </YStack>
     </SafeAreaView>
   )

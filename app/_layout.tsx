@@ -1,11 +1,10 @@
 import { useEffect } from 'react'
 import { Stack, useRouter, useSegments } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
-import { TamaguiProvider } from 'tamagui'
+import { TamaguiProvider, PortalProvider } from 'tamagui'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
-import { PortalProvider } from '@gorhom/portal'
 import { Toaster } from 'sonner-native'
 import 'react-native-reanimated'
 
@@ -74,7 +73,7 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
-            <PortalProvider>
+            <PortalProvider shouldAddRootHost>
               <BottomSheetModalProvider>
                 <RootNavigator />
                 <StatusBar style="auto" />
