@@ -202,28 +202,25 @@ export default function AdminEventsPage() {
 
         {/* Lista */}
         {events.length === 0 ? (
-          <YStack flex={1} alignItems="center" justifyContent="center" gap="$3">
-            {categories.length === 0 || locations.length === 0 ? (
-              <>
-                <Text fontSize="$5" color="$mutedForeground" textAlign="center">
-                  {categories.length === 0 && locations.length === 0
-                    ? 'Cadastre categorias e locais antes'
-                    : categories.length === 0
-                    ? 'Cadastre pelo menos uma categoria'
-                    : 'Cadastre pelo menos um local'}
-                </Text>
-                <Text fontSize="$3" color="$mutedForeground" textAlign="center">
-                  Acesse as abas correspondentes para criar
-                </Text>
-              </>
-            ) : (
-              <EmptyState
-                icon={<Calendar size={48} color="$foreground" />}
-                message="Nenhum evento cadastrado"
-                description="Clique em &quot;Novo&quot; para criar"
-              />
-            )}
-          </YStack>
+          categories.length === 0 || locations.length === 0 ? (
+            <EmptyState
+              icon={<AlertCircle size={48} color="$foreground" />}
+              message={
+                categories.length === 0 && locations.length === 0
+                  ? 'Cadastre categorias e locais antes'
+                  : categories.length === 0
+                  ? 'Cadastre pelo menos uma categoria'
+                  : 'Cadastre pelo menos um local'
+              }
+              description="Acesse as abas correspondentes para criar"
+            />
+          ) : (
+            <EmptyState
+              icon={<Calendar size={48} color="$foreground" />}
+              message="Nenhum evento cadastrado"
+              description="Clique em &quot;Novo&quot; para criar"
+            />
+          )
         ) : (
           <ScrollView showsVerticalScrollIndicator={false}>
             <YStack gap="$3">
