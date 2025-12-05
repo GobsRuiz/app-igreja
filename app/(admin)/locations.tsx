@@ -8,7 +8,7 @@ import {
   Spinner,
   Sheet,
 } from 'tamagui'
-import { Button, Card, EmptyState } from '@shared/ui'
+import { Button, Card, EmptyState, MaskedInput } from '@shared/ui'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Plus, Pencil, Trash2, X, MapPin } from '@tamagui/lucide-icons'
 import { Alert } from 'react-native'
@@ -279,11 +279,13 @@ export default function LocationsPage() {
                     <Text fontSize="$3" fontWeight="600" color="$color11">
                       CEP (opcional)
                     </Text>
-                    <Input
-                      size="$4"
+                    <MaskedInput
+                      preset="CEP"
                       placeholder="00000-000"
                       value={formData.zipCode}
-                      onChangeText={(text) => setFormData({ ...formData, zipCode: text })}
+                      onChangeText={(masked, unmasked) =>
+                        setFormData({ ...formData, zipCode: unmasked || '' })
+                      }
                       keyboardType="numeric"
                     />
                   </YStack>

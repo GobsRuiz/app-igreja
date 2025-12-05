@@ -14,7 +14,9 @@
       "Bash(if not exist \"src\\shared\\hooks\" mkdir srcsharedhooks)",
       "Bash(if not exist \"src\\features\\geo\\components\" mkdir srcfeaturesgeocomponents)",
       "Bash(mkdir:*)",
-      "Bash(if not exist \"src\\shared\\lib\" mkdir srcsharedlib)"
+      "Bash(if not exist \"src\\shared\\lib\" mkdir srcsharedlib)",
+      "Bash(powershell:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

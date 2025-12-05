@@ -6,7 +6,8 @@
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "seed": "npx ts-node scripts/seed/firestore-seed.ts"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -68,9 +69,12 @@
   "devDependencies": {
     "@tamagui/babel-plugin": "^1.138.5",
     "@tamagui/metro-plugin": "^1.138.5",
+    "@types/node": "^20.0.0",
     "@types/react": "~19.1.0",
     "eslint": "^9.25.0",
     "eslint-config-expo": "~10.0.0",
+    "firebase-admin": "^12.0.0",
+    "ts-node": "^10.9.2",
     "typescript": "~5.9.2"
   },
   "private": true

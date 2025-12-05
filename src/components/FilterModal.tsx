@@ -8,6 +8,7 @@ import { Text, useTheme, XStack, YStack } from 'tamagui'
 import { Button } from '@shared/ui'
 
 import { useEventStore } from '@shared/store/use-event-store'
+import { useLocationStore } from '@shared/store/use-location-store'
 import { Formatters } from '@shared/utils/formatters'
 import { StateCitySelect } from '@features/geo'
 import { onCategoriesChange, type Category } from '@features/categories'
@@ -34,6 +35,10 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
   const setRadiusKm = useEventStore((state) => state.setRadiusKm)
   const setDateRange = useEventStore((state) => state.setDateRange)
   const clearFilters = useEventStore((state) => state.clearFilters)
+
+  // Location store - localização detectada do usuário
+  const userCity = useLocationStore((state) => state.city)
+  const userState = useLocationStore((state) => state.state)
 
   // Dados do Firestore
   const [categories, setCategories] = useState<Category[]>([])
@@ -65,7 +70,10 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
   // Sincroniza estado local com store quando modal abre
   useEffect(() => {
     if (isOpen) {
-      setLocalCity(selectedCity)
+      // Sincroniza com localização detectada, senão usa padrões hardcoded
+      setLocalState(userState || 'SP')
+      setLocalCity(userCity || 'Taquaritinga')
+
       setLocalRadius(radiusKm)
       setLocalStartDate(startDate)
       setLocalEndDate(endDate)
@@ -74,7 +82,7 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
     } else {
       bottomSheetRef.current?.close()
     }
-  }, [isOpen, selectedCity, radiusKm, startDate, endDate, selectedCategoryIds])
+  }, [isOpen, userCity, userState, radiusKm, startDate, endDate, selectedCategoryIds])
 
   const handleApply = useCallback(() => {
     // Aplica cidade
