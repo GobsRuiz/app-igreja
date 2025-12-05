@@ -68,8 +68,8 @@ export function StateCitySelect({
   const handleCityChange = (cityName: string) => {
     onCityChange(cityName)
 
-    // Se estado vazio, descobre qual estado pertence essa cidade
-    if (!stateValue) {
+    // Se estado vazio E cidade preenchida, descobre qual estado pertence essa cidade
+    if (!stateValue && cityName) {
       const selectedCity = cities.find((c) => c.name === cityName)
       if (selectedCity) {
         onStateChange(selectedCity.state)
@@ -79,7 +79,14 @@ export function StateCitySelect({
 
   // Transformação para dropdown
   const stateItems = states.map((s) => ({ label: s.name, value: s.code }))
-  const cityItems = cities.map((c) => ({ label: c.name, value: c.name }))
+
+  // Adiciona opção "Todo o estado" quando estado está selecionado
+  const cityItems = stateValue
+    ? [
+        { label: 'Todo o estado', value: '' }, // Opção para desmarcar cidade
+        ...cities.map((c) => ({ label: c.name, value: c.name })),
+      ]
+    : cities.map((c) => ({ label: c.name, value: c.name }))
 
   // Estilos consistentes com FilterModal
   const dropdownStyles = {

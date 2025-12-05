@@ -19,7 +19,7 @@ interface UseUserLocationReturn {
   city: string | null
   isLoading: boolean
   error: string | null
-  detectLocation: () => Promise<void>
+  detectLocation: (forceNew?: boolean) => Promise<void>
   clearError: () => void
 }
 
@@ -95,8 +95,9 @@ export function useUserLocation(): UseUserLocationReturn {
 
   /**
    * Detecta localização do usuário
+   * @param forceNew - Se true, pula cache do sistema e força busca GPS nova
    */
-  const detectLocation = useCallback(async () => {
+  const detectLocation = useCallback(async (forceNew: boolean = false) => {
     try {
       // Haptic feedback ao iniciar
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
@@ -124,34 +125,38 @@ export function useUserLocation(): UseUserLocationReturn {
         return
       }
 
-      // 3. Tenta última posição conhecida (cache do sistema)
-      console.log('[useUserLocation] Trying last known position...')
-      const lastKnown = await Location.getLastKnownPositionAsync()
+      // 3. Tenta última posição conhecida (cache do sistema) - apenas se não forçar nova
+      if (!forceNew) {
+        console.log('[useUserLocation] Trying last known position...')
+        const lastKnown = await Location.getLastKnownPositionAsync()
 
-      if (lastKnown) {
-        const { timestamp } = lastKnown
-        const age = Date.now() - timestamp
+        if (lastKnown) {
+          const { timestamp } = lastKnown
+          const age = Date.now() - timestamp
 
-        // Se última posição é recente (< 1 hora), usa ela
-        if (age < CACHE_MAX_AGE) {
-          console.log('[useUserLocation] Using last known position (age: ' + Math.floor(age / 60000) + 'min)')
+          // Se última posição é recente (< 1 hora), usa ela
+          if (age < CACHE_MAX_AGE) {
+            console.log('[useUserLocation] Using last known position (age: ' + Math.floor(age / 60000) + 'min)')
 
-          const detectedCity = await getCityFromCoordinates(
-            lastKnown.coords.latitude,
-            lastKnown.coords.longitude
-          )
+            const detectedCity = await getCityFromCoordinates(
+              lastKnown.coords.latitude,
+              lastKnown.coords.longitude
+            )
 
-          if (detectedCity) {
-            setCity(detectedCity)
-            setLoading(false)
-            // Haptic feedback de sucesso
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-            return
+            if (detectedCity) {
+              setCity(detectedCity)
+              setLoading(false)
+              // Haptic feedback de sucesso
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+              return
+            }
           }
         }
+      } else {
+        console.log('[useUserLocation] Forcing new position (skipping cache)...')
       }
 
-      // 4. Cache antigo ou inexistente - pega nova localização
+      // 4. Cache antigo/inexistente ou forceNew - pega nova localização
       console.log('[useUserLocation] Getting new position with maximum accuracy...')
 
       // Timeout de 30s
