@@ -68,7 +68,7 @@ export async function listCategories(): Promise<{
   try {
     const snapshot = await firebaseFirestore
       .collection(COLLECTION)
-      .orderBy('name', 'asc')
+      .orderBy('createdAt', 'desc')
       .get()
 
     const categories: Category[] = []
@@ -149,7 +149,7 @@ export function onCategoriesChange(
 ) {
   return firebaseFirestore
     .collection(COLLECTION)
-    .orderBy('name', 'asc')
+    .orderBy('createdAt', 'desc')
     .onSnapshot(
       (snapshot) => {
         const categories: Category[] = []

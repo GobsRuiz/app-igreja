@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import {
   YStack,
   XStack,
@@ -38,6 +38,15 @@ export default function LocationsPage() {
     zipCode: '',
   })
   const [submitting, setSubmitting] = useState(false)
+
+  // Memoized handlers for StateCitySelect to prevent infinite loops
+  const handleStateChange = useCallback((state: string) => {
+    setFormData((prev) => ({ ...prev, state, city: '' }))
+  }, [])
+
+  const handleCityChange = useCallback((city: string) => {
+    setFormData((prev) => ({ ...prev, city }))
+  }, [])
 
   // Listener em tempo real
   useEffect(() => {
@@ -270,8 +279,8 @@ export default function LocationsPage() {
                   <StateCitySelect
                     stateValue={formData.state}
                     cityValue={formData.city}
-                    onStateChange={(state) => setFormData({ ...formData, state })}
-                    onCityChange={(city) => setFormData({ ...formData, city })}
+                    onStateChange={handleStateChange}
+                    onCityChange={handleCityChange}
                   />
 
                   {/* CEP */}

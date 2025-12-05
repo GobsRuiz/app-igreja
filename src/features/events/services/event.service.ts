@@ -42,7 +42,7 @@ export async function createEvent(
     const docRef = await firebaseFirestore.collection(COLLECTION).add({
       title: data.title.trim(),
       description: data.description.trim(),
-      date: firebaseFirestore.Timestamp.fromDate(data.date),
+      date: firestore.Timestamp.fromDate(data.date),
       categoryId: data.categoryId,
       locationId: data.locationId,
       imageUrl: data.imageUrl || '',
@@ -75,7 +75,7 @@ export async function listEvents(): Promise<{
   try {
     const snapshot = await firebaseFirestore
       .collection(COLLECTION)
-      .orderBy('date', 'desc')
+      .orderBy('createdAt', 'desc')
       .get()
 
     const events: Event[] = []
@@ -122,7 +122,7 @@ export async function updateEvent(
     }
 
     if (data.date !== undefined) {
-      updateData.date = firebaseFirestore.Timestamp.fromDate(data.date)
+      updateData.date = firestore.Timestamp.fromDate(data.date)
     }
 
     if (data.categoryId !== undefined) {
@@ -172,7 +172,7 @@ export function onEventsChange(
 ) {
   return firebaseFirestore
     .collection(COLLECTION)
-    .orderBy('date', 'desc')
+    .orderBy('createdAt', 'desc')
     .onSnapshot(
       (snapshot) => {
         const events: Event[] = []

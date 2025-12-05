@@ -74,7 +74,7 @@ export async function listLocations(): Promise<{
   try {
     const snapshot = await firebaseFirestore
       .collection(COLLECTION)
-      .orderBy('name', 'asc')
+      .orderBy('createdAt', 'desc')
       .get()
 
     const locations: Location[] = []
@@ -175,7 +175,7 @@ export function onLocationsChange(
 ) {
   return firebaseFirestore
     .collection(COLLECTION)
-    .orderBy('name', 'asc')
+    .orderBy('createdAt', 'desc')
     .onSnapshot(
       (snapshot) => {
         const locations: Location[] = []
