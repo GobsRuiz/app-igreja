@@ -16,9 +16,9 @@ const CardComponent = forwardRef<any, CardProps>(({ children, ...props }, ref) =
       borderColor="$borderColor"
       shadowColor="$shadowColor"
       shadowOpacity={0}
-      shadowRadius={2}
+      shadowRadius={0}
       shadowOffset={{ width: 0, height: 0.5 }}
-      elevation={1}
+      elevation={0}
       {...props}
     >
       {children}

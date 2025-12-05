@@ -231,7 +231,7 @@ export default function AdminEventsPage() {
           <ScrollView showsVerticalScrollIndicator={false}>
             <YStack gap="$3">
               {events.map((event) => (
-                <Card key={event.id} elevate size="$4" bordered padding="$4">
+                <Card key={event.id} size="$4" bordered padding="$4" backgroundColor="$background">
                   <YStack gap="$3">
                     {/* Header do card */}
                     <XStack alignItems="flex-start" justifyContent="space-between">

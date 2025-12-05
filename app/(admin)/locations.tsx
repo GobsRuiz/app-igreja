@@ -175,7 +175,7 @@ export default function LocationsPage() {
           <ScrollView showsVerticalScrollIndicator={false}>
             <YStack gap="$3">
               {locations.map((location) => (
-                <Card key={location.id} elevate size="$4" bordered padding="$4">
+                <Card key={location.id} size="$4" bordered padding="$4" backgroundColor="$background">
                   <XStack alignItems="flex-start" justifyContent="space-between">
                     <XStack alignItems="flex-start" gap="$3" flex={1}>
                       {/* Ícone */}
