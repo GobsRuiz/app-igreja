@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Dropdown } from 'react-native-element-dropdown'
 import { Text, useTheme, YStack } from 'tamagui'
 
-import { onStatesChange, onCitiesByStateChange, type State, type City } from '../services'
+import { onStatesChange, onCitiesChange, onCitiesByStateChange, type State, type City } from '../services'
 
 interface StateCitySelectProps {
   stateValue: string
@@ -45,8 +45,16 @@ export function StateCitySelect({
 
   // Listener de cidades (REATIVO a stateValue)
   useEffect(() => {
-    if (!stateValue) return
+    // Se estado vazio, busca TODAS as cidades
+    if (!stateValue) {
+      const unsubscribe = onCitiesChange(
+        (data) => setCities(data),
+        (error) => console.error('Erro ao carregar cidades:', error)
+      )
+      return () => unsubscribe()
+    }
 
+    // Se estado preenchido, filtra por estado
     const unsubscribe = onCitiesByStateChange(
       stateValue,
       (data) => setCities(data),
@@ -56,12 +64,18 @@ export function StateCitySelect({
     return () => unsubscribe()
   }, [stateValue])
 
-  // Auto-seleção de primeira cidade quando lista muda
-  useEffect(() => {
-    if (cities.length > 0 && !cities.find((c) => c.name === cityValue)) {
-      onCityChange(cities[0].name)
+  // Handler para seleção de cidade (cascata inversa)
+  const handleCityChange = (cityName: string) => {
+    onCityChange(cityName)
+
+    // Se estado vazio, descobre qual estado pertence essa cidade
+    if (!stateValue) {
+      const selectedCity = cities.find((c) => c.name === cityName)
+      if (selectedCity) {
+        onStateChange(selectedCity.state)
+      }
     }
-  }, [cities, cityValue, onCityChange])
+  }
 
   // Transformação para dropdown
   const stateItems = states.map((s) => ({ label: s.name, value: s.code }))
@@ -137,7 +151,7 @@ export function StateCitySelect({
           placeholder={cityPlaceholder}
           searchPlaceholder="Buscar..."
           value={cityValue}
-          onChange={(item) => onCityChange(item.value)}
+          onChange={(item) => handleCityChange(item.value)}
         />
       </YStack>
     </YStack>
