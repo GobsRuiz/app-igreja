@@ -10,6 +10,8 @@ import { useEventStore, selectFilteredEvents } from '@shared/store'
 import { EventCard } from '@/src/components/EventCard'
 import { EventDetailModal } from '@/src/components/EventDetailModal'
 import { FilterModal } from '@/src/components/FilterModal'
+import { LocationBadge } from '@/src/components/LocationBadge'
+import { ConnectionBadge } from '@/src/components/ConnectionBadge'
 import { MapService } from '@shared/services/map-service'
 import type { Event } from '@shared/types'
 
@@ -49,9 +51,10 @@ export default function HomePage() {
           borderBottomWidth={1}
           borderBottomColor="$borderColor"
         >
-          <Text fontSize="$7" fontWeight="700" color="$color12">
-            Eventos
-          </Text>
+          <XStack gap="$2" alignItems="center">
+            <LocationBadge />
+            <ConnectionBadge />
+          </XStack>
           <Button
             size="$3"
             variant="outlined"
