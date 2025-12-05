@@ -37,7 +37,7 @@ export default function ProfilePage() {
 
         <YStack gap="$4">
           {/* Card de Informações do Usuário */}
-          <Card padding="$4" gap="$4">
+          <Card gap="$4">
             <YStack gap="$3" alignItems="center">
               <User size={64} color="$color12" />
               <Text fontSize="$6" fontWeight="600" color="$color12">

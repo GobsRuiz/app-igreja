@@ -10,6 +10,7 @@ const CardComponent = forwardRef<any, CardProps>(({ children, ...props }, ref) =
     <TamaguiCard
       ref={ref}
       size="$4"
+      padding="$4"
       backgroundColor="white"
       borderRadius="$4"
       borderWidth={1}

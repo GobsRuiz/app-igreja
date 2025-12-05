@@ -12,8 +12,8 @@ interface EventCardProps {
 
 export function EventCard({ event, onDetailsPress, onGoPress }: EventCardProps) {
   return (
-    <Card marginBottom="$3">
-      <Card.Header padded>
+    <Card marginBottom="$3" padding="$0">
+      <Card.Header>
         <YStack gap="$2">
           {/* Badge do Tipo */}
           {event.categoryName && (
@@ -55,7 +55,7 @@ export function EventCard({ event, onDetailsPress, onGoPress }: EventCardProps) 
         </YStack>
       </Card.Header>
 
-      <Card.Footer padded>
+      <Card.Footer>
         <XStack gap="$2" width="100%">
           <Button
             flex={1}
