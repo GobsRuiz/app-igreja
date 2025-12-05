@@ -8,7 +8,9 @@
       "Bash(npm install:*)",
       "Bash(npm ls:*)",
       "Bash(find:*)",
-      "Bash(if not exist \"implementacoes\" mkdir implementacoes)"
+      "Bash(if not exist \"implementacoes\" mkdir implementacoes)",
+      "Bash(if exist \"src\\shared\\data\" rmdir /s /q \"src\\shared\\data\")",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []

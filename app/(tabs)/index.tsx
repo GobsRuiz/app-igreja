@@ -97,9 +97,6 @@ export default function HomePage() {
               <Text fontSize="$5" color="$color11" textAlign="center">
                 Nenhum evento encontrado
               </Text>
-              <Text fontSize="$3" color="$color11" textAlign="center">
-                Tente ajustar os filtros
-              </Text>
             </YStack>
           ) : (
             <FlashList
