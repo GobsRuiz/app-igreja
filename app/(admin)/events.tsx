@@ -9,7 +9,7 @@ import {
   Spinner,
   Sheet,
 } from 'tamagui'
-import { Button, Card } from '@shared/ui'
+import { Button, Card, EmptyState } from '@shared/ui'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Plus, Pencil, Trash2, X, Calendar, MapPin, Tag } from '@tamagui/lucide-icons'
 import { Alert, Platform } from 'react-native'
@@ -217,14 +217,11 @@ export default function AdminEventsPage() {
                 </Text>
               </>
             ) : (
-              <>
-                <Text fontSize="$5" color="$mutedForeground">
-                  Nenhum evento cadastrado
-                </Text>
-                <Text fontSize="$3" color="$mutedForeground">
-                  Clique em "Novo" para criar
-                </Text>
-              </>
+              <EmptyState
+                icon={<Calendar size={48} color="$foreground" />}
+                message="Nenhum evento cadastrado"
+                description="Clique em &quot;Novo&quot; para criar"
+              />
             )}
           </YStack>
         ) : (

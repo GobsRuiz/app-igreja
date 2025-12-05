@@ -2,6 +2,7 @@ import React from 'react'
 import { YStack, Text } from 'tamagui'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Bell } from '@tamagui/lucide-icons'
+import { EmptyState } from '@shared/ui'
 
 export default function NotificationsPage() {
   return (
@@ -11,15 +12,11 @@ export default function NotificationsPage() {
           Notificações
         </Text>
 
-        <YStack flex={1} justifyContent="center" alignItems="center" gap="$3">
-          <Bell size={48} color="$mutedForeground" />
-          <Text fontSize="$5" color="$mutedForeground">
-            Em breve
-          </Text>
-          <Text fontSize="$3" color="$mutedForeground" textAlign="center">
-            Aqui você verá notificações sobre seus eventos
-          </Text>
-        </YStack>
+        <EmptyState
+          icon={<Bell size={48} color="$foreground" />}
+          message="Em breve"
+          description="Aqui você verá notificações sobre seus eventos"
+        />
       </YStack>
     </SafeAreaView>
   )

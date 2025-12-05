@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { YStack, XStack, Text, Spinner } from 'tamagui'
-import { Button } from '@shared/ui'
+import { Button, EmptyState } from '@shared/ui'
 import { FlashList } from '@shopify/flash-list'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { SlidersHorizontal, Calendar } from '@tamagui/lucide-icons'
@@ -92,12 +92,10 @@ export default function HomePage() {
               </Text>
             </YStack>
           ) : filteredEvents.length === 0 ? (
-            <YStack flex={1} justifyContent="center" alignItems="center" gap="$3" padding="$4">
-              <Calendar size={48} color="$color11" />
-              <Text fontSize="$5" color="$color11" textAlign="center">
-                Nenhum evento encontrado
-              </Text>
-            </YStack>
+            <EmptyState
+              icon={<Calendar size={48} color="$foreground" />}
+              message="Nenhum evento encontrado"
+            />
           ) : (
             <FlashList
               data={filteredEvents}

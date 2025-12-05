@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { XStack, Text, Spinner } from 'tamagui'
 import { MapPin, RefreshCw } from '@tamagui/lucide-icons'
 import { useUserLocation } from '@shared/hooks/use-user-location'
@@ -9,11 +9,30 @@ const DEFAULT_CITY = 'Taquaritinga'
 export function LocationBadge() {
   const { city, isLoading, error, detectLocation } = useUserLocation()
   const loadFromCache = useLocationStore((state) => state.loadFromCache)
+  const hasAttemptedAutoDetect = useRef(false)
 
   // Carrega cidade do cache ao montar
   useEffect(() => {
-    loadFromCache()
+    const initializeLocation = async () => {
+      await loadFromCache()
+
+      // Se não tem cidade no cache e ainda não tentou detectar automaticamente
+      if (!city && !hasAttemptedAutoDetect.current && !isLoading) {
+        hasAttemptedAutoDetect.current = true
+        detectLocation()
+      }
+    }
+
+    initializeLocation()
   }, [loadFromCache])
+
+  // Detecta automaticamente na primeira vez (quando cache carregar vazio)
+  useEffect(() => {
+    if (!city && !hasAttemptedAutoDetect.current && !isLoading) {
+      hasAttemptedAutoDetect.current = true
+      detectLocation()
+    }
+  }, [city, isLoading, detectLocation])
 
   // Determina texto do badge
   const getBadgeText = () => {

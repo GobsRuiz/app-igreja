@@ -8,7 +8,7 @@ import {
   Spinner,
   Sheet,
 } from 'tamagui'
-import { Button, Card } from '@shared/ui'
+import { Button, Card, EmptyState } from '@shared/ui'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Plus, Pencil, Trash2, X, MapPin } from '@tamagui/lucide-icons'
 import { Alert } from 'react-native'
@@ -162,14 +162,11 @@ export default function LocationsPage() {
 
         {/* Lista */}
         {locations.length === 0 ? (
-          <YStack flex={1} alignItems="center" justifyContent="center" gap="$3">
-            <Text fontSize="$5" color="$mutedForeground">
-              Nenhum local cadastrado
-            </Text>
-            <Text fontSize="$3" color="$mutedForeground">
-              Clique em "Novo" para criar
-            </Text>
-          </YStack>
+          <EmptyState
+            icon={<MapPin size={48} color="$foreground" />}
+            message="Nenhum local cadastrado"
+            description="Clique em &quot;Novo&quot; para criar"
+          />
         ) : (
           <ScrollView showsVerticalScrollIndicator={false}>
             <YStack gap="$3">

@@ -8,7 +8,7 @@ import {
   Spinner,
   Sheet,
 } from 'tamagui'
-import { Button, Card } from '@shared/ui'
+import { Button, Card, EmptyState } from '@shared/ui'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import {
   Plus,
@@ -23,6 +23,7 @@ import {
   Star,
   Users,
   Home,
+  Tag,
 } from '@tamagui/lucide-icons'
 import { Alert } from 'react-native'
 import { toast } from 'sonner-native'
@@ -198,14 +199,11 @@ export default function CategoriesPage() {
 
         {/* Lista */}
         {categories.length === 0 ? (
-          <YStack flex={1} alignItems="center" justifyContent="center" gap="$3">
-            <Text fontSize="$5" color="$mutedForeground">
-              Nenhuma categoria cadastrada
-            </Text>
-            <Text fontSize="$3" color="$mutedForeground">
-              Clique em "Nova" para criar
-            </Text>
-          </YStack>
+          <EmptyState
+            icon={<Tag size={48} color="$foreground" />}
+            message="Nenhuma categoria cadastrada"
+            description="Clique em &quot;Nova&quot; para criar"
+          />
         ) : (
           <ScrollView showsVerticalScrollIndicator={false}>
             <YStack gap="$3">

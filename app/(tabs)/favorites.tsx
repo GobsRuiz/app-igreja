@@ -9,6 +9,7 @@ import { useEventStore, selectFavoriteEvents } from '@shared/store'
 import { EventCard } from '@/src/components/EventCard'
 import { EventDetailModal } from '@/src/components/EventDetailModal'
 import { MapService } from '@shared/services/map-service'
+import { EmptyState } from '@shared/ui'
 import type { Event } from '@shared/types'
 
 export default function FavoritesPage() {
@@ -47,15 +48,11 @@ export default function FavoritesPage() {
         {/* Lista de Favoritos */}
         <YStack flex={1} paddingHorizontal="$4">
           {favoriteEvents.length === 0 ? (
-            <YStack flex={1} justifyContent="center" alignItems="center" gap="$3">
-              <Star size={48} color="$mutedForeground" />
-              <Text fontSize="$5" color="$mutedForeground" textAlign="center">
-                Nenhum evento favorito
-              </Text>
-              <Text fontSize="$3" color="$mutedForeground" textAlign="center">
-                Adicione eventos aos favoritos para vê-los aqui
-              </Text>
-            </YStack>
+            <EmptyState
+              icon={<Star size={48} color="$foreground" />}
+              message="Nenhum evento favorito"
+              description="Adicione eventos aos favoritos para vê-los aqui"
+            />
           ) : (
             <FlashList
               data={favoriteEvents}

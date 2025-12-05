@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { YStack, XStack, Text, Spinner, ScrollView } from 'tamagui'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { User as UserIcon, Mail, Phone, Shield, Clock } from '@tamagui/lucide-icons'
-import { Badge, Card } from '@shared/ui'
+import { Badge, Card, EmptyState } from '@shared/ui'
 import { toast } from 'sonner-native'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -61,14 +61,11 @@ export default function UsersPage() {
 
         {/* Lista */}
         {users.length === 0 ? (
-          <YStack flex={1} alignItems="center" justifyContent="center" gap="$3">
-            <Text fontSize="$5" color="$mutedForeground">
-              Nenhum usuário cadastrado
-            </Text>
-            <Text fontSize="$3" color="$mutedForeground">
-              Os usuários aparecem aqui ao se cadastrarem
-            </Text>
-          </YStack>
+          <EmptyState
+            icon={<UserIcon size={48} color="$foreground" />}
+            message="Nenhum usuário cadastrado"
+            description="Os usuários aparecem aqui ao se cadastrarem"
+          />
         ) : (
           <ScrollView showsVerticalScrollIndicator={false}>
             <YStack gap="$3">
