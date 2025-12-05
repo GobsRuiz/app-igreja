@@ -11,7 +11,7 @@ import {
 } from 'tamagui'
 import { Button, Card, EmptyState } from '@shared/ui'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Plus, Pencil, Trash2, X, Calendar, MapPin, Tag } from '@tamagui/lucide-icons'
+import { Plus, Pencil, Trash2, X, Calendar, MapPin, Tag, AlertCircle } from '@tamagui/lucide-icons'
 import { Alert, Platform } from 'react-native'
 import { toast } from 'sonner-native'
 import { Dropdown } from 'react-native-element-dropdown'

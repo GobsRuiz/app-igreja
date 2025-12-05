@@ -4,13 +4,12 @@ import DateTimePicker from '@react-native-community/datetimepicker'
 import { Calendar, MapPin, Tag } from '@tamagui/lucide-icons'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Platform, StyleSheet } from 'react-native'
-import { Dropdown } from 'react-native-element-dropdown'
 import { Text, useTheme, XStack, YStack } from 'tamagui'
 import { Button } from '@shared/ui'
 
 import { useEventStore } from '@shared/store/use-event-store'
 import { Formatters } from '@shared/utils/formatters'
-import { onStatesChange, onCitiesByStateChange, type State, type City } from '@features/geo'
+import { StateCitySelect } from '@features/geo'
 import { onCategoriesChange, type Category } from '@features/categories'
 
 interface FilterModalProps {
@@ -37,8 +36,6 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
   const clearFilters = useEventStore((state) => state.clearFilters)
 
   // Dados do Firestore
-  const [states, setStates] = useState<State[]>([])
-  const [cities, setCities] = useState<City[]>([])
   const [categories, setCategories] = useState<Category[]>([])
 
   // Estados locais para edição antes de aplicar
@@ -55,34 +52,15 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
 
   // Listeners Firestore
   useEffect(() => {
-    const unsubscribeStates = onStatesChange(
-      (data) => setStates(data),
-      (error) => console.error('Erro ao carregar estados:', error)
-    )
-
     const unsubscribeCategories = onCategoriesChange(
       (data) => setCategories(data),
       (error) => console.error('Erro ao carregar categorias:', error)
     )
 
     return () => {
-      unsubscribeStates()
       unsubscribeCategories()
     }
   }, [])
-
-  // Listener para cidades quando muda o estado
-  useEffect(() => {
-    if (!localState) return
-
-    const unsubscribe = onCitiesByStateChange(
-      localState,
-      (data) => setCities(data),
-      (error) => console.error('Erro ao carregar cidades:', error)
-    )
-
-    return () => unsubscribe()
-  }, [localState])
 
   // Sincroniza estado local com store quando modal abre
   useEffect(() => {
@@ -97,13 +75,6 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
       bottomSheetRef.current?.close()
     }
   }, [isOpen, selectedCity, radiusKm, startDate, endDate, selectedCategoryIds])
-
-  // Quando muda o estado, seleciona primeira cidade
-  useEffect(() => {
-    if (cities.length > 0 && !cities.find(c => c.name === localCity)) {
-      setLocalCity(cities[0].name)
-    }
-  }, [cities, localCity])
 
   const handleApply = useCallback(() => {
     // Aplica cidade
@@ -158,32 +129,6 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
     })
   }
 
-  const stateItems = states.map((s) => ({ label: s.name, value: s.code }))
-  const cityItems = cities.map((c) => ({ label: c.name, value: c.name }))
-
-  const dropdownStyles = {
-    dropdown: {
-      height: 50,
-      borderColor: theme.borderColor?.val || '#e5e5e5',
-      borderWidth: 1,
-      borderRadius: 8,
-      paddingHorizontal: 12,
-      backgroundColor: theme.background?.val || '#fff',
-    },
-    placeholderStyle: {
-      fontSize: 14,
-      color: theme.color11?.val || '#666',
-    },
-    selectedTextStyle: {
-      fontSize: 14,
-      color: theme.color12?.val || '#000',
-    },
-    inputSearchStyle: {
-      height: 40,
-      fontSize: 14,
-    },
-  }
-
   const formatDateForDisplay = (date: Date | undefined): string => {
     if (!date) return 'Selecionar'
     const isoString = date.toISOString().split('T')[0]
@@ -222,43 +167,12 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
               </XStack>
 
               <YStack gap="$3">
-                <YStack gap="$1">
-                  <Text fontSize="$3" color="$color11">Estado</Text>
-                  <Dropdown
-                    style={dropdownStyles.dropdown}
-                    placeholderStyle={dropdownStyles.placeholderStyle}
-                    selectedTextStyle={dropdownStyles.selectedTextStyle}
-                    inputSearchStyle={dropdownStyles.inputSearchStyle}
-                    data={stateItems}
-                    search
-                    maxHeight={300}
-                    labelField="label"
-                    valueField="value"
-                    placeholder="Selecione o estado"
-                    searchPlaceholder="Buscar..."
-                    value={localState}
-                    onChange={(item) => setLocalState(item.value)}
-                  />
-                </YStack>
-
-                <YStack gap="$1">
-                  <Text fontSize="$3" color="$color11">Cidade</Text>
-                  <Dropdown
-                    style={dropdownStyles.dropdown}
-                    placeholderStyle={dropdownStyles.placeholderStyle}
-                    selectedTextStyle={dropdownStyles.selectedTextStyle}
-                    inputSearchStyle={dropdownStyles.inputSearchStyle}
-                    data={cityItems}
-                    search
-                    maxHeight={300}
-                    labelField="label"
-                    valueField="value"
-                    placeholder="Selecione a cidade"
-                    searchPlaceholder="Buscar..."
-                    value={localCity}
-                    onChange={(item) => setLocalCity(item.value)}
-                  />
-                </YStack>
+                <StateCitySelect
+                  stateValue={localState}
+                  cityValue={localCity}
+                  onStateChange={setLocalState}
+                  onCityChange={setLocalCity}
+                />
 
                 <YStack gap="$1">
                   <XStack justifyContent="space-between">

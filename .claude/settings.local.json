@@ -11,7 +11,9 @@
       "Bash(if not exist \"implementacoes\" mkdir implementacoes)",
       "Bash(if exist \"src\\shared\\data\" rmdir /s /q \"src\\shared\\data\")",
       "Bash(rm:*)",
-      "Bash(if not exist \"src\\shared\\hooks\" mkdir srcsharedhooks)"
+      "Bash(if not exist \"src\\shared\\hooks\" mkdir srcsharedhooks)",
+      "Bash(if not exist \"src\\features\\geo\\components\" mkdir srcfeaturesgeocomponents)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []

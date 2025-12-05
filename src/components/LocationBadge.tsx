@@ -42,6 +42,11 @@ export function LocationBadge() {
     return DEFAULT_CITY
   }
 
+  // Click no badge = sempre força GPS novo
+  const handleClick = () => {
+    detectLocation(true) // forceNew = true
+  }
+
   return (
     <XStack
       alignItems="center"
@@ -53,7 +58,7 @@ export function LocationBadge() {
       borderWidth={1}
       borderColor="$color7"
       pressStyle={{ opacity: 0.7 }}
-      onPress={detectLocation}
+      onPress={handleClick}
       disabled={isLoading}
       cursor={isLoading ? 'not-allowed' : 'pointer'}
     >
