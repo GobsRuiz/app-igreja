@@ -1,5 +1,6 @@
 import React from 'react'
-import { YStack, XStack, Card, Text, Button } from 'tamagui'
+import { YStack, XStack, Card, Text } from 'tamagui'
+import { Button } from '@shared/ui'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ArrowLeft, LayoutDashboard } from '@tamagui/lucide-icons'
 import { useRouter } from 'expo-router'

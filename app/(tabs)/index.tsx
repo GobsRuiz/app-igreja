@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { YStack, XStack, Text, Button } from 'tamagui'
+import { YStack, XStack, Text } from 'tamagui'
+import { Button } from '@shared/ui'
 import { FlashList } from '@shopify/flash-list'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { SlidersHorizontal, Calendar } from '@tamagui/lucide-icons'

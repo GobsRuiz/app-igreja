@@ -4,15 +4,15 @@ import {
   XStack,
   Card,
   Text,
-  Button,
   Input,
   TextArea,
-  Dialog,
   ScrollView,
   Spinner,
+  Sheet,
 } from 'tamagui'
+import { Button } from '@shared/ui'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Plus, Edit, Trash2, X, Calendar, MapPin, Tag } from '@tamagui/lucide-icons'
+import { Plus, Pencil, Trash2, X, Calendar, MapPin, Tag } from '@tamagui/lucide-icons'
 import { Alert, Platform } from 'react-native'
 import { toast } from 'sonner-native'
 import { Dropdown } from 'react-native-element-dropdown'
@@ -37,7 +37,7 @@ export default function AdminEventsPage() {
   const [loading, setLoading] = useState(true)
 
   // Modal state
-  const [dialogOpen, setDialogOpen] = useState(false)
+  const [sheetOpen, setSheetOpen] = useState(false)
   const [editingEvent, setEditingEvent] = useState<Event | null>(null)
   const [formData, setFormData] = useState<CreateEventData>({
     title: '',
@@ -90,7 +90,7 @@ export default function AdminEventsPage() {
       categoryId: categories[0]?.id || '',
       locationId: locations[0]?.id || '',
     })
-    setDialogOpen(true)
+    setSheetOpen(true)
   }
 
   const handleOpenEdit = (event: Event) => {
@@ -102,7 +102,11 @@ export default function AdminEventsPage() {
       categoryId: event.categoryId,
       locationId: event.locationId,
     })
-    setDialogOpen(true)
+    setSheetOpen(true)
+  }
+
+  const handleClose = () => {
+    setSheetOpen(false)
   }
 
   const handleSubmit = async () => {
@@ -133,7 +137,7 @@ export default function AdminEventsPage() {
     }
 
     setSubmitting(false)
-    setDialogOpen(false)
+    handleClose()
   }
 
   const handleDelete = (event: Event) => {
@@ -187,9 +191,7 @@ export default function AdminEventsPage() {
             Eventos
           </Text>
           <Button
-            size="$3"
-            backgroundColor="$purple10"
-            color="white"
+            variant="primary"
             icon={Plus}
             onPress={handleOpenCreate}
             disabled={categories.length === 0 || locations.length === 0}
@@ -244,17 +246,13 @@ export default function AdminEventsPage() {
 
                       <XStack gap="$2">
                         <Button
-                          size="$3"
                           variant="outlined"
-                          icon={Edit}
+                          icon={Pencil}
                           onPress={() => handleOpenEdit(event)}
                           circular
                         />
                         <Button
-                          size="$3"
-                          variant="outlined"
-                          borderColor="$red10"
-                          color="$red10"
+                          variant="danger"
                           icon={Trash2}
                           onPress={() => handleDelete(event)}
                           circular
@@ -299,40 +297,23 @@ export default function AdminEventsPage() {
           </ScrollView>
         )}
 
-        {/* Dialog Create/Edit */}
-        <Dialog modal open={dialogOpen} onOpenChange={setDialogOpen}>
-          <Dialog.Portal>
-            <Dialog.Overlay
-              key="overlay"
-              animation="quick"
-              opacity={0.5}
-              enterStyle={{ opacity: 0 }}
-              exitStyle={{ opacity: 0 }}
-            />
-
-            <Dialog.Content
-              bordered
-              elevate
-              key="content"
-              animateOnly={['transform', 'opacity']}
-              animation={[
-                'quick',
-                {
-                  opacity: {
-                    overshootClamping: true,
-                  },
-                },
-              ]}
-              enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
-              exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
-              gap="$4"
-              padding="$4"
-            >
-              <Dialog.Title fontSize="$7" fontWeight="700">
+        {/* Sheet Create/Edit */}
+        <Sheet
+          modal
+          open={sheetOpen}
+          onOpenChange={setSheetOpen}
+          snapPoints={[90]}
+          dismissOnSnapToBottom
+        >
+          <Sheet.Overlay />
+          <Sheet.Frame padding="$4" backgroundColor="$background">
+            <Sheet.Handle />
+            <YStack gap="$4">
+              <Text fontSize="$7" fontWeight="700" color="$foreground">
                 {editingEvent ? 'Editar Evento' : 'Novo Evento'}
-              </Dialog.Title>
+              </Text>
 
-              <ScrollView maxHeight={600}>
+              <ScrollView showsVerticalScrollIndicator={false}>
                 <YStack gap="$4">
                   {/* Título */}
                   <YStack gap="$2">
@@ -432,17 +413,19 @@ export default function AdminEventsPage() {
                 </YStack>
               </ScrollView>
 
-              <XStack gap="$3" marginTop="$2">
-                <Dialog.Close asChild>
-                  <Button flex={1} variant="outlined" icon={X}>
-                    Cancelar
-                  </Button>
-                </Dialog.Close>
+              <XStack gap="$3" marginTop="$4">
+                <Button
+                  flex={1}
+                  variant="outlined"
+                  icon={X}
+                  onPress={handleClose}
+                >
+                  Cancelar
+                </Button>
 
                 <Button
                   flex={1}
-                  backgroundColor="$purple10"
-                  color="white"
+                  variant="primary"
                   onPress={handleSubmit}
                   disabled={
                     submitting ||
@@ -464,9 +447,9 @@ export default function AdminEventsPage() {
                   {submitting ? 'Salvando...' : editingEvent ? 'Atualizar' : 'Criar'}
                 </Button>
               </XStack>
-            </Dialog.Content>
-          </Dialog.Portal>
-        </Dialog>
+            </YStack>
+          </Sheet.Frame>
+        </Sheet>
 
         {/* Date Picker */}
         {showDatePicker && (

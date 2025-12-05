@@ -1,5 +1,6 @@
 import React from 'react'
-import { YStack, XStack, Card, Text, Button, Separator, Spinner } from 'tamagui'
+import { YStack, XStack, Card, Text, Separator, Spinner } from 'tamagui'
+import { Button } from '@shared/ui'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { User, LogOut, Mail, LayoutDashboard } from '@tamagui/lucide-icons'
 import { toast } from 'sonner-native'
@@ -65,8 +66,7 @@ export default function ProfilePage() {
             isAdmin(role) && (
               <Button
                 size="$5"
-                backgroundColor="$blue10"
-                color="white"
+                variant="info"
                 fontWeight="600"
                 icon={LayoutDashboard}
                 onPress={handleGoToAdmin}
@@ -79,9 +79,7 @@ export default function ProfilePage() {
           {/* Botão de Logout */}
           <Button
             size="$5"
-            variant="outlined"
-            borderColor="$red10"
-            color="$red10"
+            variant="danger"
             fontWeight="600"
             icon={LogOut}
             onPress={handleLogout}

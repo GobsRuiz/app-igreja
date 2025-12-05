@@ -4,12 +4,12 @@ import {
   XStack,
   Card,
   Text,
-  Button,
   Input,
   ScrollView,
   Spinner,
   Sheet,
 } from 'tamagui'
+import { Button } from '@shared/ui'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import {
   Plus,
@@ -189,9 +189,7 @@ export default function CategoriesPage() {
             Categorias
           </Text>
           <Button
-            size="$3"
-            backgroundColor="$blue10"
-            color="white"
+            variant="primary"
             icon={Plus}
             onPress={handleOpenCreate}
           >
@@ -213,7 +211,7 @@ export default function CategoriesPage() {
           <ScrollView showsVerticalScrollIndicator={false}>
             <YStack gap="$3">
               {categories.map((category) => (
-                <Card key={category.id} elevate size="$4" bordered padding="$4">
+                <Card key={category.id} size="$4" bordered padding="$4" backgroundColor="$background">
                   <XStack alignItems="center" justifyContent="space-between">
                     <XStack alignItems="center" gap="$3" flex={1}>
                       {/* Cor preview */}
@@ -240,19 +238,13 @@ export default function CategoriesPage() {
 
                     <XStack gap="$2">
                       <Button
-                        size="$3"
                         variant="outlined"
-                        borderColor="$blue10"
-                        color="$blue10"
                         icon={Pencil}
                         onPress={() => handleOpenEdit(category)}
                         circular
                       />
                       <Button
-                        size="$3"
                         variant="outlined"
-                        borderColor="$red10"
-                        color="$red10"
                         icon={Trash2}
                         onPress={() => handleDelete(category)}
                         circular
@@ -355,8 +347,7 @@ export default function CategoriesPage() {
 
                 <Button
                   flex={1}
-                  backgroundColor="$blue10"
-                  color="white"
+                  variant="primary"
                   onPress={handleSubmit}
                   disabled={submitting || !formData.name.trim()}
                   opacity={submitting || !formData.name.trim() ? 0.5 : 1}

@@ -4,7 +4,8 @@
  */
 
 import { useState } from 'react';
-import { YStack, XStack, Card, Input, Button, Text, Separator } from 'tamagui';
+import { YStack, XStack, Card, Input, Text, Separator } from 'tamagui';
+import { Button } from '@shared/ui';
 import { Mail, Lock, Eye, EyeOff } from '@tamagui/lucide-icons';
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import { toast } from 'sonner-native';
@@ -242,9 +243,8 @@ export default function AuthScreen() {
 
           {/* Botão Submit */}
           <Button
+            variant="primary"
             size="$5"
-            backgroundColor="$color12"
-            color="$color1"
             fontWeight="600"
             marginTop="$3"
             onPress={handleSubmit}

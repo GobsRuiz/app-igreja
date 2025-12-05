@@ -4,14 +4,14 @@ import {
   XStack,
   Card,
   Text,
-  Button,
   Input,
-  Dialog,
   ScrollView,
   Spinner,
+  Sheet,
 } from 'tamagui'
+import { Button } from '@shared/ui'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Plus, Edit, Trash2, X, MapPin } from '@tamagui/lucide-icons'
+import { Plus, Pencil, Trash2, X, MapPin } from '@tamagui/lucide-icons'
 import { Alert } from 'react-native'
 import { toast } from 'sonner-native'
 import {
@@ -28,7 +28,7 @@ export default function LocationsPage() {
   const [loading, setLoading] = useState(true)
 
   // Modal state
-  const [dialogOpen, setDialogOpen] = useState(false)
+  const [sheetOpen, setSheetOpen] = useState(false)
   const [editingLocation, setEditingLocation] = useState<Location | null>(null)
   const [formData, setFormData] = useState<CreateLocationData>({
     name: '',
@@ -59,7 +59,7 @@ export default function LocationsPage() {
   const handleOpenCreate = () => {
     setEditingLocation(null)
     setFormData({ name: '', address: '', city: '', state: '', zipCode: '' })
-    setDialogOpen(true)
+    setSheetOpen(true)
   }
 
   const handleOpenEdit = (location: Location) => {
@@ -71,7 +71,11 @@ export default function LocationsPage() {
       state: location.state,
       zipCode: location.zipCode || '',
     })
-    setDialogOpen(true)
+    setSheetOpen(true)
+  }
+
+  const handleClose = () => {
+    setSheetOpen(false)
   }
 
   const handleSubmit = async () => {
@@ -102,7 +106,7 @@ export default function LocationsPage() {
     }
 
     setSubmitting(false)
-    setDialogOpen(false)
+    handleClose()
     setFormData({ name: '', address: '', city: '', state: '', zipCode: '' })
   }
 
@@ -149,9 +153,7 @@ export default function LocationsPage() {
             Locais
           </Text>
           <Button
-            size="$3"
-            backgroundColor="$green10"
-            color="white"
+            variant="success"
             icon={Plus}
             onPress={handleOpenCreate}
           >
@@ -204,17 +206,13 @@ export default function LocationsPage() {
 
                     <XStack gap="$2">
                       <Button
-                        size="$3"
                         variant="outlined"
-                        icon={Edit}
+                        icon={Pencil}
                         onPress={() => handleOpenEdit(location)}
                         circular
                       />
                       <Button
-                        size="$3"
-                        variant="outlined"
-                        borderColor="$red10"
-                        color="$red10"
+                        variant="danger"
                         icon={Trash2}
                         onPress={() => handleDelete(location)}
                         circular
@@ -227,40 +225,23 @@ export default function LocationsPage() {
           </ScrollView>
         )}
 
-        {/* Dialog Create/Edit */}
-        <Dialog modal open={dialogOpen} onOpenChange={setDialogOpen}>
-          <Dialog.Portal>
-            <Dialog.Overlay
-              key="overlay"
-              animation="quick"
-              opacity={0.5}
-              enterStyle={{ opacity: 0 }}
-              exitStyle={{ opacity: 0 }}
-            />
-
-            <Dialog.Content
-              bordered
-              elevate
-              key="content"
-              animateOnly={['transform', 'opacity']}
-              animation={[
-                'quick',
-                {
-                  opacity: {
-                    overshootClamping: true,
-                  },
-                },
-              ]}
-              enterStyle={{ x: 0, y: -20, opacity: 0, scale: 0.9 }}
-              exitStyle={{ x: 0, y: 10, opacity: 0, scale: 0.95 }}
-              gap="$4"
-              padding="$4"
-            >
-              <Dialog.Title fontSize="$7" fontWeight="700">
+        {/* Sheet Create/Edit */}
+        <Sheet
+          modal
+          open={sheetOpen}
+          onOpenChange={setSheetOpen}
+          snapPoints={[85]}
+          dismissOnSnapToBottom
+        >
+          <Sheet.Overlay />
+          <Sheet.Frame padding="$4" backgroundColor="$background">
+            <Sheet.Handle />
+            <YStack gap="$4">
+              <Text fontSize="$7" fontWeight="700" color="$foreground">
                 {editingLocation ? 'Editar Local' : 'Novo Local'}
-              </Dialog.Title>
+              </Text>
 
-              <ScrollView maxHeight={500}>
+              <ScrollView showsVerticalScrollIndicator={false}>
                 <YStack gap="$4">
                   {/* Nome */}
                   <YStack gap="$2">
@@ -331,17 +312,19 @@ export default function LocationsPage() {
                 </YStack>
               </ScrollView>
 
-              <XStack gap="$3" marginTop="$2">
-                <Dialog.Close asChild>
-                  <Button flex={1} variant="outlined" icon={X}>
-                    Cancelar
-                  </Button>
-                </Dialog.Close>
+              <XStack gap="$3" marginTop="$4">
+                <Button
+                  flex={1}
+                  variant="outlined"
+                  icon={X}
+                  onPress={handleClose}
+                >
+                  Cancelar
+                </Button>
 
                 <Button
                   flex={1}
-                  backgroundColor="$green10"
-                  color="white"
+                  variant="success"
                   onPress={handleSubmit}
                   disabled={
                     submitting ||
@@ -363,9 +346,9 @@ export default function LocationsPage() {
                   {submitting ? 'Salvando...' : editingLocation ? 'Atualizar' : 'Criar'}
                 </Button>
               </XStack>
-            </Dialog.Content>
-          </Dialog.Portal>
-        </Dialog>
+            </YStack>
+          </Sheet.Frame>
+        </Sheet>
       </YStack>
     </SafeAreaView>
   )

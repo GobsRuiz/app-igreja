@@ -5,7 +5,8 @@ import { Calendar, MapPin, Tag } from '@tamagui/lucide-icons'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Platform, StyleSheet } from 'react-native'
 import { Dropdown } from 'react-native-element-dropdown'
-import { Button, Text, useTheme, XStack, YStack } from 'tamagui'
+import { Text, useTheme, XStack, YStack } from 'tamagui'
+import { Button } from '@shared/ui'
 
 import { brazilStates, getCitiesByStateCode } from '@shared/data/brazil-locations'
 import { useEventStore } from '@shared/store/use-event-store'
@@ -260,7 +261,6 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
                 <YStack flex={1} gap="$1">
                   <Text fontSize="$3" color="$color11">Data início</Text>
                   <Button
-                    size="$3"
                     variant="outlined"
                     onPress={() => setShowStartPicker(true)}
                   >
@@ -282,7 +282,6 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
                 <YStack flex={1} gap="$1">
                   <Text fontSize="$3" color="$color11">Data fim</Text>
                   <Button
-                    size="$3"
                     variant="outlined"
                     onPress={() => setShowEndPicker(true)}
                   >
@@ -339,10 +338,10 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
           backgroundColor="$background"
         >
           <XStack gap="$3">
-            <Button flex={1} size="$4" variant="outlined" onPress={handleClear}>
+            <Button flex={1} variant="outlined" onPress={handleClear}>
               Limpar
             </Button>
-            <Button flex={1} size="$4" backgroundColor="$color12" color="$color1" onPress={handleApply}>
+            <Button flex={1} variant="primary" onPress={handleApply}>
               Aplicar
             </Button>
           </XStack>

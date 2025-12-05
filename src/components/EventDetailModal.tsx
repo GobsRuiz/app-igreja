@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { StyleSheet } from 'react-native'
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet'
-import { YStack, XStack, Text, Button, Separator } from 'tamagui'
+import { YStack, XStack, Text, Separator } from 'tamagui'
+import { Button } from '@shared/ui'
 import { Calendar, Clock, MapPin, User, Star, Bell, Map } from '@tamagui/lucide-icons'
 import { Event } from '@shared/types/event'
 import { Formatters } from '@shared/utils/formatters'
@@ -101,28 +102,24 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
           <XStack gap="$2">
             <Button
               flex={1}
-              size="$3"
+              variant="primary"
               icon={<Map size={16} color="$color1" />}
-              backgroundColor="$color12"
-              color="$color1"
               onPress={handleMapPress}
             >
               Mapa
             </Button>
             <Button
               flex={1}
-              size="$3"
-              icon={<Star size={16} color={event.isFavorite ? '$color12' : '$color11'} fill={event.isFavorite ? '$color12' : 'transparent'} />}
               variant="outlined"
+              icon={<Star size={16} color={event.isFavorite ? '$color12' : '$color11'} fill={event.isFavorite ? '$color12' : 'transparent'} />}
               onPress={handleFavoritePress}
             >
               Favoritar
             </Button>
             <Button
               flex={1}
-              size="$3"
-              icon={<Bell size={16} color={event.isNotifying ? '$color12' : '$color11'} fill={event.isNotifying ? '$color12' : 'transparent'} />}
               variant="outlined"
+              icon={<Bell size={16} color={event.isNotifying ? '$color12' : '$color11'} fill={event.isNotifying ? '$color12' : 'transparent'} />}
               onPress={handleNotificationPress}
             >
               Notificar

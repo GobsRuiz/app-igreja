@@ -1,4 +1,5 @@
-import { Card, XStack, YStack, Text, Button } from 'tamagui'
+import { Card, XStack, YStack, Text } from 'tamagui'
+import { Button } from '@shared/ui'
 import { Calendar, MapPin, User, Navigation } from '@tamagui/lucide-icons'
 import { Event } from '@shared/types/event'
 import { Formatters } from '@shared/utils/formatters'
@@ -76,7 +77,6 @@ export function EventCard({ event, onDetailsPress, onGoPress }: EventCardProps) 
         <XStack gap="$2" width="100%">
           <Button
             flex={1}
-            size="$3"
             variant="outlined"
             onPress={onDetailsPress}
           >
@@ -84,9 +84,7 @@ export function EventCard({ event, onDetailsPress, onGoPress }: EventCardProps) 
           </Button>
           <Button
             flex={1}
-            size="$3"
-            backgroundColor="$color12"
-            color="$color1"
+            variant="primary"
             iconAfter={<Navigation size={16} color="$color1" />}
             onPress={onGoPress}
           >
