@@ -1,0 +1,350 @@
+import React, { useState, useEffect, useRef, useCallback } from 'react'
+import {
+  YStack,
+  XStack,
+  Card,
+  Text,
+  Button,
+  Input,
+  ScrollView,
+  Spinner,
+} from 'tamagui'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { Plus, Edit, Trash2, X } from '@tamagui/lucide-icons'
+import { Alert } from 'react-native'
+import { toast } from 'sonner-native'
+import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet'
+import {
+  onCategoriesChange,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  type Category,
+  type CreateCategoryData,
+} from '@features/categories'
+
+// Cores disponíveis para seleção
+const COLORS = [
+  { label: 'Azul', value: '$blue10' },
+  { label: 'Verde', value: '$green10' },
+  { label: 'Vermelho', value: '$red10' },
+  { label: 'Amarelo', value: '$yellow10' },
+  { label: 'Roxo', value: '$purple10' },
+  { label: 'Rosa', value: '$pink10' },
+  { label: 'Laranja', value: '$orange10' },
+  { label: 'Cinza', value: '$gray10' },
+]
+
+// Ícones disponíveis (simplificado - apenas nomes)
+const ICONS = [
+  'Calendar',
+  'Heart',
+  'Music',
+  'Book',
+  'Coffee',
+  'Star',
+  'Users',
+  'Home',
+]
+
+export default function CategoriesPage() {
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
+
+  // Modal state
+  const bottomSheetRef = useRef<BottomSheet>(null)
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
+  const [formData, setFormData] = useState<CreateCategoryData>({
+    name: '',
+    color: '$blue10',
+    icon: 'Calendar',
+  })
+  const [submitting, setSubmitting] = useState(false)
+
+  // Listener em tempo real
+  useEffect(() => {
+    const unsubscribe = onCategoriesChange(
+      (data) => {
+        setCategories(data)
+        setLoading(false)
+      },
+      (error) => {
+        console.error('Erro ao carregar categorias:', error)
+        toast.error('Erro ao carregar categorias')
+        setLoading(false)
+      }
+    )
+
+    return () => unsubscribe()
+  }, [])
+
+  const handleOpenCreate = useCallback(() => {
+    setEditingCategory(null)
+    setFormData({ name: '', color: '$blue10', icon: 'Calendar' })
+    bottomSheetRef.current?.expand()
+  }, [])
+
+  const handleOpenEdit = useCallback((category: Category) => {
+    setEditingCategory(category)
+    setFormData({
+      name: category.name,
+      color: category.color,
+      icon: category.icon,
+    })
+    bottomSheetRef.current?.expand()
+  }, [])
+
+  const handleClose = useCallback(() => {
+    bottomSheetRef.current?.close()
+  }, [])
+
+  const handleSubmit = async () => {
+    setSubmitting(true)
+
+    if (editingCategory) {
+      // Update
+      const { error } = await updateCategory(editingCategory.id, formData)
+
+      if (error) {
+        toast.error(error)
+        setSubmitting(false)
+        return
+      }
+
+      toast.success('Categoria atualizada!')
+    } else {
+      // Create
+      const { error } = await createCategory(formData)
+
+      if (error) {
+        toast.error(error)
+        setSubmitting(false)
+        return
+      }
+
+      toast.success('Categoria criada!')
+    }
+
+    setSubmitting(false)
+    handleClose()
+    setFormData({ name: '', color: '$blue10', icon: 'Calendar' })
+  }
+
+  const handleDelete = (category: Category) => {
+    Alert.alert(
+      'Deletar Categoria',
+      `Tem certeza que deseja deletar "${category.name}"?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Deletar',
+          style: 'destructive',
+          onPress: async () => {
+            const { error } = await deleteCategory(category.id)
+
+            if (error) {
+              toast.error(error)
+              return
+            }
+
+            toast.success('Categoria deletada!')
+          },
+        },
+      ]
+    )
+  }
+
+  if (loading) {
+    return (
+      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+        <YStack flex={1} backgroundColor="$background" alignItems="center" justifyContent="center">
+          <Spinner size="large" color="$color12" />
+        </YStack>
+      </SafeAreaView>
+    )
+  }
+
+  return (
+    <SafeAreaView style={{ flex: 1 }} edges={['top']}>
+      <YStack flex={1} backgroundColor="$background" padding="$4">
+        {/* Header */}
+        <XStack alignItems="center" justifyContent="space-between" marginBottom="$4">
+          <Text fontSize="$8" fontWeight="700" color="$foreground">
+            Categorias
+          </Text>
+          <Button
+            size="$3"
+            backgroundColor="$blue10"
+            color="white"
+            icon={Plus}
+            onPress={handleOpenCreate}
+          >
+            Nova
+          </Button>
+        </XStack>
+
+        {/* Lista */}
+        {categories.length === 0 ? (
+          <YStack flex={1} alignItems="center" justifyContent="center" gap="$3">
+            <Text fontSize="$5" color="$mutedForeground">
+              Nenhuma categoria cadastrada
+            </Text>
+            <Text fontSize="$3" color="$mutedForeground">
+              Clique em "Nova" para criar
+            </Text>
+          </YStack>
+        ) : (
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <YStack gap="$3">
+              {categories.map((category) => (
+                <Card key={category.id} elevate size="$4" bordered padding="$4">
+                  <XStack alignItems="center" justifyContent="space-between">
+                    <XStack alignItems="center" gap="$3" flex={1}>
+                      {/* Cor preview */}
+                      <YStack
+                        width={40}
+                        height={40}
+                        borderRadius="$2"
+                        backgroundColor={category.color}
+                        alignItems="center"
+                        justifyContent="center"
+                      >
+                        <Text color="white" fontWeight="700">
+                          {category.icon.charAt(0)}
+                        </Text>
+                      </YStack>
+
+                      <YStack flex={1}>
+                        <Text fontSize="$5" fontWeight="600" color="$color12">
+                          {category.name}
+                        </Text>
+                        <Text fontSize="$2" color="$color11">
+                          {category.icon} • {category.color}
+                        </Text>
+                      </YStack>
+                    </XStack>
+
+                    <XStack gap="$2">
+                      <Button
+                        size="$3"
+                        variant="outlined"
+                        icon={Edit}
+                        onPress={() => handleOpenEdit(category)}
+                        circular
+                      />
+                      <Button
+                        size="$3"
+                        variant="outlined"
+                        borderColor="$red10"
+                        color="$red10"
+                        icon={Trash2}
+                        onPress={() => handleDelete(category)}
+                        circular
+                      />
+                    </XStack>
+                  </XStack>
+                </Card>
+              ))}
+            </YStack>
+          </ScrollView>
+        )}
+
+        {/* BottomSheet Create/Edit */}
+        <BottomSheet
+          ref={bottomSheetRef}
+          index={-1}
+          snapPoints={['85%']}
+          enablePanDownToClose
+          backgroundStyle={{ backgroundColor: '#fff' }}
+        >
+          <BottomSheetScrollView contentContainerStyle={{ padding: 16 }}>
+            <YStack gap="$4">
+              <Text fontSize="$7" fontWeight="700" color="$foreground">
+                {editingCategory ? 'Editar Categoria' : 'Nova Categoria'}
+              </Text>
+                <YStack gap="$4">
+                  {/* Nome */}
+                  <YStack gap="$2">
+                    <Text fontSize="$3" fontWeight="600" color="$color11">
+                      Nome
+                    </Text>
+                    <Input
+                      size="$4"
+                      placeholder="Ex: Culto, Célula, Retiro..."
+                      value={formData.name}
+                      onChangeText={(text) => setFormData({ ...formData, name: text })}
+                    />
+                  </YStack>
+
+                {/* Cor */}
+                <YStack gap="$2">
+                  <Text fontSize="$3" fontWeight="600" color="$color11">
+                    Cor
+                  </Text>
+                  <XStack gap="$2" flexWrap="wrap">
+                    {COLORS.map((color) => (
+                      <Button
+                        key={color.value}
+                        size="$3"
+                        backgroundColor={color.value}
+                        onPress={() => setFormData({ ...formData, color: color.value })}
+                        opacity={formData.color === color.value ? 1 : 0.5}
+                        borderWidth={formData.color === color.value ? 2 : 0}
+                        borderColor="$color12"
+                      >
+                        <Text color="white" fontSize="$2">
+                          {color.label}
+                        </Text>
+                      </Button>
+                    ))}
+                  </XStack>
+                </YStack>
+
+                {/* Ícone */}
+                <YStack gap="$2">
+                  <Text fontSize="$3" fontWeight="600" color="$color11">
+                    Ícone
+                  </Text>
+                  <XStack gap="$2" flexWrap="wrap">
+                    {ICONS.map((icon) => (
+                      <Button
+                        key={icon}
+                        size="$3"
+                        variant={formData.icon === icon ? undefined : 'outlined'}
+                        onPress={() => setFormData({ ...formData, icon })}
+                      >
+                        {icon}
+                      </Button>
+                    ))}
+                  </XStack>
+                </YStack>
+              </YStack>
+
+              <XStack gap="$3" marginTop="$4">
+                <Button
+                  flex={1}
+                  variant="outlined"
+                  icon={X}
+                  onPress={handleClose}
+                >
+                  Cancelar
+                </Button>
+
+                <Button
+                  flex={1}
+                  backgroundColor="$blue10"
+                  color="white"
+                  onPress={handleSubmit}
+                  disabled={submitting || !formData.name.trim()}
+                  opacity={submitting || !formData.name.trim() ? 0.5 : 1}
+                >
+                  {submitting ? 'Salvando...' : editingCategory ? 'Atualizar' : 'Criar'}
+                </Button>
+              </XStack>
+            </YStack>
+          </BottomSheetScrollView>
+        </BottomSheet>
+      </YStack>
+    </SafeAreaView>
+  )
+}

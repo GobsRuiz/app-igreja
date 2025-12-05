@@ -4,6 +4,7 @@
  */
 
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import type { Role } from '@shared/constants/permissions';
 
 /**
  * User - Usuário autenticado
@@ -21,6 +22,7 @@ export interface User {
  */
 export interface AuthState {
   user: User | null;
+  role: Role | null;
   loading: boolean;
   error: string | null;
 }

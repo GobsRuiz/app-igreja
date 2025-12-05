@@ -6,6 +6,8 @@
 import React, { createContext, useState, useEffect, type ReactNode } from 'react';
 import * as authService from '../services/auth.service';
 import type { User, AuthState } from '../types/auth.types';
+import type { Role } from '@shared/constants/permissions';
+import { firebaseFirestore } from '@core/config/firebase.config';
 
 /**
  * Auth Context Type
@@ -42,22 +44,67 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [state, setState] = useState<AuthState>({
     user: null,
+    role: null,
     loading: true,
     error: null,
   });
 
-  // Listener único de mudanças de autenticação
+  // Listener único de mudanças de autenticação + role do Firestore
   useEffect(() => {
-    const unsubscribe = authService.onAuthStateChanged((user) => {
-      setState({
-        user,
-        loading: false,
-        error: null,
-      });
+    let unsubscribeRole: (() => void) | null = null;
+
+    // Listener de autenticação
+    const unsubscribeAuth = authService.onAuthStateChanged((user) => {
+      // Limpar listener anterior SEMPRE (previne memory leak)
+      if (unsubscribeRole) {
+        unsubscribeRole();
+        unsubscribeRole = null;
+      }
+
+      if (user) {
+        // Usuário autenticado → escutar role do Firestore
+        unsubscribeRole = firebaseFirestore
+          .collection('users')
+          .doc(user.uid)
+          .onSnapshot(
+            (doc) => {
+              const role = doc.exists ? ((doc.data()?.role as Role) || 'user') : 'user';
+              setState({
+                user,
+                role,
+                loading: false,
+                error: null,
+              });
+            },
+            (error) => {
+              console.error('Erro ao obter role do usuário:', error);
+              // Fallback seguro
+              setState({
+                user,
+                role: 'user',
+                loading: false,
+                error: null,
+              });
+            }
+          );
+      } else {
+        // Não autenticado → limpar estado
+        setState({
+          user: null,
+          role: null,
+          loading: false,
+          error: null,
+        });
+      }
     });
 
     // Cleanup
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeRole) {
+        unsubscribeRole();
+      }
+    };
   }, []);
 
   // Cadastrar

@@ -3,7 +3,8 @@
  * Wrapper simples do Firebase Auth com validações
  */
 
-import { firebaseAuth } from '@core/config';
+import { firebaseAuth, firebaseFirestore } from '@core/config';
+import firestore from '@react-native-firebase/firestore';
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { AuthErrorCode, mapFirebaseUser, type User } from '../types/auth.types';
 
@@ -83,12 +84,32 @@ export async function signUp(
       return { user: null, error: 'As senhas não conferem' };
     }
 
-    // Criar usuário no Firebase
+    // Criar usuário no Firebase Auth
+    console.log('🔥 [AUTH] Criando usuário no Firebase Auth...');
     const userCredential = await firebaseAuth.createUserWithEmailAndPassword(email, password);
     const user = mapFirebaseUser(userCredential.user);
+    console.log('✅ [AUTH] Usuário criado no Auth:', user?.uid);
+
+    // Criar documento do usuário na collection users/
+    if (user) {
+      console.log('🔥 [FIRESTORE] Tentando criar documento em users/...');
+      try {
+        await firebaseFirestore.collection('users').doc(user.uid).set({
+          email: user.email,
+          role: 'user', // Todos começam como usuários
+          createdAt: firestore.FieldValue.serverTimestamp(),
+        });
+        console.log('✅ [FIRESTORE] Documento criado com sucesso!');
+      } catch (firestoreError: any) {
+        console.error('❌ [FIRESTORE] ERRO ao criar documento:', firestoreError);
+        console.error('❌ [FIRESTORE] Código do erro:', firestoreError.code);
+        console.error('❌ [FIRESTORE] Mensagem:', firestoreError.message);
+      }
+    }
 
     return { user, error: null };
   } catch (error: any) {
+    console.error('❌ [AUTH] Erro geral:', error);
     const errorMessage = mapAuthError(error, true);
     return { user: null, error: errorMessage };
   }

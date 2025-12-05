@@ -1,18 +1,71 @@
-import { Stack } from 'expo-router'
+import { useEffect } from 'react'
+import { Stack, useRouter, useSegments } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { TamaguiProvider } from 'tamagui'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'
+import { PortalProvider } from '@gorhom/portal'
 import { Toaster } from 'sonner-native'
 import 'react-native-reanimated'
 
 import tamaguiConfig from '../tamagui.config'
 import '@core/config/firebase.config'
-import { AuthProvider } from '@features/auth/providers/auth-provider'
+import { AuthProvider, useAuth } from '@features/auth'
+import { isAdmin } from '@shared/constants/permissions'
+import { toast } from 'sonner-native'
 
 export const unstable_settings = {
   anchor: '(tabs)',
+}
+
+function RootNavigator() {
+  const { user, role, loading } = useAuth()
+  const router = useRouter()
+  const segments = useSegments()
+
+  // Proteção de rotas global
+  useEffect(() => {
+    if (loading) return
+
+    const inAuthGroup = segments[0] === 'auth'
+    const inTabsGroup = segments[0] === '(tabs)'
+    const inAdminGroup = segments[0] === '(admin)'
+
+    if (user) {
+      // Autenticado
+
+      // Verificar acesso à área admin
+      if (inAdminGroup) {
+        // Bloqueia se role não existe OU não é admin
+        if (!role || !isAdmin(role)) {
+          toast.error('Acesso negado', {
+            description: 'Você não tem permissão para acessar a área administrativa.',
+          })
+          router.replace('/(tabs)')
+          return
+        }
+      }
+
+      // Garantir que está em (tabs) ou (admin)
+      if (!inTabsGroup && !inAdminGroup) {
+        router.replace('/(tabs)')
+      }
+    } else {
+      // Não autenticado → garantir que está em auth
+      if (!inAuthGroup) {
+        router.replace('/auth')
+      }
+    }
+  }, [user, role, loading, segments])
+
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="auth" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="(admin)" />
+    </Stack>
+  )
 }
 
 export default function RootLayout() {
@@ -21,16 +74,16 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
-            <BottomSheetModalProvider>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="(tabs)" />
-            </Stack>
-            <StatusBar style="auto" />
-            <Toaster visibleToasts={1} style={{ zIndex: 10000 }} />
-          </BottomSheetModalProvider>
-        </TamaguiProvider>
-      </GestureHandlerRootView>
-    </SafeAreaProvider>
+            <PortalProvider>
+              <BottomSheetModalProvider>
+                <RootNavigator />
+                <StatusBar style="auto" />
+                <Toaster visibleToasts={1} style={{ zIndex: 10000 }} />
+              </BottomSheetModalProvider>
+            </PortalProvider>
+          </TamaguiProvider>
+        </GestureHandlerRootView>
+      </SafeAreaProvider>
     </AuthProvider>
   )
 }
