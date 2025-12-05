@@ -6,7 +6,7 @@
 
 **Projeto:** App igreja
 **Descrição:** Visualizador de eventos  
-**Stacks:** React Native, Expo, TypeScript, Tamagui, react-native-reanimated, zustand, date-fns, axios, @shopify/flash-list, @gorhom/bottom-sheet,  @react-native-community/netinfo, react-native-element-dropdown
+**Stacks:** React Native, Expo, TypeScript, Tamagui, firebase, firestore database, react-native-reanimated, zustand, date-fns, axios, @shopify/flash-list, @gorhom/bottom-sheet,  @react-native-community/netinfo, react-native-element-dropdown
 **Arquitetura:** Feature-Based
 **Ferramentas:** 
 **Detalhes importantes:** Código/comentários/loggs em inglês, Validações retorno do usuário em PT. N tem essa de ser difícil de explorar man, a questão é: é um problema? Se sim, vamos resolver. N tem essa de se é difícil ou se é aceitável. Se é um problema, temove que corrigir sim! Não tem problema de refatoração ou complexidade n man, o ideal aqui é profisisonalismo, código seguro e bem estruturado. Foco somente no que está fazendo, se encontrar outro problema avise mas não faça nada!

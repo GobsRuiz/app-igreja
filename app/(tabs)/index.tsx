@@ -10,6 +10,7 @@ import { useEventStore, selectFilteredEvents } from '@shared/store'
 import { EventCard } from '@/src/components/EventCard'
 import { EventDetailModal } from '@/src/components/EventDetailModal'
 import { FilterModal } from '@/src/components/FilterModal'
+import { CategoryFilterSlider } from '@/src/components/CategoryFilterSlider'
 import { LocationBadge } from '@/src/components/LocationBadge'
 import { ConnectionBadge } from '@/src/components/ConnectionBadge'
 import { MapService } from '@shared/services/map-service'
@@ -64,6 +65,9 @@ export default function HomePage() {
             Filtros
           </Button>
         </XStack>
+
+        {/* Category Filter Slider */}
+        <CategoryFilterSlider />
 
         {/* Lista de Eventos */}
         <YStack flex={1}>

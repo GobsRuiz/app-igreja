@@ -210,7 +210,7 @@ export default function CategoriesPage() {
           <ScrollView showsVerticalScrollIndicator={false}>
             <YStack gap="$3">
               {categories.map((category) => (
-                <Card key={category.id} padding="$4" backgroundColor="$background">
+                <Card key={category.id}>
                   <XStack alignItems="center" justifyContent="space-between">
                     <XStack alignItems="center" gap="$3" flex={1}>
                       {/* Cor preview */}

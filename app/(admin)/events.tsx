@@ -200,37 +200,38 @@ export default function AdminEventsPage() {
           </Button>
         </XStack>
 
-        {/* Alerta se não tiver categorias ou locais */}
-        {(categories.length === 0 || locations.length === 0) && (
-          <Card backgroundColor="$yellow2" padding="$3" marginBottom="$3">
-            <Text fontSize="$3" color="$yellow11">
-              ⚠️{' '}
-              {categories.length === 0 && locations.length === 0
-                ? 'Cadastre categorias e locais antes de criar eventos'
-                : categories.length === 0
-                ? 'Cadastre pelo menos uma categoria'
-                : 'Cadastre pelo menos um local'}
-            </Text>
-          </Card>
-        )}
-
         {/* Lista */}
         {events.length === 0 ? (
           <YStack flex={1} alignItems="center" justifyContent="center" gap="$3">
-            <Text fontSize="$5" color="$mutedForeground">
-              Nenhum evento cadastrado
-            </Text>
-            {categories.length > 0 && locations.length > 0 && (
-              <Text fontSize="$3" color="$mutedForeground">
-                Clique em "Novo" para criar
-              </Text>
+            {categories.length === 0 || locations.length === 0 ? (
+              <>
+                <Text fontSize="$5" color="$mutedForeground" textAlign="center">
+                  {categories.length === 0 && locations.length === 0
+                    ? 'Cadastre categorias e locais antes'
+                    : categories.length === 0
+                    ? 'Cadastre pelo menos uma categoria'
+                    : 'Cadastre pelo menos um local'}
+                </Text>
+                <Text fontSize="$3" color="$mutedForeground" textAlign="center">
+                  Acesse as abas correspondentes para criar
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text fontSize="$5" color="$mutedForeground">
+                  Nenhum evento cadastrado
+                </Text>
+                <Text fontSize="$3" color="$mutedForeground">
+                  Clique em "Novo" para criar
+                </Text>
+              </>
             )}
           </YStack>
         ) : (
           <ScrollView showsVerticalScrollIndicator={false}>
             <YStack gap="$3">
               {events.map((event) => (
-                <Card key={event.id} padding="$4" backgroundColor="$background">
+                <Card key={event.id}>
                   <YStack gap="$3">
                     {/* Header do card */}
                     <XStack alignItems="flex-start" justifyContent="space-between">

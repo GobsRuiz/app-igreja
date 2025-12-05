@@ -73,7 +73,7 @@ export default function UsersPage() {
           <ScrollView showsVerticalScrollIndicator={false}>
             <YStack gap="$3">
               {users.map((user) => (
-                <Card key={user.id} padding="$4" backgroundColor="$background">
+                <Card key={user.id}>
                   <XStack alignItems="flex-start" gap="$3">
                     {/* Avatar/Ícone */}
                     <YStack
