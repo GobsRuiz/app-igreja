@@ -11,7 +11,20 @@ import {
   Sheet,
 } from 'tamagui'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Plus, Edit, Trash2, X } from '@tamagui/lucide-icons'
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  X,
+  Calendar,
+  Heart,
+  Music,
+  Book,
+  Coffee,
+  Star,
+  Users,
+  Home,
+} from '@tamagui/lucide-icons'
 import { Alert } from 'react-native'
 import { toast } from 'sonner-native'
 import {
@@ -35,17 +48,20 @@ const COLORS = [
   { label: 'Cinza', value: '$gray10' },
 ]
 
-// Ícones disponíveis (simplificado - apenas nomes)
-const ICONS = [
-  'Calendar',
-  'Heart',
-  'Music',
-  'Book',
-  'Coffee',
-  'Star',
-  'Users',
-  'Home',
-]
+// Mapeamento de ícones
+const ICON_MAP = {
+  Calendar,
+  Heart,
+  Music,
+  Book,
+  Coffee,
+  Star,
+  Users,
+  Home,
+}
+
+// Ícones disponíveis
+const ICONS = Object.keys(ICON_MAP) as Array<keyof typeof ICON_MAP>
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -209,17 +225,15 @@ export default function CategoriesPage() {
                         alignItems="center"
                         justifyContent="center"
                       >
-                        <Text color="white" fontWeight="700">
-                          {category.icon.charAt(0)}
-                        </Text>
+                        {(() => {
+                          const IconComponent = ICON_MAP[category.icon as keyof typeof ICON_MAP]
+                          return IconComponent ? <IconComponent size={20} color="white" /> : null
+                        })()}
                       </YStack>
 
                       <YStack flex={1}>
                         <Text fontSize="$5" fontWeight="600" color="$color12">
                           {category.name}
-                        </Text>
-                        <Text fontSize="$2" color="$color11">
-                          {category.icon} • {category.color}
                         </Text>
                       </YStack>
                     </XStack>
@@ -228,7 +242,9 @@ export default function CategoriesPage() {
                       <Button
                         size="$3"
                         variant="outlined"
-                        icon={Edit}
+                        borderColor="$blue10"
+                        color="$blue10"
+                        icon={Pencil}
                         onPress={() => handleOpenEdit(category)}
                         circular
                       />
@@ -310,16 +326,18 @@ export default function CategoriesPage() {
                       Ícone
                     </Text>
                     <XStack gap="$2" flexWrap="wrap">
-                      {ICONS.map((icon) => (
-                        <Button
-                          key={icon}
-                          size="$3"
-                          variant={formData.icon === icon ? undefined : 'outlined'}
-                          onPress={() => setFormData({ ...formData, icon })}
-                        >
-                          {icon}
-                        </Button>
-                      ))}
+                      {ICONS.map((iconName) => {
+                        const IconComponent = ICON_MAP[iconName]
+                        return (
+                          <Button
+                            key={iconName}
+                            size="$3"
+                            variant={formData.icon === iconName ? undefined : 'outlined'}
+                            onPress={() => setFormData({ ...formData, icon: iconName })}
+                            icon={IconComponent}
+                          />
+                        )
+                      })}
                     </XStack>
                   </YStack>
                 </YStack>
