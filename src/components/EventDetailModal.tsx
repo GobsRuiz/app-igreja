@@ -84,19 +84,21 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
           </Text>
 
           {/* Badge do Tipo */}
-          <XStack>
-            <Text
-              fontSize="$2"
-              fontWeight="600"
-              color="$color11"
-              backgroundColor="$color3"
-              paddingHorizontal="$2"
-              paddingVertical="$1"
-              borderRadius="$2"
-            >
-              {event.eventType}
-            </Text>
-          </XStack>
+          {event.categoryName && (
+            <XStack>
+              <Text
+                fontSize="$2"
+                fontWeight="600"
+                color="$color11"
+                backgroundColor="$color3"
+                paddingHorizontal="$2"
+                paddingVertical="$1"
+                borderRadius="$2"
+              >
+                {event.categoryName}
+              </Text>
+            </XStack>
+          )}
 
           {/* Botões de Ação */}
           <XStack gap="$2">

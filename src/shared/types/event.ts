@@ -9,18 +9,6 @@ export const AttachmentSchema = z.object({
 
 export type Attachment = z.infer<typeof AttachmentSchema>
 
-// Enum de tipos de evento
-export const EventTypeEnum = z.enum([
-  'Batismos',
-  'Reuniões para Mocidade',
-  'Ensaios Musicais Regionais',
-])
-
-export type EventType = z.infer<typeof EventTypeEnum>
-
-// Array constante com os valores (para uso em runtime)
-export const EVENT_TYPES: EventType[] = EventTypeEnum.options
-
 // Schema do Event com validações robustas
 export const EventSchema = z.object({
   id: z.string().trim().min(1, 'Event ID is required'),
@@ -35,7 +23,8 @@ export const EventSchema = z.object({
   latitude: z.number().min(-90).max(90).nullable().optional(),
   longitude: z.number().min(-180).max(180).nullable().optional(),
   attachments: z.array(AttachmentSchema).default([]),
-  eventType: EventTypeEnum,
+  categoryId: z.string().optional(),
+  categoryName: z.string().optional(),
   isFavorite: z.boolean().default(false),
   isNotifying: z.boolean().default(false),
 })

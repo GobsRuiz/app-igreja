@@ -2,14 +2,11 @@
 export {
   AttachmentSchema,
   EventSchema,
-  EventTypeEnum,
-  EVENT_TYPES,
   parseEvent,
   safeParseEvent,
   parseEventArray,
   type Attachment,
   type Event,
-  type EventType,
 } from './event'
 
 // Location types

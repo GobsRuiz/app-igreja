@@ -8,10 +8,10 @@ import { Dropdown } from 'react-native-element-dropdown'
 import { Text, useTheme, XStack, YStack } from 'tamagui'
 import { Button } from '@shared/ui'
 
-import { brazilStates, getCitiesByStateCode } from '@shared/data/brazil-locations'
 import { useEventStore } from '@shared/store/use-event-store'
-import { EVENT_TYPES, EventType } from '@shared/types/event'
 import { Formatters } from '@shared/utils/formatters'
+import { onStatesChange, onCitiesByStateChange, type State, type City } from '@features/geo'
+import { onCategoriesChange, type Category } from '@features/categories'
 
 interface FilterModalProps {
   isOpen: boolean
@@ -25,16 +25,21 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
 
   // Store global
   const selectedCity = useEventStore((state) => state.selectedCity)
-  const selectedEventTypes = useEventStore((state) => state.selectedEventTypes)
+  const selectedCategoryIds = useEventStore((state) => state.selectedCategoryIds)
   const radiusKm = useEventStore((state) => state.radiusKm)
   const startDate = useEventStore((state) => state.startDate)
   const endDate = useEventStore((state) => state.endDate)
 
   const setSelectedCity = useEventStore((state) => state.setSelectedCity)
-  const toggleEventType = useEventStore((state) => state.toggleEventType)
+  const toggleCategoryId = useEventStore((state) => state.toggleCategoryId)
   const setRadiusKm = useEventStore((state) => state.setRadiusKm)
   const setDateRange = useEventStore((state) => state.setDateRange)
   const clearFilters = useEventStore((state) => state.clearFilters)
+
+  // Dados do Firestore
+  const [states, setStates] = useState<State[]>([])
+  const [cities, setCities] = useState<City[]>([])
+  const [categories, setCategories] = useState<Category[]>([])
 
   // Estados locais para edição antes de aplicar
   const [localCity, setLocalCity] = useState(selectedCity)
@@ -42,14 +47,42 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
   const [localRadius, setLocalRadius] = useState(radiusKm)
   const [localStartDate, setLocalStartDate] = useState<Date | undefined>(startDate)
   const [localEndDate, setLocalEndDate] = useState<Date | undefined>(endDate)
-  const [localEventTypes, setLocalEventTypes] = useState<Set<EventType>>(new Set(selectedEventTypes))
+  const [localCategoryIds, setLocalCategoryIds] = useState<Set<string>>(new Set(selectedCategoryIds))
 
   // DatePicker states
   const [showStartPicker, setShowStartPicker] = useState(false)
   const [showEndPicker, setShowEndPicker] = useState(false)
 
-  // Cidades filtradas por estado
-  const cities = useMemo(() => getCitiesByStateCode(localState), [localState])
+  // Listeners Firestore
+  useEffect(() => {
+    const unsubscribeStates = onStatesChange(
+      (data) => setStates(data),
+      (error) => console.error('Erro ao carregar estados:', error)
+    )
+
+    const unsubscribeCategories = onCategoriesChange(
+      (data) => setCategories(data),
+      (error) => console.error('Erro ao carregar categorias:', error)
+    )
+
+    return () => {
+      unsubscribeStates()
+      unsubscribeCategories()
+    }
+  }, [])
+
+  // Listener para cidades quando muda o estado
+  useEffect(() => {
+    if (!localState) return
+
+    const unsubscribe = onCitiesByStateChange(
+      localState,
+      (data) => setCities(data),
+      (error) => console.error('Erro ao carregar cidades:', error)
+    )
+
+    return () => unsubscribe()
+  }, [localState])
 
   // Sincroniza estado local com store quando modal abre
   useEffect(() => {
@@ -58,20 +91,19 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
       setLocalRadius(radiusKm)
       setLocalStartDate(startDate)
       setLocalEndDate(endDate)
-      setLocalEventTypes(new Set(selectedEventTypes))
+      setLocalCategoryIds(new Set(selectedCategoryIds))
       bottomSheetRef.current?.snapToIndex(0)
     } else {
       bottomSheetRef.current?.close()
     }
-  }, [isOpen, selectedCity, radiusKm, startDate, endDate, selectedEventTypes])
+  }, [isOpen, selectedCity, radiusKm, startDate, endDate, selectedCategoryIds])
 
   // Quando muda o estado, seleciona primeira cidade
   useEffect(() => {
-    const citiesForState = getCitiesByStateCode(localState)
-    if (citiesForState.length > 0 && !citiesForState.includes(localCity)) {
-      setLocalCity(citiesForState[0])
+    if (cities.length > 0 && !cities.find(c => c.name === localCity)) {
+      setLocalCity(cities[0].name)
     }
-  }, [localState, localCity])
+  }, [cities, localCity])
 
   const handleApply = useCallback(() => {
     // Aplica cidade
@@ -89,21 +121,21 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
       setDateRange(localStartDate, localEndDate)
     }
 
-    // Aplica tipos de evento (toggle os que mudaram)
-    const currentTypes = new Set(selectedEventTypes)
-    localEventTypes.forEach((type) => {
-      if (!currentTypes.has(type)) {
-        toggleEventType(type)
+    // Aplica categorias (toggle os que mudaram)
+    const currentCategoryIds = new Set(selectedCategoryIds)
+    localCategoryIds.forEach((id) => {
+      if (!currentCategoryIds.has(id)) {
+        toggleCategoryId(id)
       }
     })
-    currentTypes.forEach((type) => {
-      if (!localEventTypes.has(type)) {
-        toggleEventType(type)
+    currentCategoryIds.forEach((id) => {
+      if (!localCategoryIds.has(id)) {
+        toggleCategoryId(id)
       }
     })
 
     onClose()
-  }, [localCity, localRadius, localStartDate, localEndDate, localEventTypes, selectedCity, radiusKm, startDate, endDate, selectedEventTypes, setSelectedCity, setRadiusKm, setDateRange, toggleEventType, onClose])
+  }, [localCity, localRadius, localStartDate, localEndDate, localCategoryIds, selectedCity, radiusKm, startDate, endDate, selectedCategoryIds, setSelectedCity, setRadiusKm, setDateRange, toggleCategoryId, onClose])
 
   const handleClear = useCallback(() => {
     setLocalState('SP')
@@ -111,23 +143,23 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
     setLocalRadius(10)
     setLocalStartDate(undefined)
     setLocalEndDate(undefined)
-    setLocalEventTypes(new Set())
+    setLocalCategoryIds(new Set())
   }, [])
 
-  const handleToggleEventType = (type: EventType) => {
-    setLocalEventTypes((prev) => {
+  const handleToggleCategory = (categoryId: string) => {
+    setLocalCategoryIds((prev) => {
       const newSet = new Set(prev)
-      if (newSet.has(type)) {
-        newSet.delete(type)
+      if (newSet.has(categoryId)) {
+        newSet.delete(categoryId)
       } else {
-        newSet.add(type)
+        newSet.add(categoryId)
       }
       return newSet
     })
   }
 
-  const stateItems = brazilStates.map((s) => ({ label: s.name, value: s.code }))
-  const cityItems = cities.map((c) => ({ label: c, value: c }))
+  const stateItems = states.map((s) => ({ label: s.name, value: s.code }))
+  const cityItems = cities.map((c) => ({ label: c.name, value: c.name }))
 
   const dropdownStyles = {
     dropdown: {
@@ -302,27 +334,27 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
               </XStack>
             </YStack>
 
-            {/* Tipos de Evento */}
+            {/* Categorias */}
             <YStack gap="$3">
               <XStack gap="$2" alignItems="center">
                 <Tag size={20} color="$color11" />
                 <Text fontSize="$4" fontWeight="600" color="$color12">
-                  Tipos de Evento
+                  Categorias
                 </Text>
               </XStack>
 
               <XStack flexWrap="wrap" gap="$2">
-                {EVENT_TYPES.map((type) => (
+                {categories.map((category) => (
                   <Button
-                    key={type}
+                    key={category.id}
                     size="$3"
                     variant="outlined"
-                    backgroundColor={localEventTypes.has(type) ? '$color3' : 'transparent'}
-                    borderColor={localEventTypes.has(type) ? '$color8' : '$borderColor'}
-                    color={localEventTypes.has(type) ? '$color12' : '$color11'}
-                    onPress={() => handleToggleEventType(type)}
+                    backgroundColor={localCategoryIds.has(category.id) ? '$color3' : 'transparent'}
+                    borderColor={localCategoryIds.has(category.id) ? '$color8' : '$borderColor'}
+                    color={localCategoryIds.has(category.id) ? '$color12' : '$color11'}
+                    onPress={() => handleToggleCategory(category.id)}
                   >
-                    {type}
+                    {category.name}
                   </Button>
                 ))}
               </XStack>

@@ -16,11 +16,13 @@ export function EventCard({ event, onDetailsPress, onGoPress }: EventCardProps) 
       <Card.Header padded>
         <YStack gap="$2">
           {/* Badge do Tipo */}
-          <XStack>
-            <Badge variant="outlined">
-              {event.eventType}
-            </Badge>
-          </XStack>
+          {event.categoryName && (
+            <XStack>
+              <Badge variant="outlined">
+                {event.categoryName}
+              </Badge>
+            </XStack>
+          )}
 
           {/* Título */}
           <Text fontSize="$6" fontWeight="700" color="$color12">

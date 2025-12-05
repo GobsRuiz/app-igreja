@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { z } from 'zod'
-import type { Event, EventType } from '@shared/types'
+import type { Event } from '@shared/types'
 import { mockEvents } from '@shared/data'
 
 // ========================================
@@ -38,7 +38,6 @@ interface EventState {
   filteredEvents: Event[]
   favoriteEvents: Event[]
   selectedCity: string
-  selectedEventTypes: Set<EventType>
   selectedCategoryIds: Set<string>
   searchQuery: string
   startDate?: Date
@@ -49,7 +48,6 @@ interface EventState {
 
   // Actions - Filtros
   setSelectedCity: (city: string) => void
-  toggleEventType: (type: EventType) => void
   toggleCategoryId: (categoryId: string) => void
   setSearchQuery: (query: string) => void
   setDateRange: (start?: Date, end?: Date) => void
@@ -81,7 +79,6 @@ export const useEventStore = create<EventState>((set, get) => ({
   filteredEvents: mockEvents,
   favoriteEvents: mockEvents.filter(event => event.isFavorite),
   selectedCity: 'Taquaritinga',
-  selectedEventTypes: new Set<EventType>(),
   selectedCategoryIds: new Set<string>(),
   searchQuery: '',
   radiusKm: 10, // TODO: filtro de raio não implementado (requer geolocation ou coordenadas de cidades)
@@ -100,17 +97,6 @@ export const useEventStore = create<EventState>((set, get) => ({
     }
 
     set({ selectedCity: sanitizedCity })
-    get().applyFilters()
-  },
-
-  toggleEventType: (type) => {
-    const types = new Set(get().selectedEventTypes)
-    if (types.has(type)) {
-      types.delete(type)
-    } else {
-      types.add(type)
-    }
-    set({ selectedEventTypes: types })
     get().applyFilters()
   },
 
@@ -177,7 +163,6 @@ export const useEventStore = create<EventState>((set, get) => ({
 
   clearFilters: () => {
     set({
-      selectedEventTypes: new Set(),
       selectedCategoryIds: new Set(),
       searchQuery: '',
       startDate: undefined,
@@ -192,7 +177,6 @@ export const useEventStore = create<EventState>((set, get) => ({
     const {
       allEvents,
       selectedCity,
-      selectedEventTypes,
       selectedCategoryIds,
       searchQuery,
       startDate,
@@ -204,15 +188,9 @@ export const useEventStore = create<EventState>((set, get) => ({
     // Filtro por cidade (sempre ativo)
     filtered = filtered.filter((event) => event.city === selectedCity)
 
-    // Filtro por tipo de evento (sistema antigo)
-    if (selectedEventTypes.size > 0) {
-      filtered = filtered.filter((event) => selectedEventTypes.has(event.eventType))
-    }
-
-    // Filtro por categoria (sistema novo - Firebase)
+    // Filtro por categoria
     if (selectedCategoryIds.size > 0) {
       filtered = filtered.filter((event) => {
-        // @ts-ignore - categoryId existe nos eventos do Firebase
         return event.categoryId && selectedCategoryIds.has(event.categoryId)
       })
     }
@@ -345,7 +323,6 @@ export const useEventStore = create<EventState>((set, get) => ({
   hasActiveFilters: () => {
     const state = get()
     return (
-      state.selectedEventTypes.size > 0 ||
       state.selectedCategoryIds.size > 0 ||
       state.searchQuery.trim() !== '' ||
       state.startDate !== undefined ||
