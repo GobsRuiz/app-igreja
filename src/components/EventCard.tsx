@@ -1,5 +1,5 @@
 import { Card, XStack, YStack, Text } from 'tamagui'
-import { Button } from '@shared/ui'
+import { Badge, Button } from '@shared/ui'
 import { Calendar, MapPin, User, Navigation } from '@tamagui/lucide-icons'
 import { Event } from '@shared/types/event'
 import { Formatters } from '@shared/utils/formatters'
@@ -29,17 +29,9 @@ export function EventCard({ event, onDetailsPress, onGoPress }: EventCardProps) 
         <YStack gap="$2">
           {/* Badge do Tipo */}
           <XStack>
-            <Text
-              fontSize="$2"
-              fontWeight="600"
-              color="$color11"
-              backgroundColor="$color3"
-              paddingHorizontal="$2"
-              paddingVertical="$1"
-              borderRadius="$2"
-            >
+            <Badge variant="outlined">
               {event.eventType}
-            </Text>
+            </Badge>
           </XStack>
 
           {/* Título */}

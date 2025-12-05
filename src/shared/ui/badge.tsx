@@ -2,7 +2,7 @@ import { forwardRef } from 'react'
 import { XStack, XStackProps, Text } from 'tamagui'
 import type { IconProps } from '@tamagui/helpers-icon'
 
-export type BadgeVariant = 'primary' | 'outlined' | 'ghost' | 'danger' | 'info'
+export type BadgeVariant = 'primary' | 'outlined' | 'ghost' | 'danger' | 'info' | 'success'
 
 export interface BadgeProps extends Omit<XStackProps, 'variant'> {
   variant?: BadgeVariant
@@ -36,6 +36,10 @@ export const Badge = forwardRef<any, BadgeProps>(
         backgroundColor: '$blue10',
         borderWidth: 0,
       },
+      success: {
+        backgroundColor: '$green10',
+        borderWidth: 0,
+      },
     }
 
     const textColors: Record<BadgeVariant, string> = {
@@ -44,6 +48,7 @@ export const Badge = forwardRef<any, BadgeProps>(
       ghost: '$color12',
       danger: '$red10',
       info: 'white',
+      success: 'white',
     }
 
     const iconColors: Record<BadgeVariant, string> = {
@@ -52,6 +57,7 @@ export const Badge = forwardRef<any, BadgeProps>(
       ghost: '$color12',
       danger: '$red10',
       info: 'white',
+      success: 'white',
     }
 
     return (
