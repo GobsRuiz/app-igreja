@@ -45,13 +45,15 @@ export function EventCard({ event, onDetailsPress, onGoPress }: EventCardProps) 
             </Text>
           </XStack>
 
-          {/* Regente */}
-          <XStack gap="$2" alignItems="center">
-            <User size={16} color="$color11" />
-            <Text fontSize="$3" color="$color11">
-              {event.conductor}
-            </Text>
-          </XStack>
+          {/* Regente - só exibe se tiver valor */}
+          {event.conductor && (
+            <XStack gap="$2" alignItems="center">
+              <User size={16} color="$color11" />
+              <Text fontSize="$3" color="$color11">
+                {event.conductor}
+              </Text>
+            </XStack>
+          )}
         </YStack>
       </Card.Header>
 

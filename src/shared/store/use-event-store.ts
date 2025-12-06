@@ -3,6 +3,8 @@ import { z } from 'zod'
 import type { Event } from '@shared/types'
 import { listEvents, onEventsChange } from '@features/events/services/event.service'
 import type { Event as FirebaseEvent } from '@features/events/types/event.types'
+import { onCategoriesChange, type Category } from '@features/categories'
+import { onLocationsChange, type Location } from '@features/locations'
 import { format } from 'date-fns'
 
 // ========================================
@@ -37,22 +39,29 @@ const SearchQuerySchema = z.string()
 /**
  * Converte Event do Firebase para formato da UI
  */
-function adaptFirebaseEventToUI(firebaseEvent: FirebaseEvent): Event {
+function adaptFirebaseEventToUI(
+  firebaseEvent: FirebaseEvent,
+  categories: Category[],
+  locations: Location[]
+): Event {
+  const category = categories.find(c => c.id === firebaseEvent.categoryId)
+  const location = locations.find(l => l.id === firebaseEvent.locationId)
+
   return {
     id: firebaseEvent.id,
     title: firebaseEvent.title,
     description: firebaseEvent.description,
     date: format(firebaseEvent.date, 'yyyy-MM-dd'),
     time: format(firebaseEvent.date, 'HH:mm'),
-    church: '', // TODO: buscar do locationId
-    address: '', // TODO: buscar do locationId
-    city: 'Taquaritinga', // TODO: buscar do locationId
-    conductor: '', // TODO: adicionar campo no Firebase
-    latitude: undefined,
+    church: location?.name || '',
+    address: location?.address || '',
+    city: location?.city || '',
+    conductor: '', // Campo não existe no Firebase (será adicionado futuramente)
+    latitude: undefined, // TODO: adicionar no Firebase se necessário
     longitude: undefined,
     attachments: [],
     categoryId: firebaseEvent.categoryId,
-    categoryName: undefined, // TODO: buscar do categoryId
+    categoryName: category?.name,
     isFavorite: false,
     isNotifying: false,
   }
@@ -67,6 +76,8 @@ interface EventState {
   allEvents: Event[]
   filteredEvents: Event[]
   favoriteEvents: Event[]
+  categories: Category[]
+  locations: Location[]
   selectedCity: string
   selectedCategoryIds: Set<string>
   searchQuery: string
@@ -109,6 +120,8 @@ export const useEventStore = create<EventState>((set, get) => ({
   allEvents: [],
   filteredEvents: [],
   favoriteEvents: [],
+  categories: [],
+  locations: [],
   selectedCity: 'Taquaritinga',
   selectedCategoryIds: new Set<string>(),
   searchQuery: '',
@@ -216,8 +229,10 @@ export const useEventStore = create<EventState>((set, get) => ({
 
     let filtered = allEvents
 
-    // Filtro por cidade (sempre ativo)
-    filtered = filtered.filter((event) => event.city === selectedCity)
+    // Filtro por cidade (apenas se selectedCity não for o default)
+    if (selectedCity && selectedCity !== 'Taquaritinga') {
+      filtered = filtered.filter((event) => event.city === selectedCity)
+    }
 
     // Filtro por categoria
     if (selectedCategoryIds.size > 0) {
@@ -322,7 +337,10 @@ export const useEventStore = create<EventState>((set, get) => ({
       }
 
       // Adaptar eventos do Firebase para formato da UI
-      const adaptedEvents = events.map(adaptFirebaseEventToUI)
+      const { categories, locations } = get()
+      const adaptedEvents = events.map(event =>
+        adaptFirebaseEventToUI(event, categories, locations)
+      )
 
       set({
         allEvents: adaptedEvents,
@@ -341,25 +359,58 @@ export const useEventStore = create<EventState>((set, get) => ({
   },
 
   initializeFirestoreListener: () => {
-    console.log('[EventStore] Initializing Firestore listener')
+    console.log('[EventStore] Initializing Firestore listeners')
 
-    const unsubscribe = onEventsChange(
-      (events) => {
-        console.log(`[EventStore] Received ${events.length} events from Firestore`)
+    // Closures para manter dados atualizados entre listeners
+    let categories: Category[] = []
+    let locations: Location[] = []
+    let rawEvents: FirebaseEvent[] = []
 
-        // Adaptar eventos do Firebase para formato da UI
-        const adaptedEvents = events.map(adaptFirebaseEventToUI)
+    // Função helper para adaptar todos os eventos
+    const adaptAllEvents = () => {
+      const adaptedEvents = rawEvents.map(event =>
+        adaptFirebaseEventToUI(event, categories, locations)
+      )
+      set({ allEvents: adaptedEvents })
+      get().applyFilters()
+    }
 
-        set({
-          allEvents: adaptedEvents,
-          isLoading: false,
-          error: undefined
-        })
-
-        get().applyFilters()
+    // 1. Listener de categories
+    const unsubscribeCategories = onCategoriesChange(
+      (cats) => {
+        console.log(`[EventStore] Received ${cats.length} categories from Firestore`)
+        categories = cats
+        set({ categories: cats })
+        adaptAllEvents()
       },
       (error) => {
-        console.error('[EventStore] Firestore listener error:', error)
+        console.error('[EventStore] Categories listener error:', error)
+      }
+    )
+
+    // 2. Listener de locations
+    const unsubscribeLocations = onLocationsChange(
+      (locs) => {
+        console.log(`[EventStore] Received ${locs.length} locations from Firestore`)
+        locations = locs
+        set({ locations: locs })
+        adaptAllEvents()
+      },
+      (error) => {
+        console.error('[EventStore] Locations listener error:', error)
+      }
+    )
+
+    // 3. Listener de events
+    const unsubscribeEvents = onEventsChange(
+      (events) => {
+        console.log(`[EventStore] Received ${events.length} events from Firestore`)
+        rawEvents = events
+        set({ isLoading: false, error: undefined })
+        adaptAllEvents()
+      },
+      (error) => {
+        console.error('[EventStore] Events listener error:', error)
         set({
           error: 'Erro ao sincronizar eventos',
           isLoading: false
@@ -367,7 +418,13 @@ export const useEventStore = create<EventState>((set, get) => ({
       }
     )
 
-    return unsubscribe
+    // Retorna função que cancela todos os listeners
+    return () => {
+      console.log('[EventStore] Cleaning up all Firestore listeners')
+      unsubscribeCategories()
+      unsubscribeLocations()
+      unsubscribeEvents()
+    }
   },
 
   // ========================================
