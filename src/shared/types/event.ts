@@ -18,6 +18,8 @@ export const EventSchema = z.object({
   church: z.string().trim().min(1, 'Church name is required'),
   address: z.string().trim().min(1, 'Address is required'),
   city: z.string().trim().min(1, 'City is required'),
+  state: z.string().optional(),
+  zipCode: z.string().optional(),
   conductor: z.string().trim().min(1, 'Conductor is required'),
   description: z.string().trim().min(1, 'Description is required'),
   latitude: z.number().min(-90).max(90).nullable().optional(),

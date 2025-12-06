@@ -56,6 +56,8 @@ function adaptFirebaseEventToUI(
     church: location?.name || '',
     address: location?.address || '',
     city: location?.city || '',
+    state: location?.state || '',
+    zipCode: location?.zipCode || '',
     conductor: '', // Campo não existe no Firebase (será adicionado futuramente)
     latitude: undefined, // TODO: adicionar no Firebase se necessário
     longitude: undefined,

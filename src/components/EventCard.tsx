@@ -41,7 +41,7 @@ export function EventCard({ event, onDetailsPress, onGoPress }: EventCardProps) 
           <XStack gap="$2" alignItems="center">
             <MapPin size={16} color="$color11" />
             <Text fontSize="$3" color="$color11" numberOfLines={1} flex={1}>
-              {event.church} - {event.address}, {event.city}
+              {event.church} - {event.city}, {event.state}
             </Text>
           </XStack>
 

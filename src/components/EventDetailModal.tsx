@@ -84,11 +84,6 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
     >
       <BottomSheetScrollView contentContainerStyle={styles.contentContainer}>
         <YStack padding="$4" gap="$4">
-          {/* Título */}
-          <Text fontSize="$8" fontWeight="700" color="$color12">
-            {displayEvent.title}
-          </Text>
-
           {/* Badge do Tipo */}
           {displayEvent.categoryName && (
             <XStack>
@@ -105,6 +100,16 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
               </Text>
             </XStack>
           )}
+
+          {/* Título */}
+          <Text fontSize="$8" fontWeight="700" color="$color12">
+            {displayEvent.title}
+          </Text>
+
+          {/* Descrição */}
+          <Text fontSize="$4" color="$color11" lineHeight={22}>
+            {displayEvent.description}
+          </Text>
 
           {/* Botões de Ação */}
           <XStack gap="$2">
@@ -172,37 +177,31 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
                 {displayEvent.church}
               </Text>
               <Text fontSize="$3" color="$color11">
-                {displayEvent.address}, {displayEvent.city}
+                {displayEvent.address}
+              </Text>
+              <Text fontSize="$3" color="$color11">
+                {displayEvent.city}, {displayEvent.state} - CEP {displayEvent.zipCode}
               </Text>
             </YStack>
           </YStack>
 
-          <Separator />
-
-          {/* Regente */}
-          <YStack gap="$2">
-            <XStack gap="$2" alignItems="center">
-              <User size={20} color="$color11" />
-              <Text fontSize="$4" fontWeight="600" color="$color12">
-                Regente
-              </Text>
-            </XStack>
-            <Text fontSize="$4" color="$color12" paddingLeft="$7">
-              {displayEvent.conductor}
-            </Text>
-          </YStack>
-
-          <Separator />
-
-          {/* Descrição */}
-          <YStack gap="$2">
-            <Text fontSize="$4" fontWeight="600" color="$color12">
-              Descrição
-            </Text>
-            <Text fontSize="$3" color="$color11" lineHeight={22}>
-              {displayEvent.description}
-            </Text>
-          </YStack>
+          {/* Regente - só exibe se tiver valor */}
+          {displayEvent.conductor && (
+            <>
+              <Separator />
+              <YStack gap="$2">
+                <XStack gap="$2" alignItems="center">
+                  <User size={20} color="$color11" />
+                  <Text fontSize="$4" fontWeight="600" color="$color12">
+                    Regente
+                  </Text>
+                </XStack>
+                <Text fontSize="$4" color="$color12" paddingLeft="$7">
+                  {displayEvent.conductor}
+                </Text>
+              </YStack>
+            </>
+          )}
 
           {/* Anexos */}
           {displayEvent.attachments.length > 0 && (
@@ -214,7 +213,7 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
                 </Text>
                 {displayEvent.attachments.map((attachment, index) => (
                   <Text key={index} fontSize="$3" color="$color11">
-                    {attachment}
+                    {attachment.name || attachment}
                   </Text>
                 ))}
               </YStack>
