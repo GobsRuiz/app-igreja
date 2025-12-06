@@ -84,32 +84,35 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
     >
       <BottomSheetScrollView contentContainerStyle={styles.contentContainer}>
         <YStack padding="$4" gap="$4">
-          {/* Badge do Tipo */}
-          {displayEvent.categoryName && (
-            <XStack>
-              <Text
-                fontSize="$2"
-                fontWeight="600"
-                color="$color11"
-                backgroundColor="$color3"
-                paddingHorizontal="$2"
-                paddingVertical="$1"
-                borderRadius="$2"
-              >
-                {displayEvent.categoryName}
-              </Text>
-            </XStack>
-          )}
+          {/* Cabeçalho: Categoria + Título + Descrição */}
+          <YStack gap="$2">
+            {/* Badge do Tipo */}
+            {displayEvent.categoryName && (
+              <XStack>
+                <Text
+                  fontSize="$2"
+                  fontWeight="600"
+                  color="$color11"
+                  backgroundColor="$color3"
+                  paddingHorizontal="$2"
+                  paddingVertical="$1"
+                  borderRadius="$2"
+                >
+                  {displayEvent.categoryName}
+                </Text>
+              </XStack>
+            )}
 
-          {/* Título */}
-          <Text fontSize="$8" fontWeight="700" color="$color12">
-            {displayEvent.title}
-          </Text>
+            {/* Título */}
+            <Text fontSize="$8" fontWeight="700" color="$color12">
+              {displayEvent.title}
+            </Text>
 
-          {/* Descrição */}
-          <Text fontSize="$4" color="$color11" lineHeight={22}>
-            {displayEvent.description}
-          </Text>
+            {/* Descrição */}
+            <Text fontSize="$4" color="$color11" lineHeight={22}>
+              {displayEvent.description}
+            </Text>
+          </YStack>
 
           {/* Botões de Ação */}
           <XStack gap="$2">
