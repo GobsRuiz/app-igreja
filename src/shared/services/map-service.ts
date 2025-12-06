@@ -117,4 +117,66 @@ export class MapService {
       throw new Error('Não foi possível abrir o Apple Maps')
     }
   }
+
+  /**
+   * Extrai o número do endereço (primeiro número encontrado)
+   * @param address - Endereço completo
+   * @returns Número do endereço ou string vazia se não encontrado
+   */
+  private static extractNumberFromAddress(address: string): string {
+    const match = address.match(/\d+/)
+    return match ? match[0] : ''
+  }
+
+  /**
+   * Abre app de mapas (sistema escolhe) usando CEP + número
+   * Suporta Google Maps, Waze e Apple Maps
+   *
+   * @param zipCode - CEP do destino
+   * @param address - Endereço completo (para extrair número)
+   * @param label - Label opcional para o destino
+   * @throws Error se não conseguir abrir URL
+   */
+  static async openMapsWithAddress(
+    zipCode: string,
+    address: string,
+    label?: string
+  ): Promise<void> {
+    if (!zipCode || !address) {
+      throw new Error('CEP e endereço são obrigatórios')
+    }
+
+    // Extrai número do endereço
+    const number = this.extractNumberFromAddress(address)
+
+    // Monta query: "CEP número" (ex: "14770-000 100")
+    const query = number ? `${zipCode} ${number}` : zipCode
+    const encodedQuery = encodeURIComponent(query)
+
+    // URLs para cada plataforma
+    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodedQuery}${
+      label ? `&destination_label=${encodeURIComponent(label)}` : ''
+    }`
+
+    const url = Platform.select({
+      ios: `maps://app?daddr=${encodedQuery}`,
+      android: `google.navigation:q=${encodedQuery}`,
+      default: googleMapsUrl,
+    })
+
+    try {
+      const canOpen = await Linking.canOpenURL(url)
+      if (canOpen) {
+        await Linking.openURL(url)
+      } else {
+        // Fallback para Google Maps web
+        await Linking.openURL(googleMapsUrl)
+      }
+    } catch (error) {
+      if (__DEV__) {
+        console.error('[MapService] Erro ao abrir mapas com endereço:', error)
+      }
+      throw new Error('Não foi possível abrir o aplicativo de mapas')
+    }
+  }
 }

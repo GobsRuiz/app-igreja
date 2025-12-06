@@ -41,13 +41,13 @@ export default function HomePage() {
   }
 
   const handleGoPress = async (event: Event) => {
-    if (!event.latitude || !event.longitude) {
-      toast.warning('Localização não disponível para este evento')
+    if (!event.zipCode || !event.address) {
+      toast.warning('Endereço não disponível para este evento')
       return
     }
 
     try {
-      await MapService.openGoogleMaps(event.latitude, event.longitude, event.church)
+      await MapService.openMapsWithAddress(event.zipCode, event.address, event.church)
     } catch (error) {
       toast.error('Não foi possível abrir o mapa')
     }

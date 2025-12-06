@@ -6,3 +6,4 @@
 export * from './map-service'
 export * from './toast-service'
 export * from './error-handler'
+export * from './notification-service'

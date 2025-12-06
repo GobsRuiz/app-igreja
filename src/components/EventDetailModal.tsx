@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { StyleSheet } from 'react-native'
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import { YStack, XStack, Text, Separator } from 'tamagui'
@@ -9,6 +9,8 @@ import { Formatters } from '@shared/utils/formatters'
 import { useEventStore } from '@shared/store/use-event-store'
 import { MapService } from '@shared/services/map-service'
 import { ToastService } from '@shared/services/toast-service'
+import { canEnableNotification, hasReachedNotificationLimit } from '@shared/services/notification-service'
+import { MAX_NOTIFYING_EVENTS } from '@shared/constants/notification-config'
 
 interface EventDetailModalProps {
   event: Event | null
@@ -19,6 +21,7 @@ interface EventDetailModalProps {
 export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalProps) {
   const bottomSheetRef = useRef<BottomSheetModal>(null)
   const snapPoints = useMemo(() => ['50%', '90%', '95%'], [])
+  const [isTogglingNotification, setIsTogglingNotification] = useState(false)
 
   const toggleFavorite = useEventStore((state) => state.toggleFavorite)
   const toggleNotification = useEventStore((state) => state.toggleNotification)
@@ -43,14 +46,17 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
 
   if (!displayEvent) return null
 
+  // Check if notification button should be shown (event must be > 3h away)
+  const showNotificationButton = canEnableNotification(displayEvent) || displayEvent.isNotifying
+
   const handleMapPress = async () => {
-    if (!displayEvent.latitude || !displayEvent.longitude) {
-      ToastService.warning('Localização não disponível')
+    if (!displayEvent.zipCode || !displayEvent.address) {
+      ToastService.warning('Endereço não disponível')
       return
     }
 
     try {
-      await MapService.openGoogleMaps(displayEvent.latitude, displayEvent.longitude, displayEvent.church)
+      await MapService.openMapsWithAddress(displayEvent.zipCode, displayEvent.address, displayEvent.church)
     } catch {
       ToastService.error('Não foi possível abrir o mapa')
     }
@@ -64,12 +70,40 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
     )
   }
 
-  const handleNotificationPress = () => {
+  const handleNotificationPress = async () => {
     const wasNotifying = displayEvent.isNotifying
-    toggleNotification(displayEvent.id)
-    ToastService.success(
-      wasNotifying ? 'Notificação desativada' : 'Notificação ativada'
-    )
+
+    // If deactivating, just do it
+    if (wasNotifying) {
+      setIsTogglingNotification(true)
+      await toggleNotification(displayEvent.id)
+      setIsTogglingNotification(false)
+      ToastService.success('Notificação desativada')
+      return
+    }
+
+    // If activating, validate first
+
+    // Check if event is too close (< 3h)
+    if (!canEnableNotification(displayEvent)) {
+      ToastService.error('Evento muito próximo. Não é possível ativar notificações.')
+      return
+    }
+
+    // Check limit
+    const limitReached = await hasReachedNotificationLimit()
+    if (limitReached) {
+      ToastService.error(
+        `Limite atingido! Você já tem ${MAX_NOTIFYING_EVENTS} eventos com notificação ativada.`
+      )
+      return
+    }
+
+    // Activate notification
+    setIsTogglingNotification(true)
+    await toggleNotification(displayEvent.id)
+    setIsTogglingNotification(false)
+    ToastService.success('Notificação ativada')
   }
 
   return (
@@ -132,14 +166,18 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
             >
               {displayEvent.isFavorite ? 'Favoritado' : 'Favoritar'}
             </Button>
-            <Button
-              flex={1}
-              variant={displayEvent.isNotifying ? 'primary' : 'outlined'}
-              icon={<Bell size={16} color={displayEvent.isNotifying ? '$color1' : '$color11'} fill={displayEvent.isNotifying ? '$color1' : 'transparent'} />}
-              onPress={handleNotificationPress}
-            >
-              {displayEvent.isNotifying ? 'Notificará' : 'Notificar'}
-            </Button>
+            {showNotificationButton && (
+              <Button
+                flex={1}
+                variant={displayEvent.isNotifying ? 'primary' : 'outlined'}
+                icon={Bell}
+                onPress={handleNotificationPress}
+                disabled={isTogglingNotification}
+                opacity={isTogglingNotification ? 0.5 : 1}
+              >
+                {displayEvent.isNotifying ? 'Notificará' : 'Notificar'}
+              </Button>
+            )}
           </XStack>
 
           <Separator />

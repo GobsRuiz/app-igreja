@@ -22,20 +22,12 @@ export const EventSchema = z.object({
   zipCode: z.string().optional(),
   conductor: z.string().trim().min(1, 'Conductor is required'),
   description: z.string().trim().min(1, 'Description is required'),
-  latitude: z.number().min(-90).max(90).nullable().optional(),
-  longitude: z.number().min(-180).max(180).nullable().optional(),
   attachments: z.array(AttachmentSchema).default([]),
   categoryId: z.string().optional(),
   categoryName: z.string().optional(),
   isFavorite: z.boolean().default(false),
   isNotifying: z.boolean().default(false),
 })
-  .refine(
-    (data) =>
-      (data.latitude != null && data.longitude != null) ||
-      (data.latitude == null && data.longitude == null),
-    { message: 'Latitude and longitude must both be provided or both be null' }
-  )
 
 export type Event = z.infer<typeof EventSchema>
 

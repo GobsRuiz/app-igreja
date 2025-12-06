@@ -6,6 +6,13 @@ import type { Event as FirebaseEvent } from '@features/events/types/event.types'
 import { onCategoriesChange, type Category } from '@features/categories'
 import { onLocationsChange, type Location } from '@features/locations'
 import { format } from 'date-fns'
+import {
+  scheduleEventNotifications,
+  cancelEventNotifications,
+  hasReachedNotificationLimit,
+  canEnableNotification,
+} from '@shared/services/notification-service'
+import { MAX_NOTIFYING_EVENTS } from '@shared/constants/notification-config'
 
 // ========================================
 // SCHEMAS DE VALIDAÇÃO
@@ -59,8 +66,6 @@ function adaptFirebaseEventToUI(
     state: location?.state || '',
     zipCode: location?.zipCode || '',
     conductor: '', // Campo não existe no Firebase (será adicionado futuramente)
-    latitude: undefined, // TODO: adicionar no Firebase se necessário
-    longitude: undefined,
     attachments: [],
     categoryId: firebaseEvent.categoryId,
     categoryName: category?.name,
@@ -101,7 +106,7 @@ interface EventState {
 
   // Actions - Eventos
   toggleFavorite: (eventId: string) => void
-  toggleNotification: (eventId: string) => void
+  toggleNotification: (eventId: string) => Promise<void>
   refreshEvents: () => Promise<void>
   initializeFirestoreListener: () => () => void
 
@@ -305,20 +310,73 @@ export const useEventStore = create<EventState>((set, get) => ({
     get().applyFilters()
   },
 
-  toggleNotification: (eventId) => {
+  toggleNotification: async (eventId) => {
     // Validação do ID
     if (!eventId || typeof eventId !== 'string') {
       console.warn('[EventStore] Invalid event ID for notification toggle')
       return
     }
 
-    set((state) => ({
-      allEvents: state.allEvents.map((event) =>
-        event.id === eventId
-          ? { ...event, isNotifying: !event.isNotifying }
-          : event
-      ),
-    }))
+    const event = get().getEventById(eventId)
+    if (!event) {
+      console.warn('[EventStore] Event not found for notification toggle')
+      return
+    }
+
+    const isCurrentlyNotifying = event.isNotifying
+
+    if (isCurrentlyNotifying) {
+      // DEACTIVATE: Cancel notifications
+      const { success, error } = await cancelEventNotifications(eventId)
+
+      if (!success) {
+        console.error('[EventStore] Failed to cancel notifications:', error)
+        return
+      }
+
+      // Update state
+      set((state) => ({
+        allEvents: state.allEvents.map((e) =>
+          e.id === eventId ? { ...e, isNotifying: false } : e
+        ),
+      }))
+
+      console.log(`[EventStore] Notifications deactivated for event ${eventId}`)
+    } else {
+      // ACTIVATE: Check limits and schedule notifications
+
+      // Check if event is too close
+      if (!canEnableNotification(event)) {
+        console.warn('[EventStore] Event too close to enable notifications')
+        return
+      }
+
+      // Check limit
+      const limitReached = await hasReachedNotificationLimit()
+      if (limitReached) {
+        console.warn('[EventStore] Notification limit reached')
+        return
+      }
+
+      // Schedule notifications
+      const { success, error, scheduledCount } = await scheduleEventNotifications(event)
+
+      if (!success) {
+        console.error('[EventStore] Failed to schedule notifications:', error)
+        return
+      }
+
+      // Update state
+      set((state) => ({
+        allEvents: state.allEvents.map((e) =>
+          e.id === eventId ? { ...e, isNotifying: true } : e
+        ),
+      }))
+
+      console.log(
+        `[EventStore] Notifications activated for event ${eventId} (${scheduledCount} scheduled)`
+      )
+    }
 
     // Reaplica filtros para atualizar filteredEvents
     get().applyFilters()
