@@ -1,33 +1,33 @@
-import React, { useState, useEffect } from 'react'
+import { onCategoriesChange, type Category } from '@features/categories'
 import {
-  YStack,
-  XStack,
-  Text,
-  Input,
-  TextArea,
-  ScrollView,
-  Spinner,
-  Sheet,
-} from 'tamagui'
-import { Button, Card, EmptyState } from '@shared/ui'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { Plus, Pencil, Trash2, X, Calendar, MapPin, Tag, AlertCircle } from '@tamagui/lucide-icons'
-import { Alert, Platform } from 'react-native'
-import { toast } from 'sonner-native'
-import { Dropdown } from 'react-native-element-dropdown'
+  createEvent,
+  deleteEvent,
+  onEventsChange,
+  updateEvent,
+  type CreateEventData,
+  type Event,
+} from '@features/events'
+import { onLocationsChange, type Location } from '@features/locations'
 import DateTimePicker from '@react-native-community/datetimepicker'
+import { Button, Card, EmptyState } from '@shared/ui'
+import { AlertCircle, Calendar, MapPin, Pencil, Plus, Tag, Trash2, X } from '@tamagui/lucide-icons'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import React, { useEffect, useState } from 'react'
+import { Alert, Platform } from 'react-native'
+import { Dropdown } from 'react-native-element-dropdown'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { toast } from 'sonner-native'
 import {
-  onEventsChange,
-  createEvent,
-  updateEvent,
-  deleteEvent,
-  type Event,
-  type CreateEventData,
-} from '@features/events'
-import { onCategoriesChange, type Category } from '@features/categories'
-import { onLocationsChange, type Location } from '@features/locations'
+  Input,
+  ScrollView,
+  Sheet,
+  Spinner,
+  Text,
+  TextArea,
+  XStack,
+  YStack,
+} from 'tamagui'
 
 export default function AdminEventsPage() {
   const [events, setEvents] = useState<Event[]>([])
@@ -168,7 +168,9 @@ export default function AdminEventsPage() {
   }
 
   const getLocationName = (locationId: string) => {
-    return locations.find((l) => l.id === locationId)?.name || 'N/A'
+    const location = locations.find((l) => l.id === locationId)
+    if (!location) return 'N/A'
+    return `${location.name} - ${location.city}, ${location.state}`
   }
 
   if (loading) {
@@ -264,6 +266,13 @@ export default function AdminEventsPage() {
                       </XStack>
 
                       <XStack alignItems="center" gap="$2">
+                        <MapPin size={16} color="$color10" />
+                        <Text fontSize="$3" color="$color11">
+                          {getLocationName(event.locationId)}
+                        </Text>
+                      </XStack>
+                      
+                      <XStack alignItems="center" gap="$2">
                         <Tag size={16} color="$color10" />
                         <YStack
                           paddingHorizontal="$2"
@@ -277,12 +286,6 @@ export default function AdminEventsPage() {
                         </YStack>
                       </XStack>
 
-                      <XStack alignItems="center" gap="$2">
-                        <MapPin size={16} color="$color10" />
-                        <Text fontSize="$3" color="$color11">
-                          {getLocationName(event.locationId)}
-                        </Text>
-                      </XStack>
                     </YStack>
                   </YStack>
                 </Card>
