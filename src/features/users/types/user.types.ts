@@ -15,6 +15,26 @@ export interface User {
 }
 
 /**
+ * Dados para criar usuário (com senha para Auth)
+ */
+export interface CreateUserData {
+  email: string
+  password: string
+  displayName?: string
+  phone?: string
+  role: Role
+}
+
+/**
+ * Dados para atualizar usuário (sem email/senha)
+ */
+export interface UpdateUserData {
+  displayName?: string
+  phone?: string
+  role?: Role
+}
+
+/**
  * Converte documento Firestore para User
  */
 export function mapFirestoreUser(
