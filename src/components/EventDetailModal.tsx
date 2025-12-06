@@ -23,6 +23,12 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
   const toggleFavorite = useEventStore((state) => state.toggleFavorite)
   const toggleNotification = useEventStore((state) => state.toggleNotification)
 
+  // Busca o evento atualizado diretamente do allEvents para garantir reatividade
+  const eventFromStore = useEventStore((state) =>
+    event ? state.allEvents.find(e => e.id === event.id) : undefined
+  )
+  const displayEvent = eventFromStore || event
+
   useEffect(() => {
     if (isOpen && event) {
       bottomSheetRef.current?.present()
@@ -35,32 +41,32 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
     }
   }, [isOpen, event])
 
-  if (!event) return null
+  if (!displayEvent) return null
 
   const handleMapPress = async () => {
-    if (!event.latitude || !event.longitude) {
+    if (!displayEvent.latitude || !displayEvent.longitude) {
       ToastService.warning('Localização não disponível')
       return
     }
 
     try {
-      await MapService.openGoogleMaps(event.latitude, event.longitude, event.church)
+      await MapService.openGoogleMaps(displayEvent.latitude, displayEvent.longitude, displayEvent.church)
     } catch {
       ToastService.error('Não foi possível abrir o mapa')
     }
   }
 
   const handleFavoritePress = () => {
-    const wasFavorite = event.isFavorite
-    toggleFavorite(event.id)
+    const wasFavorite = displayEvent.isFavorite
+    toggleFavorite(displayEvent.id)
     ToastService.success(
       wasFavorite ? 'Removido dos favoritos' : 'Adicionado aos favoritos'
     )
   }
 
   const handleNotificationPress = () => {
-    const wasNotifying = event.isNotifying
-    toggleNotification(event.id)
+    const wasNotifying = displayEvent.isNotifying
+    toggleNotification(displayEvent.id)
     ToastService.success(
       wasNotifying ? 'Notificação desativada' : 'Notificação ativada'
     )
@@ -80,11 +86,11 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
         <YStack padding="$4" gap="$4">
           {/* Título */}
           <Text fontSize="$8" fontWeight="700" color="$color12">
-            {event.title}
+            {displayEvent.title}
           </Text>
 
           {/* Badge do Tipo */}
-          {event.categoryName && (
+          {displayEvent.categoryName && (
             <XStack>
               <Text
                 fontSize="$2"
@@ -95,7 +101,7 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
                 paddingVertical="$1"
                 borderRadius="$2"
               >
-                {event.categoryName}
+                {displayEvent.categoryName}
               </Text>
             </XStack>
           )}
@@ -112,19 +118,19 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
             </Button>
             <Button
               flex={1}
-              variant="outlined"
-              icon={<Star size={16} color={event.isFavorite ? '$color12' : '$color11'} fill={event.isFavorite ? '$color12' : 'transparent'} />}
+              variant={displayEvent.isFavorite ? 'primary' : 'outlined'}
+              icon={<Star size={16} color={displayEvent.isFavorite ? '$color1' : '$color11'} fill={displayEvent.isFavorite ? '$color1' : 'transparent'} />}
               onPress={handleFavoritePress}
             >
-              Favoritar
+              {displayEvent.isFavorite ? 'Favoritado' : 'Favoritar'}
             </Button>
             <Button
               flex={1}
-              variant="outlined"
-              icon={<Bell size={16} color={event.isNotifying ? '$color12' : '$color11'} fill={event.isNotifying ? '$color12' : 'transparent'} />}
+              variant={displayEvent.isNotifying ? 'primary' : 'outlined'}
+              icon={<Bell size={16} color={displayEvent.isNotifying ? '$color1' : '$color11'} fill={displayEvent.isNotifying ? '$color1' : 'transparent'} />}
               onPress={handleNotificationPress}
             >
-              Notificar
+              {displayEvent.isNotifying ? 'Notificará' : 'Notificar'}
             </Button>
           </XStack>
 
@@ -140,12 +146,12 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
             </XStack>
             <YStack paddingLeft="$7" gap="$1">
               <Text fontSize="$4" color="$color12">
-                {Formatters.formatDateFull(event.date)}
+                {Formatters.formatDateFull(displayEvent.date)}
               </Text>
               <XStack gap="$2" alignItems="center">
                 <Clock size={16} color="$color11" />
                 <Text fontSize="$3" color="$color11">
-                  {event.time}
+                  {displayEvent.time}
                 </Text>
               </XStack>
             </YStack>
@@ -163,10 +169,10 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
             </XStack>
             <YStack paddingLeft="$7" gap="$1">
               <Text fontSize="$4" color="$color12">
-                {event.church}
+                {displayEvent.church}
               </Text>
               <Text fontSize="$3" color="$color11">
-                {event.address}, {event.city}
+                {displayEvent.address}, {displayEvent.city}
               </Text>
             </YStack>
           </YStack>
@@ -182,7 +188,7 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
               </Text>
             </XStack>
             <Text fontSize="$4" color="$color12" paddingLeft="$7">
-              {event.conductor}
+              {displayEvent.conductor}
             </Text>
           </YStack>
 
@@ -194,19 +200,19 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
               Descrição
             </Text>
             <Text fontSize="$3" color="$color11" lineHeight={22}>
-              {event.description}
+              {displayEvent.description}
             </Text>
           </YStack>
 
           {/* Anexos */}
-          {event.attachments.length > 0 && (
+          {displayEvent.attachments.length > 0 && (
             <>
               <Separator />
               <YStack gap="$2">
                 <Text fontSize="$4" fontWeight="600" color="$color12">
                   Anexos
                 </Text>
-                {event.attachments.map((attachment, index) => (
+                {displayEvent.attachments.map((attachment, index) => (
                   <Text key={index} fontSize="$3" color="$color11">
                     {attachment}
                   </Text>
