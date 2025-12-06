@@ -29,8 +29,19 @@ const CardComponent = forwardRef<any, CardProps>(({ children, ...props }, ref) =
 
 CardComponent.displayName = 'Card'
 
+// Custom Footer with padding
+const CardFooter = forwardRef<any, TamaguiCardProps>(({ children, ...props }, ref) => {
+  return (
+    <TamaguiCard.Footer ref={ref} padding="$4" {...props}>
+      {children}
+    </TamaguiCard.Footer>
+  )
+})
+
+CardFooter.displayName = 'Card.Footer'
+
 // Preserve Tamagui Card namespace (Header, Footer)
 export const Card = Object.assign(CardComponent, {
   Header: TamaguiCard.Header,
-  Footer: TamaguiCard.Footer,
+  Footer: CardFooter,
 })
