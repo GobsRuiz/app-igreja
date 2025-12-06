@@ -1,8 +1,8 @@
-import { XStack, YStack, Text, Separator } from 'tamagui'
-import { Badge, Button, Card } from '@shared/ui'
-import { Calendar, MapPin, User, Navigation } from '@tamagui/lucide-icons'
 import { Event } from '@shared/types/event'
+import { Badge, Button, Card } from '@shared/ui'
 import { Formatters } from '@shared/utils/formatters'
+import { Calendar, MapPin, Navigation, User } from '@tamagui/lucide-icons'
+import { Separator, Text, XStack, YStack } from 'tamagui'
 
 interface EventCardProps {
   event: Event
@@ -55,9 +55,9 @@ export function EventCard({ event, onDetailsPress, onGoPress }: EventCardProps) 
             </XStack>
           )}
         </YStack>
-      </Card.Header>
 
-      <Separator />
+      <Separator marginTop="$4" />
+      </Card.Header>
 
       <Card.Footer>
         <XStack gap="$2" width="100%">

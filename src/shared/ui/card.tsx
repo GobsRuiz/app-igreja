@@ -32,7 +32,7 @@ CardComponent.displayName = 'Card'
 // Custom Footer with padding
 const CardFooter = forwardRef<any, TamaguiCardProps>(({ children, ...props }, ref) => {
   return (
-    <TamaguiCard.Footer ref={ref} padding="$4" {...props}>
+    <TamaguiCard.Footer ref={ref} paddingHorizontal="$4" paddingBottom="$4" {...props}>
       {children}
     </TamaguiCard.Footer>
   )
