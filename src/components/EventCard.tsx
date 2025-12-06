@@ -1,4 +1,4 @@
-import { XStack, YStack, Text } from 'tamagui'
+import { XStack, YStack, Text, Separator } from 'tamagui'
 import { Badge, Button, Card } from '@shared/ui'
 import { Calendar, MapPin, User, Navigation } from '@tamagui/lucide-icons'
 import { Event } from '@shared/types/event'
@@ -56,6 +56,8 @@ export function EventCard({ event, onDetailsPress, onGoPress }: EventCardProps) 
           )}
         </YStack>
       </Card.Header>
+
+      <Separator />
 
       <Card.Footer>
         <XStack gap="$2" width="100%">
