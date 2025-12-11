@@ -8,6 +8,7 @@ import { YStack, XStack, Card, Input, Text, Separator } from 'tamagui';
 import { Button } from '@shared/ui';
 import { Mail, Lock, Eye, EyeOff } from '@tamagui/lucide-icons';
 import { KeyboardAvoidingView, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { toast } from 'sonner-native';
 import { useAuth } from '@features/auth';
 
@@ -64,11 +65,12 @@ export default function AuthScreen() {
   const isLoginMode = mode === 'login';
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1 }}
-    >
-      <YStack flex={1} backgroundColor="$background" paddingHorizontal="$4" justifyContent="center">
+    <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <YStack flex={1} backgroundColor="$background" paddingHorizontal="$4" justifyContent="center">
         <Card
           elevate
           size="$4"
@@ -271,6 +273,7 @@ export default function AuthScreen() {
           </XStack>
         </Card>
       </YStack>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }

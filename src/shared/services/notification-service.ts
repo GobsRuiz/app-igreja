@@ -239,8 +239,22 @@ export async function scheduleEventNotifications(event: Event): Promise<{
 
     // 4. Schedule each notification
     const scheduledNotifications: ScheduledNotification[] = []
+    const now = new Date()
 
     for (const notification of validNotifications) {
+      // Calculate seconds until trigger (relative time is more reliable than absolute date)
+      const secondsUntilTrigger = Math.floor(
+        (notification.scheduledDate.getTime() - now.getTime()) / 1000
+      )
+
+      // Safety check: ensure positive delay
+      if (secondsUntilTrigger <= 0) {
+        console.warn(
+          `[NotificationService] Skipping ${notification.type} - calculated time is in the past`
+        )
+        continue
+      }
+
       const notificationId = await Notifications.scheduleNotificationAsync({
         content: {
           title: 'Lembrete de Evento',
@@ -249,7 +263,7 @@ export async function scheduleEventNotifications(event: Event): Promise<{
           sound: true,
         },
         trigger: {
-          date: notification.scheduledDate,
+          seconds: secondsUntilTrigger,
         },
       })
 
@@ -262,7 +276,7 @@ export async function scheduleEventNotifications(event: Event): Promise<{
       })
 
       console.log(
-        `[NotificationService] Scheduled ${notification.type} notification for ${event.title} at ${notification.scheduledDate.toISOString()}`
+        `[NotificationService] Scheduled ${notification.type} notification for ${event.title} in ${(secondsUntilTrigger / 3600).toFixed(1)}h`
       )
     }
 
@@ -278,7 +292,7 @@ export async function scheduleEventNotifications(event: Event): Promise<{
           sound: true,
         },
         trigger: {
-          date: debugDate,
+          seconds: DEBUG_NOTIFICATION_DELAY_SECONDS,
         },
       })
 

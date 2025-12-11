@@ -3,10 +3,12 @@ import React from 'react'
 import { useColorScheme } from 'react-native'
 import { Home, Star, Bell, User } from '@tamagui/lucide-icons'
 import { useTheme } from 'tamagui'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export default function TabLayout() {
   const theme = useTheme()
   const colorScheme = useColorScheme()
+  const insets = useSafeAreaInsets()
 
   return (
     <Tabs
@@ -15,8 +17,8 @@ export default function TabLayout() {
         tabBarInactiveTintColor: colorScheme === 'dark' ? '#4D4D4D' : '#BBBBBB',
         headerShown: false,
         tabBarStyle: {
-          height: 75,
-          paddingBottom: 12,
+          height: 75 + insets.bottom,
+          paddingBottom: 12 + insets.bottom,
           paddingTop: 12,
           backgroundColor: theme.background.val,
           borderTopColor: theme.borderColor.val,

@@ -3,6 +3,7 @@ import { Badge, Button, Card } from '@shared/ui'
 import { Formatters } from '@shared/utils/formatters'
 import { Calendar, MapPin, Navigation, User } from '@tamagui/lucide-icons'
 import { Separator, Text, XStack, YStack } from 'tamagui'
+import { canEnableNotification } from '@shared/services/notification-service'
 
 interface EventCardProps {
   event: Event
@@ -11,6 +12,9 @@ interface EventCardProps {
 }
 
 export function EventCard({ event, onDetailsPress, onGoPress }: EventCardProps) {
+  // Check if "Go" button should be shown (event must be > 3h away)
+  const showGoButton = canEnableNotification(event)
+
   return (
     <Card marginBottom="$3" padding="$0">
       <Card.Header>
@@ -68,14 +72,16 @@ export function EventCard({ event, onDetailsPress, onGoPress }: EventCardProps) 
           >
             Detalhes
           </Button>
-          <Button
-            flex={1}
-            variant="primary"
-            iconAfter={<Navigation size={16} color="$color1" />}
-            onPress={onGoPress}
-          >
-            Ir
-          </Button>
+          {showGoButton && (
+            <Button
+              flex={1}
+              variant="primary"
+              iconAfter={<Navigation size={16} color="$color1" />}
+              onPress={onGoPress}
+            >
+              Ir
+            </Button>
+          )}
         </XStack>
       </Card.Footer>
     </Card>

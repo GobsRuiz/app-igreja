@@ -48,6 +48,8 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
 
   // Check if notification button should be shown (event must be > 3h away)
   const showNotificationButton = canEnableNotification(displayEvent) || displayEvent.isNotifying
+  // Check if favorite button should be shown (same logic as notification)
+  const showFavoriteButton = canEnableNotification(displayEvent) || displayEvent.isFavorite
 
   const handleMapPress = async () => {
     if (!displayEvent.zipCode || !displayEvent.address) {
@@ -158,14 +160,16 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
             >
               Mapa
             </Button>
-            <Button
-              flex={1}
-              variant={displayEvent.isFavorite ? 'primary' : 'outlined'}
-              icon={<Star size={16} color={displayEvent.isFavorite ? '$color1' : '$color11'} fill={displayEvent.isFavorite ? '$color1' : 'transparent'} />}
-              onPress={handleFavoritePress}
-            >
-              {displayEvent.isFavorite ? 'Favoritado' : 'Favoritar'}
-            </Button>
+            {showFavoriteButton && (
+              <Button
+                flex={1}
+                variant={displayEvent.isFavorite ? 'primary' : 'outlined'}
+                icon={<Star size={16} color={displayEvent.isFavorite ? '$color1' : '$color11'} fill={displayEvent.isFavorite ? '$color1' : 'transparent'} />}
+                onPress={handleFavoritePress}
+              >
+                {displayEvent.isFavorite ? 'Favoritado' : 'Favoritar'}
+              </Button>
+            )}
             {showNotificationButton && (
               <Button
                 flex={1}

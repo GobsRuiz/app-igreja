@@ -59,7 +59,7 @@ export const DEBUG_NOTIFICATION_DELAY_SECONDS = 65
  * 🚨 DEBUG ONLY - REMOVE IN PRODUCTION
  * Enable debug notifications for testing
  */
-export const ENABLE_DEBUG_NOTIFICATIONS = true
+export const ENABLE_DEBUG_NOTIFICATIONS = false
 
 // ========================================
 // STORAGE KEYS

@@ -17,7 +17,9 @@
       "Bash(if not exist \"src\\shared\\lib\" mkdir srcsharedlib)",
       "Bash(powershell:*)",
       "Bash(git checkout:*)",
-      "Bash(if not exist \"functions\" mkdir functions)"
+      "Bash(if not exist \"functions\" mkdir functions)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []
