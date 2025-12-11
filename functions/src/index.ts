@@ -86,3 +86,67 @@ export const setDefaultUserRole = functions.firestore
       throw error
     }
   })
+
+/**
+ * Cloud Function: Update Finished Events
+ *
+ * Atualiza automaticamente eventos para status 'finished' quando:
+ * - Status atual é 'active' E
+ * - Data do evento é <= 10 minutos no futuro OU já passou
+ *
+ * Execução: A cada 5 minutos
+ * Timezone: America/Sao_Paulo (Brasília)
+ */
+export const updateFinishedEvents = functions
+  .region('southamerica-east1')  // São Paulo (mais próximo do Brasil)
+  .pubsub
+  .schedule('*/5 * * * *')  // A cada 5 minutos
+  .timeZone('America/Sao_Paulo')
+  .onRun(async () => {
+    try {
+      const now = new Date()
+      const tenMinutesFromNow = new Date(now.getTime() + 10 * 60 * 1000)
+
+      functions.logger.info(`[updateFinishedEvents] Running at ${now.toISOString()}`)
+      functions.logger.info(`[updateFinishedEvents] Looking for events before ${tenMinutesFromNow.toISOString()}`)
+
+      // Busca eventos active que passaram OU estão <= 10 min
+      const eventsRef = admin.firestore().collection('events')
+      const snapshot = await eventsRef
+        .where('status', '==', 'active')
+        .where('date', '<', admin.firestore.Timestamp.fromDate(tenMinutesFromNow))
+        .get()
+
+      if (snapshot.empty) {
+        functions.logger.info('[updateFinishedEvents] No events to update')
+        return null
+      }
+
+      functions.logger.info(`[updateFinishedEvents] Found ${snapshot.size} events to mark as finished`)
+
+      // Atualiza para finished em batch (mais eficiente)
+      const batch = admin.firestore().batch()
+      const eventIds: string[] = []
+
+      snapshot.docs.forEach(doc => {
+        batch.update(doc.ref, {
+          status: 'finished',
+          finishedAt: admin.firestore.FieldValue.serverTimestamp()
+        })
+        eventIds.push(doc.id)
+      })
+
+      await batch.commit()
+
+      functions.logger.info(`[updateFinishedEvents] ✅ Successfully updated ${snapshot.size} events:`, eventIds)
+
+      return {
+        success: true,
+        updatedCount: snapshot.size,
+        eventIds
+      }
+    } catch (error) {
+      functions.logger.error('[updateFinishedEvents] ❌ Error:', error)
+      throw error
+    }
+  })

@@ -1,0 +1,16 @@
+[debug] [2025-12-11T20:39:59.194Z] ----------------------------------------------------------------------
+[debug] [2025-12-11T20:39:59.195Z] Command:       C:\Program Files\nodejs\node.exe C:\Program Files\nodejs\node_modules\firebase-tools\lib\bin\firebase.js deploy --only functions
+[debug] [2025-12-11T20:39:59.196Z] CLI Version:   15.0.0
+[debug] [2025-12-11T20:39:59.196Z] Platform:      win32
+[debug] [2025-12-11T20:39:59.196Z] Node Version:  v22.20.0
+[debug] [2025-12-11T20:39:59.196Z] Time:          Thu Dec 11 2025 17:39:59 GMT-0300 (Horário Padrão de Brasília)
+[debug] [2025-12-11T20:39:59.196Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-12-11T20:40:00.230Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-12-11T20:40:00.231Z] > authorizing via signed-in user (gabrielruizdev@gmail.com)
+[debug] [2025-12-11T20:40:00.231Z] [iam] checking project app-igreja-f82a7 for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]
+[debug] [2025-12-11T20:40:00.232Z] Checked if tokens are valid: true, expires at: 1765488533686
+[debug] [2025-12-11T20:40:00.232Z] Checked if tokens are valid: true, expires at: 1765488533686
+[debug] [2025-12-11T20:40:00.232Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/app-igreja-f82a7:testIamPermissions [none]
+[debug] [2025-12-11T20:40:00.232Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/app-igreja-f82a7:testIamPermissions x-goog-quota-user=projects/app-igreja-f82a7
+[debug] [2025-12-11T20:40:00.233Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/app-igreja-f82a7:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get"]}

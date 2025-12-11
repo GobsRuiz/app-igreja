@@ -126,6 +126,12 @@ export default function UsersPage() {
       phone: '',
       role: 'user',
     })
+
+    // Show loading while listener updates data
+    setLoading(true)
+    setTimeout(() => {
+      setLoading(false)
+    }, 300)
   }
 
   const handleDelete = (user: User) => {
@@ -138,27 +144,25 @@ export default function UsersPage() {
           text: 'Deletar',
           style: 'destructive',
           onPress: async () => {
+            setLoading(true)
+
             const { error } = await deleteUser(user.id)
 
             if (error) {
               toast.error(error)
+              setLoading(false)
               return
             }
 
             toast.success('Usuário deletado!')
+
+            // Wait for listener to update data
+            setTimeout(() => {
+              setLoading(false)
+            }, 300)
           },
         },
       ]
-    )
-  }
-
-  if (loading) {
-    return (
-      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-        <YStack flex={1} backgroundColor="$background" alignItems="center" justifyContent="center">
-          <Spinner size="large" color="$color12" />
-        </YStack>
-      </SafeAreaView>
     )
   }
 
@@ -187,8 +191,12 @@ export default function UsersPage() {
           </XStack>
         </XStack>
 
-        {/* Lista */}
-        {users.length === 0 ? (
+        {/* Lista ou Loading */}
+        {loading ? (
+          <YStack flex={1} alignItems="center" justifyContent="center">
+            <Spinner size="large" color="$color12" />
+          </YStack>
+        ) : users.length === 0 ? (
           <EmptyState
             icon={<UserIcon size={48} color="$foreground" />}
             message="Nenhum usuário cadastrado"

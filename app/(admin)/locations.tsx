@@ -117,6 +117,12 @@ export default function LocationsPage() {
     setSubmitting(false)
     handleClose()
     setFormData({ name: '', address: '', city: '', state: '', zipCode: '' })
+
+    // Show loading while listener updates data
+    setLoading(true)
+    setTimeout(() => {
+      setLoading(false)
+    }, 300)
   }
 
   const handleDelete = (location: Location) => {
@@ -129,27 +135,25 @@ export default function LocationsPage() {
           text: 'Deletar',
           style: 'destructive',
           onPress: async () => {
+            setLoading(true)
+
             const { error } = await deleteLocation(location.id)
 
             if (error) {
               toast.error(error)
+              setLoading(false)
               return
             }
 
             toast.success('Local deletado!')
+
+            // Wait for listener to update data
+            setTimeout(() => {
+              setLoading(false)
+            }, 300)
           },
         },
       ]
-    )
-  }
-
-  if (loading) {
-    return (
-      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-        <YStack flex={1} backgroundColor="$background" alignItems="center" justifyContent="center">
-          <Spinner size="large" color="$color12" />
-        </YStack>
-      </SafeAreaView>
     )
   }
 
@@ -170,8 +174,12 @@ export default function LocationsPage() {
           </Button>
         </XStack>
 
-        {/* Lista */}
-        {locations.length === 0 ? (
+        {/* Lista ou Loading */}
+        {loading ? (
+          <YStack flex={1} alignItems="center" justifyContent="center">
+            <Spinner size="large" color="$color12" />
+          </YStack>
+        ) : locations.length === 0 ? (
           <EmptyState
             icon={<MapPin size={48} color="$foreground" />}
             message="Nenhum local cadastrado"

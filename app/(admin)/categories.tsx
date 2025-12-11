@@ -144,6 +144,12 @@ export default function CategoriesPage() {
     setSubmitting(false)
     handleClose()
     setFormData({ name: '', color: '$blue10', icon: 'Calendar' })
+
+    // Show loading while listener updates data
+    setLoading(true)
+    setTimeout(() => {
+      setLoading(false)
+    }, 300)
   }
 
   const handleDelete = (category: Category) => {
@@ -156,27 +162,25 @@ export default function CategoriesPage() {
           text: 'Deletar',
           style: 'destructive',
           onPress: async () => {
+            setLoading(true)
+
             const { error } = await deleteCategory(category.id)
 
             if (error) {
               toast.error(error)
+              setLoading(false)
               return
             }
 
             toast.success('Categoria deletada!')
+
+            // Wait for listener to update data
+            setTimeout(() => {
+              setLoading(false)
+            }, 300)
           },
         },
       ]
-    )
-  }
-
-  if (loading) {
-    return (
-      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-        <YStack flex={1} backgroundColor="$background" alignItems="center" justifyContent="center">
-          <Spinner size="large" color="$color12" />
-        </YStack>
-      </SafeAreaView>
     )
   }
 
@@ -197,8 +201,12 @@ export default function CategoriesPage() {
           </Button>
         </XStack>
 
-        {/* Lista */}
-        {categories.length === 0 ? (
+        {/* Lista ou Loading */}
+        {loading ? (
+          <YStack flex={1} alignItems="center" justifyContent="center">
+            <Spinner size="large" color="$color12" />
+          </YStack>
+        ) : categories.length === 0 ? (
           <EmptyState
             icon={<Tag size={48} color="$foreground" />}
             message="Nenhuma categoria cadastrada"

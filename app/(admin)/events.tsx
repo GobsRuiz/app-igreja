@@ -137,6 +137,12 @@ export default function AdminEventsPage() {
 
     setSubmitting(false)
     handleClose()
+
+    // Show loading while listener updates data
+    setLoading(true)
+    setTimeout(() => {
+      setLoading(false)
+    }, 300)
   }
 
   const handleDelete = (event: Event) => {
@@ -146,14 +152,22 @@ export default function AdminEventsPage() {
         text: 'Deletar',
         style: 'destructive',
         onPress: async () => {
+          setLoading(true)
+
           const { error } = await deleteEvent(event.id)
 
           if (error) {
             toast.error(error)
+            setLoading(false)
             return
           }
 
           toast.success('Evento deletado!')
+
+          // Wait for listener to update data
+          setTimeout(() => {
+            setLoading(false)
+          }, 300)
         },
       },
     ])
@@ -171,16 +185,6 @@ export default function AdminEventsPage() {
     const location = locations.find((l) => l.id === locationId)
     if (!location) return 'N/A'
     return `${location.name} - ${location.city}, ${location.state}`
-  }
-
-  if (loading) {
-    return (
-      <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-        <YStack flex={1} backgroundColor="$background" alignItems="center" justifyContent="center">
-          <Spinner size="large" color="$color12" />
-        </YStack>
-      </SafeAreaView>
-    )
   }
 
   return (
@@ -202,8 +206,12 @@ export default function AdminEventsPage() {
           </Button>
         </XStack>
 
-        {/* Lista */}
-        {events.length === 0 ? (
+        {/* Lista ou Loading */}
+        {loading ? (
+          <YStack flex={1} alignItems="center" justifyContent="center">
+            <Spinner size="large" color="$color12" />
+          </YStack>
+        ) : events.length === 0 ? (
           categories.length === 0 || locations.length === 0 ? (
             <EmptyState
               icon={<AlertCircle size={48} color="$foreground" />}
