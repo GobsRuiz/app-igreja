@@ -424,6 +424,8 @@ export default function AdminEventsPage() {
                   variant="outlined"
                   icon={X}
                   onPress={handleClose}
+                  disabled={submitting}
+                  opacity={submitting ? 0.5 : 1}
                 >
                   Cancelar
                 </Button>

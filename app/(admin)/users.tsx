@@ -411,7 +411,14 @@ export default function UsersPage() {
               </ScrollView>
 
               <XStack gap="$3" marginTop="$4">
-                <Button flex={1} variant="outlined" icon={X} onPress={handleClose}>
+                <Button
+                  flex={1}
+                  variant="outlined"
+                  icon={X}
+                  onPress={handleClose}
+                  disabled={submitting}
+                  opacity={submitting ? 0.5 : 1}
+                >
                   Cancelar
                 </Button>
 
