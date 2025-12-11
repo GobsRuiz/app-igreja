@@ -69,10 +69,26 @@ service cloud.firestore {
      * EVENTOS
      * - Todos autenticados podem ler
      * - Apenas admin pode criar/editar/deletar
+     *
+     * PROTEÇÃO DO CAMPO STATUS:
+     * - Campo 'status' só pode ser alterado por admins
+     * - Cloud Function (updateFinishedEvents) roda com admin privileges, então pode atualizar
+     * - Usuários regulares NÃO podem modificar status, mesmo com permissão de update
+     *
+     * Validação extra: Garante que se houver update de status, deve ser admin
      */
     match /events/{eventId} {
       allow read: if isAuthenticated();
-      allow create, update, delete: if isAdmin();
+
+      // Create: apenas admin
+      allow create: if isAdmin();
+
+      // Update: apenas admin (inclui todas as modificações, incluindo status)
+      // Cloud Function roda como admin, então updateFinishedEvents funciona
+      allow update: if isAdmin();
+
+      // Delete: apenas admin
+      allow delete: if isAdmin();
     }
 
     /**

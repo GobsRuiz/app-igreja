@@ -154,6 +154,31 @@ export async function updateLocation(
 }
 
 /**
+ * Verifica se um local está sendo usado por algum evento
+ * Otimizado: para no primeiro evento encontrado
+ */
+export async function checkLocationInUse(locationId: string): Promise<{
+  inUse: boolean
+  error: string | null
+}> {
+  try {
+    const snapshot = await firebaseFirestore
+      .collection('events')
+      .where('locationId', '==', locationId)
+      .limit(1)
+      .get()
+
+    return {
+      inUse: !snapshot.empty,
+      error: null,
+    }
+  } catch (error: any) {
+    console.error('[LocationService] Erro ao verificar uso do local:', error)
+    return { inUse: false, error: 'Erro ao verificar dependências' }
+  }
+}
+
+/**
  * Deleta um local
  */
 export async function deleteLocation(locationId: string): Promise<{ error: string | null }> {

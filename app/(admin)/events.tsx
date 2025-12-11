@@ -6,6 +6,7 @@ import {
   updateEvent,
   type CreateEventData,
   type Event,
+  type EventStatus,
 } from '@features/events'
 import { onLocationsChange, type Location } from '@features/locations'
 import DateTimePicker from '@react-native-community/datetimepicker'
@@ -88,6 +89,7 @@ export default function AdminEventsPage() {
       date: new Date(),
       categoryId: categories[0]?.id || '',
       locationId: locations[0]?.id || '',
+      status: 'active',
     })
     setSheetOpen(true)
   }
@@ -100,6 +102,7 @@ export default function AdminEventsPage() {
       date: event.date,
       categoryId: event.categoryId,
       locationId: event.locationId,
+      status: event.status,
     })
     setSheetOpen(true)
   }
@@ -294,6 +297,29 @@ export default function AdminEventsPage() {
                         </YStack>
                       </XStack>
 
+                      <XStack alignItems="center" gap="$2">
+                        <YStack
+                          paddingHorizontal="$2"
+                          paddingVertical="$1"
+                          borderRadius="$2"
+                          backgroundColor={
+                            event.status === 'active'
+                              ? '$green9'
+                              : event.status === 'finished'
+                              ? '$gray9'
+                              : '$red9'
+                          }
+                        >
+                          <Text fontSize="$2" color="white" fontWeight="600">
+                            {event.status === 'active'
+                              ? '● Ativo'
+                              : event.status === 'finished'
+                              ? '● Finalizado'
+                              : '● Cancelado'}
+                          </Text>
+                        </YStack>
+                      </XStack>
+
                     </YStack>
                   </YStack>
                 </Card>
@@ -406,6 +432,32 @@ export default function AdminEventsPage() {
                       value={formData.locationId}
                       onChange={(item) => setFormData({ ...formData, locationId: item.value })}
                       placeholder="Selecione um local"
+                      style={{
+                        height: 50,
+                        borderWidth: 1,
+                        borderColor: '#e5e5e5',
+                        borderRadius: 8,
+                        paddingHorizontal: 12,
+                      }}
+                    />
+                  </YStack>
+
+                  {/* Status */}
+                  <YStack gap="$2">
+                    <Text fontSize="$3" fontWeight="600" color="$color11">
+                      Status *
+                    </Text>
+                    <Dropdown
+                      data={[
+                        { label: 'Ativo', value: 'active' },
+                        { label: 'Finalizado', value: 'finished' },
+                        { label: 'Cancelado', value: 'cancelled' },
+                      ]}
+                      labelField="label"
+                      valueField="value"
+                      value={formData.status}
+                      onChange={(item) => setFormData({ ...formData, status: item.value as EventStatus })}
+                      placeholder="Selecione o status"
                       style={{
                         height: 50,
                         borderWidth: 1,

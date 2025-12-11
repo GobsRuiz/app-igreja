@@ -9,6 +9,13 @@ import * as admin from 'firebase-admin'
 // Inicializar Firebase Admin
 admin.initializeApp()
 
+// ========================================
+// EXPORTS
+// ========================================
+
+// Migration function (one-time use)
+export { migrateEventsStatus } from './migration-add-status'
+
 /**
  * Cloud Function: Sync Custom Claims quando role muda
  *

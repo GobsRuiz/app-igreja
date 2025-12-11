@@ -18,6 +18,7 @@ import {
   createLocation,
   updateLocation,
   deleteLocation,
+  checkLocationInUse,
   type Location,
   type CreateLocationData,
 } from '@features/locations'
@@ -125,7 +126,24 @@ export default function LocationsPage() {
     }, 300)
   }
 
-  const handleDelete = (location: Location) => {
+  const handleDelete = async (location: Location) => {
+    // Check if location is being used by events
+    const { inUse, error: checkError } = await checkLocationInUse(location.id)
+
+    if (checkError) {
+      toast.error(checkError)
+      return
+    }
+
+    if (inUse) {
+      Alert.alert(
+        'Não é possível deletar',
+        'Este local está sendo usado por eventos.\n\nRemova ou altere o local desses eventos antes de deletá-lo.',
+        [{ text: 'OK', style: 'default' }]
+      )
+      return
+    }
+
     Alert.alert(
       'Deletar Local',
       `Tem certeza que deseja deletar "${location.name}"?`,

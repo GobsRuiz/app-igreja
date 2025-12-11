@@ -32,6 +32,7 @@ import {
   createCategory,
   updateCategory,
   deleteCategory,
+  checkCategoryInUse,
   type Category,
   type CreateCategoryData,
 } from '@features/categories'
@@ -152,7 +153,24 @@ export default function CategoriesPage() {
     }, 300)
   }
 
-  const handleDelete = (category: Category) => {
+  const handleDelete = async (category: Category) => {
+    // Check if category is being used by events
+    const { inUse, error: checkError } = await checkCategoryInUse(category.id)
+
+    if (checkError) {
+      toast.error(checkError)
+      return
+    }
+
+    if (inUse) {
+      Alert.alert(
+        'Não é possível deletar',
+        'Esta categoria está sendo usada por eventos.\n\nRemova ou altere a categoria desses eventos antes de deletá-la.',
+        [{ text: 'OK', style: 'default' }]
+      )
+      return
+    }
+
     Alert.alert(
       'Deletar Categoria',
       `Tem certeza que deseja deletar "${category.name}"?`,

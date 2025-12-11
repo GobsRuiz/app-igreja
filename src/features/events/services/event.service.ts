@@ -45,7 +45,7 @@ export async function createEvent(
       date: firestore.Timestamp.fromDate(data.date),
       categoryId: data.categoryId,
       locationId: data.locationId,
-      imageUrl: data.imageUrl || '',
+      status: data.status || 'active',
       createdAt: firestore.FieldValue.serverTimestamp(),
       createdBy: currentUser.uid,
     })
@@ -67,6 +67,7 @@ export async function createEvent(
 
 /**
  * Lista todos os eventos
+ * Ordenado por data do evento (mais próximo primeiro)
  */
 export async function listEvents(): Promise<{
   events: Event[]
@@ -75,7 +76,7 @@ export async function listEvents(): Promise<{
   try {
     const snapshot = await firebaseFirestore
       .collection(COLLECTION)
-      .orderBy('createdAt', 'desc')
+      .orderBy('date', 'asc')
       .get()
 
     const events: Event[] = []
@@ -133,8 +134,8 @@ export async function updateEvent(
       updateData.locationId = data.locationId
     }
 
-    if (data.imageUrl !== undefined) {
-      updateData.imageUrl = data.imageUrl
+    if (data.status !== undefined) {
+      updateData.status = data.status
     }
 
     if (Object.keys(updateData).length === 0) {
@@ -165,6 +166,7 @@ export async function deleteEvent(eventId: string): Promise<{ error: string | nu
 
 /**
  * Listener em tempo real de eventos
+ * Ordenado por data do evento (mais próximo primeiro)
  */
 export function onEventsChange(
   callback: (events: Event[]) => void,
@@ -172,7 +174,7 @@ export function onEventsChange(
 ) {
   return firebaseFirestore
     .collection(COLLECTION)
-    .orderBy('createdAt', 'desc')
+    .orderBy('date', 'asc')
     .onSnapshot(
       (snapshot) => {
         const events: Event[] = []
@@ -193,4 +195,35 @@ export function onEventsChange(
         }
       }
     )
+}
+
+/**
+ * Marca evento como finalizado
+ */
+export async function markEventAsFinished(eventId: string): Promise<{ error: string | null }> {
+  try {
+    await firebaseFirestore.collection(COLLECTION).doc(eventId).update({
+      status: 'finished',
+      finishedAt: firestore.FieldValue.serverTimestamp(),
+    })
+    return { error: null }
+  } catch (error: any) {
+    console.error('[EventService] Erro ao marcar evento como finalizado:', error)
+    return { error: 'Erro ao marcar evento como finalizado' }
+  }
+}
+
+/**
+ * Marca evento como cancelado
+ */
+export async function markEventAsCancelled(eventId: string): Promise<{ error: string | null }> {
+  try {
+    await firebaseFirestore.collection(COLLECTION).doc(eventId).update({
+      status: 'cancelled',
+    })
+    return { error: null }
+  } catch (error: any) {
+    console.error('[EventService] Erro ao marcar evento como cancelado:', error)
+    return { error: 'Erro ao marcar evento como cancelado' }
+  }
 }

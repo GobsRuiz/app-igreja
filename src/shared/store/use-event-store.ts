@@ -13,6 +13,7 @@ import {
   canEnableNotification,
 } from '@shared/services/notification-service'
 import { MAX_NOTIFYING_EVENTS } from '@shared/constants/notification-config'
+import { shouldShowInHome } from '@shared/utils/event-helpers'
 
 // ========================================
 // SCHEMAS DE VALIDAÇÃO
@@ -69,6 +70,7 @@ function adaptFirebaseEventToUI(
     attachments: [],
     categoryId: firebaseEvent.categoryId,
     categoryName: category?.name,
+    status: firebaseEvent.status || 'active',
     isFavorite: false,
     isNotifying: false,
   }
@@ -235,6 +237,11 @@ export const useEventStore = create<EventState>((set, get) => ({
     } = get()
 
     let filtered = allEvents
+
+    // Filtro por status: apenas eventos 'active' (Home/Search)
+    // Cloud Function marca eventos como 'finished' quando <= 10 minutos
+    // Este filtro adiciona segurança client-side
+    filtered = filtered.filter((event) => shouldShowInHome(event))
 
     // Filtro por cidade (apenas se selectedCity não for o default)
     if (selectedCity && selectedCity !== 'Taquaritinga') {

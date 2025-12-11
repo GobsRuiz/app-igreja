@@ -128,6 +128,31 @@ export async function updateCategory(
 }
 
 /**
+ * Verifica se uma categoria está sendo usada por algum evento
+ * Otimizado: para no primeiro evento encontrado
+ */
+export async function checkCategoryInUse(categoryId: string): Promise<{
+  inUse: boolean
+  error: string | null
+}> {
+  try {
+    const snapshot = await firebaseFirestore
+      .collection('events')
+      .where('categoryId', '==', categoryId)
+      .limit(1)
+      .get()
+
+    return {
+      inUse: !snapshot.empty,
+      error: null,
+    }
+  } catch (error: any) {
+    console.error('[CategoryService] Erro ao verificar uso da categoria:', error)
+    return { inUse: false, error: 'Erro ao verificar dependências' }
+  }
+}
+
+/**
  * Deleta uma categoria
  */
 export async function deleteCategory(categoryId: string): Promise<{ error: string | null }> {

@@ -3,6 +3,11 @@ import type { Category } from '@features/categories'
 import type { Location } from '@features/locations'
 
 /**
+ * Event status type
+ */
+export type EventStatus = 'active' | 'finished' | 'cancelled'
+
+/**
  * Evento
  */
 export interface Event {
@@ -12,9 +17,10 @@ export interface Event {
   date: Date
   categoryId: string
   locationId: string
-  imageUrl?: string
+  status: EventStatus
   createdAt: Date
   createdBy: string
+  finishedAt?: Date
 }
 
 /**
@@ -34,7 +40,7 @@ export interface CreateEventData {
   date: Date
   categoryId: string
   locationId: string
-  imageUrl?: string
+  status?: EventStatus
 }
 
 /**
@@ -46,7 +52,7 @@ export interface UpdateEventData {
   date?: Date
   categoryId?: string
   locationId?: string
-  imageUrl?: string
+  status?: EventStatus
 }
 
 /**
@@ -67,8 +73,9 @@ export function mapFirestoreEvent(
     date: data.date?.toDate() || new Date(),
     categoryId: data.categoryId,
     locationId: data.locationId,
-    imageUrl: data.imageUrl,
+    status: data.status || 'active',
     createdAt: data.createdAt?.toDate() || new Date(),
     createdBy: data.createdBy,
+    finishedAt: data.finishedAt?.toDate(),
   }
 }

@@ -25,6 +25,7 @@ export const EventSchema = z.object({
   attachments: z.array(AttachmentSchema).default([]),
   categoryId: z.string().optional(),
   categoryName: z.string().optional(),
+  status: z.enum(['active', 'finished', 'cancelled']).default('active'),
   isFavorite: z.boolean().default(false),
   isNotifying: z.boolean().default(false),
 })
