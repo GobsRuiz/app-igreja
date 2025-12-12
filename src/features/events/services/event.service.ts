@@ -1,4 +1,4 @@
-import { firebaseFirestore, firebaseAuth } from '@core/config/firebase.config'
+import { firebaseFirestore, firebaseAuth, firebaseFunctions } from '@core/config/firebase.config'
 import firestore from '@react-native-firebase/firestore'
 import type { Event, CreateEventData, UpdateEventData } from '../types/event.types'
 import { mapFirestoreEvent } from '../types/event.types'
@@ -6,13 +6,17 @@ import { mapFirestoreEvent } from '../types/event.types'
 const COLLECTION = 'events'
 
 /**
- * Cria um novo evento
+ * Cria um novo evento usando Cloud Function com validação server-side
+ *
+ * Validações no servidor (previne manipulação de data no client):
+ * - Usuário autenticado e é admin
+ * - Data do evento no futuro (usa horário do servidor)
  */
 export async function createEvent(
   data: CreateEventData
 ): Promise<{ event: Event | null; error: string | null }> {
   try {
-    // Validações
+    // Validações básicas client-side (UX imediato)
     if (!data.title.trim()) {
       return { event: null, error: 'Título do evento é obrigatório' }
     }
@@ -34,20 +38,22 @@ export async function createEvent(
       return { event: null, error: 'Usuário não autenticado' }
     }
 
-    // Criar no Firestore
-    const docRef = await firebaseFirestore.collection(COLLECTION).add({
+    // Chamar Cloud Function para criar evento com validação server-side
+    const createEventFn = firebaseFunctions.httpsCallable('createEventWithValidation')
+
+    const result = await createEventFn({
       title: data.title.trim(),
       description: data.description?.trim() || '',
-      date: firestore.Timestamp.fromDate(data.date),
+      date: data.date.toISOString(), // Envia ISO string
       categoryId: data.categoryId,
       locationId: data.locationId,
       status: data.status || 'active',
-      createdAt: firestore.FieldValue.serverTimestamp(),
-      createdBy: currentUser.uid,
     })
 
-    // Buscar documento criado
-    const doc = await docRef.get()
+    const { eventId } = result.data
+
+    // Buscar evento criado
+    const doc = await firebaseFirestore.collection(COLLECTION).doc(eventId).get()
     const event = mapFirestoreEvent(doc)
 
     if (!event) {
@@ -57,7 +63,10 @@ export async function createEvent(
     return { event, error: null }
   } catch (error: any) {
     console.error('[EventService] Erro ao criar evento:', error)
-    return { event: null, error: 'Erro ao criar evento' }
+
+    // Extrair mensagem de erro da Cloud Function
+    const errorMessage = error?.message || 'Erro ao criar evento'
+    return { event: null, error: errorMessage }
   }
 }
 

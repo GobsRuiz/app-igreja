@@ -19,7 +19,9 @@
       "Bash(git checkout:*)",
       "Bash(if not exist \"functions\" mkdir functions)",
       "Bash(dir:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(npm run build:*)",
+      "Bash(firebase functions:list:*)"
     ],
     "deny": [],
     "ask": []

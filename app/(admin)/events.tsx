@@ -11,7 +11,7 @@ import {
 import { onLocationsChange, type Location } from '@features/locations'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { Button, Card, EmptyState } from '@shared/ui'
-import { AlertCircle, Calendar, MapPin, Pencil, Plus, Tag, Trash2, X } from '@tamagui/lucide-icons'
+import { AlertCircle, Calendar, Eye, MapPin, Pencil, Plus, Tag, Trash2, X } from '@tamagui/lucide-icons'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import React, { useEffect, useState } from 'react'
@@ -254,7 +254,7 @@ export default function AdminEventsPage() {
                       <XStack gap="$2">
                         <Button
                           variant="outlined"
-                          icon={Pencil}
+                          icon={event.status === 'finished' ? Eye : Pencil}
                           onPress={() => handleOpenEdit(event)}
                           circular
                         />
@@ -341,7 +341,11 @@ export default function AdminEventsPage() {
             <Sheet.Handle />
             <YStack gap="$4">
               <Text fontSize="$7" fontWeight="700" color="$foreground">
-                {editingEvent ? 'Editar Evento' : 'Novo Evento'}
+                {editingEvent
+                  ? editingEvent.status === 'finished'
+                    ? 'Visualizar Evento'
+                    : 'Editar Evento'
+                  : 'Novo Evento'}
               </Text>
 
               <ScrollView showsVerticalScrollIndicator={false}>
@@ -356,6 +360,8 @@ export default function AdminEventsPage() {
                       placeholder="Ex: Culto de Domingo"
                       value={formData.title}
                       onChangeText={(text) => setFormData({ ...formData, title: text })}
+                      disabled={editingEvent?.status === 'finished'}
+                      opacity={editingEvent?.status === 'finished' ? 0.6 : 1}
                     />
                   </YStack>
 
@@ -370,6 +376,8 @@ export default function AdminEventsPage() {
                       value={formData.description}
                       onChangeText={(text) => setFormData({ ...formData, description: text })}
                       numberOfLines={4}
+                      disabled={editingEvent?.status === 'finished'}
+                      opacity={editingEvent?.status === 'finished' ? 0.6 : 1}
                     />
                   </YStack>
 
@@ -384,6 +392,8 @@ export default function AdminEventsPage() {
                         size="$4"
                         variant="outlined"
                         onPress={() => setShowDatePicker(true)}
+                        disabled={editingEvent?.status === 'finished'}
+                        opacity={editingEvent?.status === 'finished' ? 0.6 : 1}
                       >
                         {format(formData.date, 'dd/MM/yyyy', { locale: ptBR })}
                       </Button>
@@ -392,6 +402,8 @@ export default function AdminEventsPage() {
                         size="$4"
                         variant="outlined"
                         onPress={() => setShowTimePicker(true)}
+                        disabled={editingEvent?.status === 'finished'}
+                        opacity={editingEvent?.status === 'finished' ? 0.6 : 1}
                       >
                         {format(formData.date, 'HH:mm', { locale: ptBR })}
                       </Button>
@@ -410,12 +422,14 @@ export default function AdminEventsPage() {
                       value={formData.categoryId}
                       onChange={(item) => setFormData({ ...formData, categoryId: item.value })}
                       placeholder="Selecione uma categoria"
+                      disable={editingEvent?.status === 'finished'}
                       style={{
                         height: 50,
                         borderWidth: 1,
                         borderColor: '#e5e5e5',
                         borderRadius: 8,
                         paddingHorizontal: 12,
+                        opacity: editingEvent?.status === 'finished' ? 0.6 : 1,
                       }}
                     />
                   </YStack>
@@ -432,12 +446,14 @@ export default function AdminEventsPage() {
                       value={formData.locationId}
                       onChange={(item) => setFormData({ ...formData, locationId: item.value })}
                       placeholder="Selecione um local"
+                      disable={editingEvent?.status === 'finished'}
                       style={{
                         height: 50,
                         borderWidth: 1,
                         borderColor: '#e5e5e5',
                         borderRadius: 8,
                         paddingHorizontal: 12,
+                        opacity: editingEvent?.status === 'finished' ? 0.6 : 1,
                       }}
                     />
                   </YStack>
@@ -473,37 +489,39 @@ export default function AdminEventsPage() {
 
               <XStack gap="$3" marginTop="$4">
                 <Button
-                  flex={1}
+                  flex={editingEvent?.status === 'finished' ? 1 : 1}
                   variant="outlined"
                   icon={X}
                   onPress={handleClose}
                   disabled={submitting}
                   opacity={submitting ? 0.5 : 1}
                 >
-                  Cancelar
+                  {editingEvent?.status === 'finished' ? 'Fechar' : 'Cancelar'}
                 </Button>
 
-                <Button
-                  flex={1}
-                  variant="primary"
-                  onPress={handleSubmit}
-                  disabled={
-                    submitting ||
-                    !formData.title.trim() ||
-                    !formData.categoryId ||
-                    !formData.locationId
-                  }
-                  opacity={
-                    submitting ||
-                    !formData.title.trim() ||
-                    !formData.categoryId ||
-                    !formData.locationId
-                      ? 0.5
-                      : 1
-                  }
-                >
-                  {submitting ? 'Salvando...' : editingEvent ? 'Atualizar' : 'Criar'}
-                </Button>
+                {editingEvent?.status !== 'finished' && (
+                  <Button
+                    flex={1}
+                    variant="primary"
+                    onPress={handleSubmit}
+                    disabled={
+                      submitting ||
+                      !formData.title.trim() ||
+                      !formData.categoryId ||
+                      !formData.locationId
+                    }
+                    opacity={
+                      submitting ||
+                      !formData.title.trim() ||
+                      !formData.categoryId ||
+                      !formData.locationId
+                        ? 0.5
+                        : 1
+                    }
+                  >
+                    {submitting ? 'Salvando...' : editingEvent ? 'Atualizar' : 'Criar'}
+                  </Button>
+                )}
               </XStack>
             </YStack>
           </Sheet.Frame>
