@@ -17,10 +17,6 @@ export async function createEvent(
       return { event: null, error: 'Título do evento é obrigatório' }
     }
 
-    if (!data.description.trim()) {
-      return { event: null, error: 'Descrição é obrigatória' }
-    }
-
     if (!data.categoryId) {
       return { event: null, error: 'Categoria é obrigatória' }
     }
@@ -41,7 +37,7 @@ export async function createEvent(
     // Criar no Firestore
     const docRef = await firebaseFirestore.collection(COLLECTION).add({
       title: data.title.trim(),
-      description: data.description.trim(),
+      description: data.description?.trim() || '',
       date: firestore.Timestamp.fromDate(data.date),
       categoryId: data.categoryId,
       locationId: data.locationId,
@@ -108,10 +104,6 @@ export async function updateEvent(
       return { error: 'Título não pode ser vazio' }
     }
 
-    if (data.description !== undefined && !data.description.trim()) {
-      return { error: 'Descrição não pode ser vazia' }
-    }
-
     const updateData: any = {}
 
     if (data.title !== undefined) {
@@ -119,7 +111,7 @@ export async function updateEvent(
     }
 
     if (data.description !== undefined) {
-      updateData.description = data.description.trim()
+      updateData.description = data.description?.trim() || ''
     }
 
     if (data.date !== undefined) {

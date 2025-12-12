@@ -39,22 +39,12 @@ export function isEventPast(event: Event): boolean {
  * Determine if event should be shown in Home/Search screens
  * Shows only 'active' events
  *
- * Cloud Function marks events as 'finished' when <= 10 minutes away,
- * but this provides client-side safety filtering
+ * Cloud Function is responsible for marking events as 'finished' when <= 10 minutes away.
+ * Client only checks status - no time-based filtering to avoid dependency on device clock.
  */
 export function shouldShowInHome(event: Event & { status?: EventStatus }): boolean {
-  // Primary filter: only show active events
-  if (event.status && event.status !== 'active') {
-    return false
-  }
-
-  // Safety filter: hide events <= 10 minutes away (in case Cloud Function hasn't run yet)
-  const minutesUntil = getMinutesUntilEvent(event)
-  if (minutesUntil <= 10) {
-    return false
-  }
-
-  return true
+  // Only show active events - Cloud Function manages the status transitions
+  return event.status === 'active' || !event.status
 }
 
 /**

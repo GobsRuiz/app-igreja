@@ -362,11 +362,11 @@ export default function AdminEventsPage() {
                   {/* Descrição */}
                   <YStack gap="$2">
                     <Text fontSize="$3" fontWeight="600" color="$color11">
-                      Descrição *
+                      Descrição
                     </Text>
                     <TextArea
                       size="$4"
-                      placeholder="Detalhes do evento..."
+                      placeholder="Detalhes do evento (opcional)..."
                       value={formData.description}
                       onChangeText={(text) => setFormData({ ...formData, description: text })}
                       numberOfLines={4}
@@ -442,31 +442,32 @@ export default function AdminEventsPage() {
                     />
                   </YStack>
 
-                  {/* Status */}
-                  <YStack gap="$2">
-                    <Text fontSize="$3" fontWeight="600" color="$color11">
-                      Status *
-                    </Text>
-                    <Dropdown
-                      data={[
-                        { label: 'Ativo', value: 'active' },
-                        { label: 'Finalizado', value: 'finished' },
-                        { label: 'Cancelado', value: 'cancelled' },
-                      ]}
-                      labelField="label"
-                      valueField="value"
-                      value={formData.status}
-                      onChange={(item) => setFormData({ ...formData, status: item.value as EventStatus })}
-                      placeholder="Selecione o status"
-                      style={{
-                        height: 50,
-                        borderWidth: 1,
-                        borderColor: '#e5e5e5',
-                        borderRadius: 8,
-                        paddingHorizontal: 12,
-                      }}
-                    />
-                  </YStack>
+                  {/* Status - Só aparece se NÃO for finished */}
+                  {editingEvent?.status !== 'finished' && (
+                    <YStack gap="$2">
+                      <Text fontSize="$3" fontWeight="600" color="$color11">
+                        Status *
+                      </Text>
+                      <Dropdown
+                        data={[
+                          { label: 'Ativo', value: 'active' },
+                          { label: 'Cancelado', value: 'cancelled' },
+                        ]}
+                        labelField="label"
+                        valueField="value"
+                        value={formData.status}
+                        onChange={(item) => setFormData({ ...formData, status: item.value as EventStatus })}
+                        placeholder="Selecione o status"
+                        style={{
+                          height: 50,
+                          borderWidth: 1,
+                          borderColor: '#e5e5e5',
+                          borderRadius: 8,
+                          paddingHorizontal: 12,
+                        }}
+                      />
+                    </YStack>
+                  )}
                 </YStack>
               </ScrollView>
 
@@ -489,14 +490,12 @@ export default function AdminEventsPage() {
                   disabled={
                     submitting ||
                     !formData.title.trim() ||
-                    !formData.description.trim() ||
                     !formData.categoryId ||
                     !formData.locationId
                   }
                   opacity={
                     submitting ||
                     !formData.title.trim() ||
-                    !formData.description.trim() ||
                     !formData.categoryId ||
                     !formData.locationId
                       ? 0.5

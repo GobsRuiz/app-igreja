@@ -21,7 +21,7 @@ export const EventSchema = z.object({
   state: z.string().optional(),
   zipCode: z.string().optional(),
   conductor: z.string().trim().min(1, 'Conductor is required'),
-  description: z.string().trim().min(1, 'Description is required'),
+  description: z.string().trim().optional(),
   attachments: z.array(AttachmentSchema).default([]),
   categoryId: z.string().optional(),
   categoryName: z.string().optional(),
