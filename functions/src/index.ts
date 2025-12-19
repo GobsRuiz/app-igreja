@@ -25,7 +25,9 @@ export { migrateEventsStatus } from './migration-add-status'
  * IMPORTANTE: Após essa function rodar, usuário precisa fazer refresh do token:
  * await user.getIdToken(true)
  */
-export const syncUserRole = functions.firestore
+export const syncUserRole = functions
+  .region('southamerica-east1')
+  .firestore
   .document('users/{userId}')
   .onUpdate(async (change, context) => {
     const userId = context.params.userId
@@ -57,6 +59,7 @@ export const syncUserRole = functions.firestore
       // Opcional: Atualizar campo no Firestore para indicar que claim foi atualizado
       await admin.firestore().collection('users').doc(userId).update({
         roleUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        _roleUpdatedAtMs: Date.now(),  // Timestamp em ms para cálculo client-side
       })
 
       return null
@@ -72,7 +75,9 @@ export const syncUserRole = functions.firestore
  * Trigger: Quando documento em users/{userId} é criado
  * Ação: Define custom claim 'role: user' por padrão
  */
-export const setDefaultUserRole = functions.firestore
+export const setDefaultUserRole = functions
+  .region('southamerica-east1')
+  .firestore
   .document('users/{userId}')
   .onCreate(async (snapshot, context) => {
     const userId = context.params.userId

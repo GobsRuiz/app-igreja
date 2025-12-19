@@ -1,5 +1,13 @@
 // tamagui.config.ts
-import { config } from '@tamagui/config/v2'
+import { config } from '@tamagui/config/v3'
 import { createTamagui } from 'tamagui'
 
-export default createTamagui(config)
+const tamaguiConfig = createTamagui(config)
+
+export default tamaguiConfig
+
+// Type declarations para TypeScript
+export type Conf = typeof tamaguiConfig
+declare module 'tamagui' {
+  interface TamaguiCustomConfig extends Conf {}
+}

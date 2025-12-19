@@ -8,6 +8,7 @@ export { AuthProvider } from './providers/auth-provider';
 
 // Hooks
 export { useAuth } from './hooks/use-auth';
+export { useRolePropagationCheck } from './hooks/use-role-propagation-check';
 
 // Services
 export * as authService from './services/auth.service';

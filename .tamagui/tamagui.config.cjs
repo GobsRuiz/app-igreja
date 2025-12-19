@@ -34,150 +34,7 @@ __export(tamagui_config_exports, {
 });
 module.exports = __toCommonJS(tamagui_config_exports);
 
-// node_modules/@tamagui/constants/dist/esm/constants.mjs
-var import_react = __toESM(require("react"), 1);
-var IS_REACT_19 = typeof import_react.default.use < "u";
-var isWeb = true;
-var isWindowDefined = typeof window < "u";
-var isServer = isWeb && !isWindowDefined;
-var isClient = isWeb && isWindowDefined;
-var useIsomorphicLayoutEffect = isServer ? import_react.useEffect : import_react.useLayoutEffect;
-var isChrome = typeof navigator < "u" && /Chrome/.test(navigator.userAgent || "");
-var isWebTouchable = isClient && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
-var isIos = process.env.TEST_NATIVE_PLATFORM === "ios";
-
-// node_modules/@tamagui/use-presence/dist/esm/PresenceContext.mjs
-var React2 = __toESM(require("react"), 1);
-var import_jsx_runtime = require("react/jsx-runtime");
-var PresenceContext = React2.createContext(null);
-var ResetPresence = /* @__PURE__ */ __name((props) => {
-  const parent = React2.useContext(PresenceContext);
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PresenceContext.Provider, {
-    value: props.disable ? parent : null,
-    children: props.children
-  });
-}, "ResetPresence");
-
-// node_modules/@tamagui/use-presence/dist/esm/usePresence.mjs
-var React3 = __toESM(require("react"), 1);
-function usePresence() {
-  const context = React3.useContext(PresenceContext);
-  if (!context) return [true, null, context];
-  const {
-    id,
-    isPresent: isPresent2,
-    onExitComplete,
-    register
-  } = context;
-  return React3.useEffect(() => register(id), []), !isPresent2 && onExitComplete ? [false, () => onExitComplete?.(id), context] : [true, void 0, context];
-}
-__name(usePresence, "usePresence");
-
-// node_modules/@tamagui/animations-css/dist/esm/createAnimations.mjs
-var import_web = require("@tamagui/core");
-var import_react2 = __toESM(require("react"), 1);
-function extractDuration(animation) {
-  const msMatch = animation.match(/(\d+(?:\.\d+)?)\s*ms/);
-  if (msMatch) return Number.parseInt(msMatch[1], 10);
-  const sMatch = animation.match(/(\d+(?:\.\d+)?)\s*s/);
-  return sMatch ? Math.round(Number.parseFloat(sMatch[1]) * 1e3) : 300;
-}
-__name(extractDuration, "extractDuration");
-function createAnimations(animations2) {
-  const reactionListeners = /* @__PURE__ */ new WeakMap();
-  return {
-    animations: animations2,
-    usePresence,
-    ResetPresence,
-    supportsCSS: true,
-    classNameAnimation: true,
-    useAnimatedNumber(initial) {
-      const [val, setVal] = import_react2.default.useState(initial), [onFinish, setOnFinish] = (0, import_react2.useState)();
-      return useIsomorphicLayoutEffect(() => {
-        onFinish && (onFinish?.(), setOnFinish(void 0));
-      }, [onFinish]), {
-        getInstance() {
-          return setVal;
-        },
-        getValue() {
-          return val;
-        },
-        setValue(next, config3, onFinish2) {
-          setVal(next), setOnFinish(onFinish2);
-        },
-        stop() {
-        }
-      };
-    },
-    useAnimatedNumberReaction({
-      value
-    }, onValue) {
-      import_react2.default.useEffect(() => {
-        const instance = value.getInstance();
-        let queue = reactionListeners.get(instance);
-        if (!queue) {
-          const next = /* @__PURE__ */ new Set();
-          reactionListeners.set(instance, next), queue = next;
-        }
-        return queue.add(onValue), () => {
-          queue?.delete(onValue);
-        };
-      }, []);
-    },
-    useAnimatedNumberStyle(val, getStyle) {
-      return getStyle(val.getValue());
-    },
-    useAnimations: /* @__PURE__ */ __name(({
-      props,
-      presence,
-      style,
-      componentState,
-      stateRef
-    }) => {
-      const isEntering = !!componentState.unmounted, isExiting = presence?.[0] === false, sendExitComplete = presence?.[1], [animationKey, animationConfig] = Array.isArray(props.animation) ? props.animation : [props.animation], animation = animations2[animationKey], keys = props.animateOnly ?? ["all"];
-      return useIsomorphicLayoutEffect(() => {
-        const host = stateRef.current.host;
-        if (!sendExitComplete || !isExiting || !host) return;
-        const node = host, fallbackTimeout = animation ? extractDuration(animation) : 200, timeoutId = setTimeout(() => {
-          sendExitComplete?.();
-        }, fallbackTimeout), onFinishAnimation = /* @__PURE__ */ __name(() => {
-          clearTimeout(timeoutId), sendExitComplete?.();
-        }, "onFinishAnimation");
-        return node.addEventListener("transitionend", onFinishAnimation), node.addEventListener("transitioncancel", onFinishAnimation), () => {
-          clearTimeout(timeoutId), node.removeEventListener("transitionend", onFinishAnimation), node.removeEventListener("transitioncancel", onFinishAnimation);
-        };
-      }, [sendExitComplete, isExiting]), animation && (Array.isArray(style.transform) && (style.transform = (0, import_web.transformsToString)(style.transform)), style.transition = keys.map((key) => {
-        const override = animations2[animationConfig?.[key]] ?? animation;
-        return `${key} ${override}`;
-      }).join(", ")), process.env.NODE_ENV === "development" && props.debug === "verbose" && console.info("CSS animation", {
-        props,
-        animations: animations2,
-        animation,
-        animationKey,
-        style,
-        isEntering,
-        isExiting
-      }), animation ? {
-        style,
-        className: isEntering ? "t_unmounted" : ""
-      } : null;
-    }, "useAnimations")
-  };
-}
-__name(createAnimations, "createAnimations");
-
-// node_modules/@tamagui/config/dist/esm/animations.css.js
-var animations = createAnimations({
-  "100ms": "ease-in 100ms",
-  bouncy: "ease-in 200ms",
-  lazy: "ease-in 600ms",
-  slow: "ease-in 500ms",
-  medium: "ease-in 300ms",
-  quick: "ease-in 100ms",
-  tooltip: "ease-in 400ms"
-});
-
-// node_modules/@tamagui/shorthands/dist/esm/index.mjs
+// node_modules/@tamagui/shorthands/dist/esm/v2.mjs
 var shorthands = {
   // web-only
   ussel: "userSelect",
@@ -200,7 +57,6 @@ var shorthands = {
   ai: "alignItems",
   als: "alignSelf",
   b: "bottom",
-  bc: "backgroundColor",
   bg: "backgroundColor",
   bbc: "borderBottomColor",
   bblr: "borderBottomLeftRadius",
@@ -208,7 +64,7 @@ var shorthands = {
   bbw: "borderBottomWidth",
   blc: "borderLeftColor",
   blw: "borderLeftWidth",
-  boc: "borderColor",
+  bc: "borderColor",
   br: "borderRadius",
   bs: "borderStyle",
   brw: "borderRightWidth",
@@ -523,131 +379,6 @@ var yellow2 = {
   yellow12: "hsl(40, 55.0%, 13.5%)"
 };
 
-// node_modules/@tamagui/themes/dist/esm/tokens.mjs
-var import_web2 = require("@tamagui/core");
-var size = {
-  $0: 0,
-  "$0.25": 2,
-  "$0.5": 4,
-  "$0.75": 8,
-  $1: 20,
-  "$1.5": 24,
-  $2: 28,
-  "$2.5": 32,
-  $3: 36,
-  "$3.5": 40,
-  $4: 44,
-  $true: 44,
-  "$4.5": 48,
-  $5: 52,
-  $6: 64,
-  $7: 74,
-  $8: 84,
-  $9: 94,
-  $10: 104,
-  $11: 124,
-  $12: 144,
-  $13: 164,
-  $14: 184,
-  $15: 204,
-  $16: 224,
-  $17: 224,
-  $18: 244,
-  $19: 264,
-  $20: 284
-};
-var spaces = Object.entries(size).map(([k, v]) => [k, sizeToSpace(v)]);
-function sizeToSpace(v) {
-  return v === 0 ? 0 : v === 2 ? 0.5 : v === 4 ? 1 : v === 8 ? 1.5 : v <= 16 ? Math.round(v * 0.333) : Math.floor(v * 0.7 - 12);
-}
-__name(sizeToSpace, "sizeToSpace");
-var spacesNegative = spaces.slice(1).map(([k, v]) => [`-${k.slice(1)}`, -v]);
-var space = {
-  ...Object.fromEntries(spaces),
-  ...Object.fromEntries(spacesNegative)
-};
-var zIndex = {
-  0: 0,
-  1: 100,
-  2: 200,
-  3: 300,
-  4: 400,
-  5: 500
-};
-var colorTokens = {
-  light: {
-    blue: blue2,
-    gray: gray2,
-    green: green2,
-    orange: orange2,
-    pink: pink2,
-    purple: purple2,
-    red: red2,
-    yellow: yellow2
-  },
-  dark: {
-    blue,
-    gray,
-    green,
-    orange,
-    pink,
-    purple,
-    red,
-    yellow
-  }
-};
-var darkColors = {
-  ...colorTokens.dark.blue,
-  ...colorTokens.dark.gray,
-  ...colorTokens.dark.green,
-  ...colorTokens.dark.orange,
-  ...colorTokens.dark.pink,
-  ...colorTokens.dark.purple,
-  ...colorTokens.dark.red,
-  ...colorTokens.dark.yellow
-};
-var lightColors = {
-  ...colorTokens.light.blue,
-  ...colorTokens.light.gray,
-  ...colorTokens.light.green,
-  ...colorTokens.light.orange,
-  ...colorTokens.light.pink,
-  ...colorTokens.light.purple,
-  ...colorTokens.light.red,
-  ...colorTokens.light.yellow
-};
-var color = {
-  ...postfixObjKeys(lightColors, "Light"),
-  ...postfixObjKeys(darkColors, "Dark")
-};
-function postfixObjKeys(obj, postfix) {
-  return Object.fromEntries(Object.entries(obj).map(([k, v]) => [`${k}${postfix}`, v]));
-}
-__name(postfixObjKeys, "postfixObjKeys");
-var radius = {
-  0: 0,
-  1: 3,
-  2: 5,
-  3: 7,
-  4: 9,
-  true: 9,
-  5: 10,
-  6: 16,
-  7: 19,
-  8: 22,
-  9: 26,
-  10: 34,
-  11: 42,
-  12: 50
-};
-var tokens = (0, import_web2.createTokens)({
-  color,
-  radius,
-  zIndex,
-  space,
-  size
-});
-
 // node_modules/@tamagui/create-theme/dist/esm/isMinusZero.mjs
 function isMinusZero(value) {
   return 1 / value === Number.NEGATIVE_INFINITY;
@@ -667,22 +398,22 @@ var setThemeInfo = /* @__PURE__ */ __name((theme, info) => {
 
 // node_modules/@tamagui/create-theme/dist/esm/createTheme.mjs
 var identityCache = /* @__PURE__ */ new Map();
-function createThemeWithPalettes(palettes2, defaultPalette, definition, options, name, skipCache = false) {
-  if (!palettes2[defaultPalette]) throw new Error(`No pallete: ${defaultPalette}`);
+function createThemeWithPalettes(palettes, defaultPalette, definition, options, name, skipCache = false) {
+  if (!palettes[defaultPalette]) throw new Error(`No pallete: ${defaultPalette}`);
   const newDef = {
     ...definition
   };
   for (const key in definition) {
     let val = definition[key];
     if (typeof val == "string" && val[0] === "$") {
-      const [altPaletteName$, altPaletteIndex] = val.split("."), altPaletteName = altPaletteName$.slice(1), parentName = defaultPalette.split("_")[0], altPalette = palettes2[altPaletteName] || palettes2[`${parentName}_${altPaletteName}`];
+      const [altPaletteName$, altPaletteIndex] = val.split("."), altPaletteName = altPaletteName$.slice(1), parentName = defaultPalette.split("_")[0], altPalette = palettes[altPaletteName] || palettes[`${parentName}_${altPaletteName}`];
       if (altPalette) {
         const next = getValue(altPalette, +altPaletteIndex);
         typeof next < "u" && (newDef[key] = next);
       }
     }
   }
-  return createTheme(palettes2[defaultPalette], newDef, options, name, skipCache);
+  return createTheme(palettes[defaultPalette], newDef, options, name, skipCache);
 }
 __name(createThemeWithPalettes, "createThemeWithPalettes");
 function createTheme(palette, definition, options, name, skipCache = false) {
@@ -819,12 +550,12 @@ function applyMaskStateless(info, mask, options = {}, parentName) {
     ...options.skip
   };
   if (info.options?.nonInheritedValues) for (const key in info.options.nonInheritedValues) skip[key] = 1;
-  const maskOptions2 = {
+  const maskOptions = {
     parentName,
     palette: info.palette,
     ...options,
     skip
-  }, template = mask.mask(info.definition, maskOptions2), theme = createTheme(info.palette, template);
+  }, template = mask.mask(info.definition, maskOptions), theme = createTheme(info.palette, template);
   return {
     ...info,
     cache: /* @__PURE__ */ new Map(),
@@ -857,18 +588,18 @@ var ThemeBuilder = class {
     this.state = state;
   }
   _getThemeFn;
-  addPalettes(palettes2) {
+  addPalettes(palettes) {
     return this.state.palettes = {
       // as {} prevents generic string key merge messing up types
       ...this.state.palettes,
-      ...palettes2
+      ...palettes
     }, this;
   }
-  addTemplates(templates2) {
+  addTemplates(templates) {
     return this.state.templates = {
       // as {} prevents generic string key merge messing up types
       ...this.state.templates,
-      ...templates2
+      ...templates
     }, this;
   }
   addMasks(masks2) {
@@ -880,14 +611,14 @@ var ThemeBuilder = class {
   }
   // for dev mode only really
   _addedThemes = [];
-  addThemes(themes2) {
+  addThemes(themes3) {
     return this._addedThemes.push({
       type: "themes",
-      args: [themes2]
+      args: [themes3]
     }), this.state.themes = {
       // as {} prevents generic string key merge messing up types
       ...this.state.themes,
-      ...themes2
+      ...themes3
     }, this;
   }
   // these wont be typed to save some complexity and because they don't need to be typed!
@@ -1009,16 +740,16 @@ var ColorError = class extends Error {
   static {
     __name(this, "ColorError");
   }
-  constructor(color3) {
-    super(`Failed to parse color: "${color3}"`);
+  constructor(color2) {
+    super(`Failed to parse color: "${color2}"`);
   }
 };
 var ColorError$1 = ColorError;
-function parseToRgba(color3) {
-  if (typeof color3 !== "string") throw new ColorError$1(color3);
-  if (color3.trim().toLowerCase() === "transparent") return [0, 0, 0, 0];
-  let normalizedColor = color3.trim();
-  normalizedColor = namedColorRegex.test(color3) ? nameToHex(color3) : color3;
+function parseToRgba(color2) {
+  if (typeof color2 !== "string") throw new ColorError$1(color2);
+  if (color2.trim().toLowerCase() === "transparent") return [0, 0, 0, 0];
+  let normalizedColor = color2.trim();
+  normalizedColor = namedColorRegex.test(color2) ? nameToHex(color2) : color2;
   const reducedHexMatch = reducedHexRegex.exec(normalizedColor);
   if (reducedHexMatch) {
     const arr = Array.from(reducedHexMatch).slice(1);
@@ -1037,11 +768,11 @@ function parseToRgba(color3) {
   const hslaMatch = hslaRegex.exec(normalizedColor);
   if (hslaMatch) {
     const [h, s, l, a] = Array.from(hslaMatch).slice(1).map(parseFloat);
-    if (guard(0, 100, s) !== s) throw new ColorError$1(color3);
-    if (guard(0, 100, l) !== l) throw new ColorError$1(color3);
+    if (guard(0, 100, s) !== s) throw new ColorError$1(color2);
+    if (guard(0, 100, l) !== l) throw new ColorError$1(color2);
     return [...hslToRgb(h, s, l), Number.isNaN(a) ? 1 : a];
   }
-  throw new ColorError$1(color3);
+  throw new ColorError$1(color2);
 }
 __name(parseToRgba, "parseToRgba");
 function hash(str) {
@@ -1064,10 +795,10 @@ var compressedColorMap = "1q29ehhb 1n09sgk7 1kl1ekf_ _yl4zsno 16z9eiv3 1p29lhp8 
   acc[key] = `${prefix}${hex}`;
   return acc;
 }, {});
-function nameToHex(color3) {
-  const normalizedColorName = color3.toLowerCase().trim();
+function nameToHex(color2) {
+  const normalizedColorName = color2.toLowerCase().trim();
   const result = compressedColorMap[hash(normalizedColorName)];
-  if (!result) throw new ColorError$1(color3);
+  if (!result) throw new ColorError$1(color2);
   return `#${result}`;
 }
 __name(nameToHex, "nameToHex");
@@ -1077,8 +808,8 @@ var hexRegex = new RegExp(`^#${r("([a-f0-9]{2})", 3)}([a-f0-9]{2})?$`, "i");
 var rgbaRegex = new RegExp(`^rgba?\\(\\s*(\\d+)\\s*${r(",\\s*(\\d+)\\s*", 2)}(?:,\\s*([\\d.]+))?\\s*\\)$`, "i");
 var hslaRegex = /^hsla?\(\s*([\d.]+)\s*,\s*([\d.]+)%\s*,\s*([\d.]+)%(?:\s*,\s*([\d.]+))?\s*\)$/i;
 var namedColorRegex = /^[a-z]+$/i;
-var roundColor = /* @__PURE__ */ __name((color3) => {
-  return Math.round(color3 * 255);
+var roundColor = /* @__PURE__ */ __name((color2) => {
+  return Math.round(color2 * 255);
 }, "roundColor");
 var hslToRgb = /* @__PURE__ */ __name((hue, saturation, lightness) => {
   let l = lightness / 100;
@@ -1116,8 +847,8 @@ var hslToRgb = /* @__PURE__ */ __name((hue, saturation, lightness) => {
   const finalBlue = blue3 + lightnessModification;
   return [finalRed, finalGreen, finalBlue].map(roundColor);
 }, "hslToRgb");
-function parseToHsla(color3) {
-  const [red3, green3, blue3, alpha] = parseToRgba(color3).map((value, index) => (
+function parseToHsla(color2) {
+  const [red3, green3, blue3, alpha] = parseToRgba(color2).map((value, index) => (
     // 3rd index is alpha channel which is already normalized
     index === 3 ? value : value / 255
   ));
@@ -1200,7 +931,7 @@ var getBaseTemplates = /* @__PURE__ */ __name((scheme) => {
     borderColorFocus: borderColor,
     ...baseColors,
     colorTransparent: -1
-  }, surface1 = {
+  }, surface12 = {
     ...baseColors,
     background: base.background + 1,
     backgroundHover: base.backgroundHover + 1,
@@ -1210,7 +941,7 @@ var getBaseTemplates = /* @__PURE__ */ __name((scheme) => {
     borderColorHover: base.borderColorHover + 1,
     borderColorFocus: base.borderColorFocus + 1,
     borderColorPress: base.borderColorPress + 1
-  }, surface2 = {
+  }, surface22 = {
     ...baseColors,
     background: base.background + 2,
     backgroundHover: base.backgroundHover + 2,
@@ -1220,7 +951,7 @@ var getBaseTemplates = /* @__PURE__ */ __name((scheme) => {
     borderColorHover: base.borderColorHover + 2,
     borderColorFocus: base.borderColorFocus + 2,
     borderColorPress: base.borderColorPress + 2
-  }, surface3 = {
+  }, surface32 = {
     ...baseColors,
     background: base.background + 3,
     backgroundHover: base.backgroundHover + 3,
@@ -1243,9 +974,9 @@ var getBaseTemplates = /* @__PURE__ */ __name((scheme) => {
   }, inverse = Object.fromEntries(Object.entries(base).map(([key, index]) => [key, -index]));
   return {
     base,
-    surface1,
-    surface2,
-    surface3,
+    surface1: surface12,
+    surface2: surface22,
+    surface3: surface32,
     alt1,
     alt2,
     inverse
@@ -1278,8 +1009,8 @@ var generateColorPalette = /* @__PURE__ */ __name(({
     }
     if (add(h, s, l, a), anchorIndex === numAnchors - 1 && palette.length < paletteSize) for (let step = anchor.index + 1; step < paletteSize; step++) add(h, s, l);
   }
-  const background = palette[0], foreground = palette[palette.length - 1], transparentValues = [background, foreground].map((color3) => {
-    const [h, s, l] = parseToHsla(color3);
+  const background = palette[0], foreground = palette[palette.length - 1], transparentValues = [background, foreground].map((color2) => {
+    const [h, s, l] = parseToHsla(color2);
     return [hsla(h, s, l, 0), hsla(h, s, l, 0.2), hsla(h, s, l, 0.4), hsla(h, s, l, 0.6), hsla(h, s, l, 0.8)];
   }), reverseForeground = [...transparentValues[1]].reverse();
   return palette = [...transparentValues[0], ...palette, ...reverseForeground], palette;
@@ -1373,13 +1104,13 @@ function getThemesPalettes(props) {
   };
 }
 __name(getThemesPalettes, "getThemesPalettes");
-function createPalettes(palettes2) {
-  const accentPalettes = palettes2.accent ? getThemeSuitePalettes(palettes2.accent) : null, basePalettes = getThemeSuitePalettes(palettes2.base);
-  return Object.fromEntries(Object.entries(palettes2).flatMap(([name, palette]) => {
-    const palettes22 = getThemeSuitePalettes(palette), oppositePalettes = name.startsWith("accent") ? basePalettes : accentPalettes || basePalettes;
+function createPalettes(palettes) {
+  const accentPalettes = palettes.accent ? getThemeSuitePalettes(palettes.accent) : null, basePalettes = getThemeSuitePalettes(palettes.base);
+  return Object.fromEntries(Object.entries(palettes).flatMap(([name, palette]) => {
+    const palettes2 = getThemeSuitePalettes(palette), oppositePalettes = name.startsWith("accent") ? basePalettes : accentPalettes || basePalettes;
     if (!oppositePalettes) return [];
     const oppositeLight = oppositePalettes.light, oppositeDark = oppositePalettes.dark, bgOffset = 7;
-    return [[name === "base" ? "light" : `light_${name}`, [oppositeLight[bgOffset], ...palettes22.light, oppositeLight[oppositeLight.length - bgOffset - 1]]], [name === "base" ? "dark" : `dark_${name}`, [oppositeDark[oppositeDark.length - bgOffset - 1], ...palettes22.dark, oppositeDark[bgOffset]]]];
+    return [[name === "base" ? "light" : `light_${name}`, [oppositeLight[bgOffset], ...palettes2.light, oppositeLight[oppositeLight.length - bgOffset - 1]]], [name === "base" ? "dark" : `dark_${name}`, [oppositeDark[oppositeDark.length - bgOffset - 1], ...palettes2.dark, oppositeDark[bgOffset]]]];
   }));
 }
 __name(createPalettes, "createPalettes");
@@ -1441,7 +1172,7 @@ var getBaseTemplates2 = /* @__PURE__ */ __name((scheme) => {
     borderColorFocus: borderColor,
     ...baseColors,
     colorTransparent: -1
-  }, surface1 = {
+  }, surface12 = {
     ...baseColors,
     background: base.background + 2,
     backgroundHover: base.backgroundHover + 2,
@@ -1451,7 +1182,7 @@ var getBaseTemplates2 = /* @__PURE__ */ __name((scheme) => {
     borderColorHover: base.borderColorHover + 2,
     borderColorFocus: base.borderColorFocus + 2,
     borderColorPress: base.borderColorPress + 2
-  }, surface2 = {
+  }, surface22 = {
     ...baseColors,
     background: base.background + 3,
     backgroundHover: base.backgroundHover + 3,
@@ -1461,7 +1192,7 @@ var getBaseTemplates2 = /* @__PURE__ */ __name((scheme) => {
     borderColorHover: base.borderColorHover + 3,
     borderColorFocus: base.borderColorFocus + 3,
     borderColorPress: base.borderColorPress + 3
-  }, surface3 = {
+  }, surface32 = {
     ...baseColors,
     background: base.background + 4,
     backgroundHover: base.backgroundHover + 4,
@@ -1484,9 +1215,9 @@ var getBaseTemplates2 = /* @__PURE__ */ __name((scheme) => {
   }, inverse = Object.fromEntries(Object.entries(base).map(([key, index]) => [key, -index]));
   return {
     base,
-    surface1,
-    surface2,
-    surface3,
+    surface1: surface12,
+    surface2: surface22,
+    surface3: surface32,
     alt1,
     alt2,
     inverse
@@ -1551,7 +1282,7 @@ var getBaseTemplates3 = /* @__PURE__ */ __name((scheme) => {
     borderColorFocus: borderColor,
     ...baseColors,
     colorTransparent: -1
-  }, surface1 = {
+  }, surface12 = {
     ...baseColors,
     background: base.background + 3,
     backgroundHover: base.backgroundHover + 3,
@@ -1561,7 +1292,7 @@ var getBaseTemplates3 = /* @__PURE__ */ __name((scheme) => {
     borderColorHover: base.borderColorHover + 3,
     borderColorFocus: base.borderColorFocus + 3,
     borderColorPress: base.borderColorPress + 3
-  }, surface2 = {
+  }, surface22 = {
     ...baseColors,
     background: base.background + 4,
     backgroundHover: base.backgroundHover + 4,
@@ -1571,7 +1302,7 @@ var getBaseTemplates3 = /* @__PURE__ */ __name((scheme) => {
     borderColorHover: base.borderColorHover + 4,
     borderColorFocus: base.borderColorFocus + 4,
     borderColorPress: base.borderColorPress + 4
-  }, surface3 = {
+  }, surface32 = {
     ...baseColors,
     background: base.background + 5,
     backgroundHover: base.backgroundHover + 5,
@@ -1594,9 +1325,9 @@ var getBaseTemplates3 = /* @__PURE__ */ __name((scheme) => {
   }, inverse = Object.fromEntries(Object.entries(base).map(([key, index]) => [key, -index]));
   return {
     base,
-    surface1,
-    surface2,
-    surface3,
+    surface1: surface12,
+    surface2: surface22,
+    surface3: surface32,
     alt1,
     alt2,
     inverse
@@ -1690,143 +1421,25 @@ var masks = {
   })
 };
 
-// node_modules/@tamagui/themes/dist/esm/v2-themes.mjs
-var import_web3 = require("@tamagui/core");
-var colorTokens2 = {
-  light: {
-    blue: blue2,
-    gray: gray2,
-    green: green2,
-    orange: orange2,
-    pink: pink2,
-    purple: purple2,
-    red: red2,
-    yellow: yellow2
-  },
-  dark: {
-    blue,
-    gray,
-    green,
-    orange,
-    pink,
-    purple,
-    red,
-    yellow
-  }
-};
-var palettes = (() => {
-  const lightTransparent = "rgba(255,255,255,0)", darkTransparent = "rgba(10,10,10,0)", transparent = /* @__PURE__ */ __name((hsl, opacity = 0) => hsl.replace("%)", `%, ${opacity})`).replace("hsl(", "hsla("), "transparent"), getColorPalette = /* @__PURE__ */ __name((colors, color22 = colors[0]) => {
-    const colorPalette = Object.values(colors), [head, tail] = [colorPalette.slice(0, 6), colorPalette.slice(colorPalette.length - 5)];
-    return [transparent(colorPalette[0]), ...head, ...tail, color22, transparent(colorPalette[colorPalette.length - 1])];
-  }, "getColorPalette"), lightColor = "hsl(0, 0%, 9.0%)", lightPalette = [lightTransparent, "#fff", "#f8f8f8", "hsl(0, 0%, 96.3%)", "hsl(0, 0%, 94.1%)", "hsl(0, 0%, 92.0%)", "hsl(0, 0%, 90.0%)", "hsl(0, 0%, 88.5%)", "hsl(0, 0%, 81.0%)", "hsl(0, 0%, 56.1%)", "hsl(0, 0%, 50.3%)", "hsl(0, 0%, 42.5%)", lightColor, darkTransparent], darkColor = "#fff", darkPalette = [darkTransparent, "#050505", "#151515", "#191919", "#232323", "#282828", "#323232", "#424242", "#494949", "#545454", "#626262", "#a5a5a5", darkColor, lightTransparent], lightPalettes = objectFromEntries3(objectKeys2(colorTokens2.light).map((key) => [`light_${key}`, getColorPalette(colorTokens2.light[key], lightColor)])), darkPalettes = objectFromEntries3(objectKeys2(colorTokens2.dark).map((key) => [`dark_${key}`, getColorPalette(colorTokens2.dark[key], darkColor)])), colorPalettes = {
-    ...lightPalettes,
-    ...darkPalettes
-  };
-  return {
-    light: lightPalette,
-    dark: darkPalette,
-    ...colorPalettes
-  };
-})();
-var templateColorsSpecific = {
-  color1: 1,
-  color2: 2,
-  color3: 3,
-  color4: 4,
-  color5: 5,
-  color6: 6,
-  color7: 7,
-  color8: 8,
-  color9: 9,
-  color10: 10,
-  color11: 11,
-  color12: 12
-};
-var templates = (() => {
-  const template = {
-    ...templateColorsSpecific,
-    // the background, color, etc keys here work like generics - they make it so you
-    // can publish components for others to use without mandating a specific color scale
-    // the @tamagui/button Button component looks for `$background`, so you set the
-    // dark_red_Button theme to have a stronger background than the dark_red theme.
-    background: 2,
-    backgroundHover: 3,
-    backgroundPress: 4,
-    backgroundFocus: 5,
-    backgroundStrong: 1,
-    backgroundTransparent: 0,
-    color: -1,
-    colorHover: -2,
-    colorPress: -1,
-    colorFocus: -2,
-    colorTransparent: -0,
-    borderColor: 5,
-    borderColorHover: 6,
-    borderColorFocus: 4,
-    borderColorPress: 5,
-    placeholderColor: -4,
-    // in the future this should be partially transparent
-    outlineColor: 5
-  };
-  return {
-    base: template,
-    colorLight: {
-      ...template,
-      // light color themes are a bit less sensitive
-      borderColor: 4,
-      borderColorHover: 5,
-      borderColorFocus: 4,
-      borderColorPress: 4
-    }
-  };
-})();
-var maskOptions = (() => {
-  const shadows2 = {
-    shadowColor: 0,
-    shadowColorHover: 0,
-    shadowColorPress: 0,
-    shadowColorFocus: 0
-  }, colors = {
-    ...shadows2,
-    color: 0,
-    colorHover: 0,
-    colorFocus: 0,
-    colorPress: 0
-  }, baseMaskOptions = {
-    override: shadows2,
-    skip: shadows2,
-    // avoids the transparent ends
-    max: palettes.light.length - 2,
-    min: 1
-  }, skipShadowsAndSpecificColors = {
-    ...shadows2,
-    ...templateColorsSpecific
-  };
-  return {
-    component: {
-      ...baseMaskOptions,
-      override: colors,
-      skip: skipShadowsAndSpecificColors
-    },
-    alt: {
-      ...baseMaskOptions
-    },
-    button: {
-      ...baseMaskOptions,
-      override: {
-        ...colors,
-        borderColor: "transparent",
-        borderColorHover: "transparent"
-      },
-      skip: skipShadowsAndSpecificColors
-    }
-  };
-})();
-var lightShadowColor = "rgba(0,0,0,0.04)";
-var lightShadowColorStrong = "rgba(0,0,0,0.085)";
-var darkShadowColor = "rgba(0,0,0,0.2)";
-var darkShadowColorStrong = "rgba(0,0,0,0.3)";
-var size2 = {
+// node_modules/@tamagui/themes/dist/esm/v3-themes.mjs
+var import_web = require("@tamagui/core");
+
+// node_modules/@tamagui/themes/dist/esm/utils.mjs
+function postfixObjKeys(obj, postfix) {
+  return Object.fromEntries(Object.entries(obj).map(([k, v]) => [`${k}${postfix}`, v]));
+}
+__name(postfixObjKeys, "postfixObjKeys");
+function sizeToSpace(v) {
+  return v === 0 ? 0 : v === 2 ? 0.5 : v === 4 ? 1 : v === 8 ? 1.5 : v <= 16 ? Math.round(v * 0.333) : Math.floor(v * 0.7 - 12);
+}
+__name(sizeToSpace, "sizeToSpace");
+function objectKeys2(obj) {
+  return Object.keys(obj);
+}
+__name(objectKeys2, "objectKeys");
+
+// node_modules/@tamagui/themes/dist/esm/v3-tokens.mjs
+var size = {
   $0: 0,
   "$0.25": 2,
   "$0.5": 4,
@@ -1857,13 +1470,13 @@ var size2 = {
   $19: 264,
   $20: 284
 };
-var spaces2 = Object.entries(size2).map(([k, v]) => [k, sizeToSpace2(v)]);
-var spacesNegative2 = spaces2.slice(1).map(([k, v]) => [`-${k.slice(1)}`, -v]);
-var space2 = {
-  ...Object.fromEntries(spaces2),
-  ...Object.fromEntries(spacesNegative2)
+var spaces = Object.entries(size).map(([k, v]) => [k, sizeToSpace(v)]);
+var spacesNegative = spaces.slice(1).map(([k, v]) => [`-${k.slice(1)}`, -v]);
+var space = {
+  ...Object.fromEntries(spaces),
+  ...Object.fromEntries(spacesNegative)
 };
-var zIndex2 = {
+var zIndex = {
   0: 0,
   1: 100,
   2: 200,
@@ -1871,31 +1484,7 @@ var zIndex2 = {
   4: 400,
   5: 500
 };
-var darkColors2 = {
-  ...colorTokens2.dark.blue,
-  ...colorTokens2.dark.gray,
-  ...colorTokens2.dark.green,
-  ...colorTokens2.dark.orange,
-  ...colorTokens2.dark.pink,
-  ...colorTokens2.dark.purple,
-  ...colorTokens2.dark.red,
-  ...colorTokens2.dark.yellow
-};
-var lightColors2 = {
-  ...colorTokens2.light.blue,
-  ...colorTokens2.light.gray,
-  ...colorTokens2.light.green,
-  ...colorTokens2.light.orange,
-  ...colorTokens2.light.pink,
-  ...colorTokens2.light.purple,
-  ...colorTokens2.light.red,
-  ...colorTokens2.light.yellow
-};
-var color2 = {
-  ...postfixObjKeys2(lightColors2, "Light"),
-  ...postfixObjKeys2(darkColors2, "Dark")
-};
-var radius2 = {
+var radius = {
   0: 0,
   1: 3,
   2: 5,
@@ -1911,13 +1500,250 @@ var radius2 = {
   11: 42,
   12: 50
 };
-var tokens2 = (0, import_web3.createTokens)({
-  color: color2,
-  radius: radius2,
-  zIndex: zIndex2,
-  space: space2,
-  size: size2
-});
+var tokens = {
+  radius,
+  zIndex,
+  space,
+  size
+};
+
+// node_modules/@tamagui/themes/dist/esm/v3-themes.mjs
+var colorTokens = {
+  light: {
+    blue: blue2,
+    gray: gray2,
+    green: green2,
+    orange: orange2,
+    pink: pink2,
+    purple: purple2,
+    red: red2,
+    yellow: yellow2
+  },
+  dark: {
+    blue,
+    gray,
+    green,
+    orange,
+    pink,
+    purple,
+    red,
+    yellow
+  }
+};
+var lightShadowColor = "rgba(0,0,0,0.04)";
+var lightShadowColorStrong = "rgba(0,0,0,0.085)";
+var darkShadowColor = "rgba(0,0,0,0.2)";
+var darkShadowColorStrong = "rgba(0,0,0,0.3)";
+var darkColors = {
+  ...colorTokens.dark.blue,
+  ...colorTokens.dark.gray,
+  ...colorTokens.dark.green,
+  ...colorTokens.dark.orange,
+  ...colorTokens.dark.pink,
+  ...colorTokens.dark.purple,
+  ...colorTokens.dark.red,
+  ...colorTokens.dark.yellow
+};
+var lightColors = {
+  ...colorTokens.light.blue,
+  ...colorTokens.light.gray,
+  ...colorTokens.light.green,
+  ...colorTokens.light.orange,
+  ...colorTokens.light.pink,
+  ...colorTokens.light.purple,
+  ...colorTokens.light.red,
+  ...colorTokens.light.yellow
+};
+var color = {
+  white0: "rgba(255,255,255,0)",
+  white075: "rgba(255,255,255,0.75)",
+  white05: "rgba(255,255,255,0.5)",
+  white025: "rgba(255,255,255,0.25)",
+  black0: "rgba(10,10,10,0)",
+  black075: "rgba(10,10,10,0.75)",
+  black05: "rgba(10,10,10,0.5)",
+  black025: "rgba(10,10,10,0.25)",
+  white1: "#fff",
+  white2: "#f8f8f8",
+  white3: "hsl(0, 0%, 96.3%)",
+  white4: "hsl(0, 0%, 94.1%)",
+  white5: "hsl(0, 0%, 92.0%)",
+  white6: "hsl(0, 0%, 90.0%)",
+  white7: "hsl(0, 0%, 88.5%)",
+  white8: "hsl(0, 0%, 81.0%)",
+  white9: "hsl(0, 0%, 56.1%)",
+  white10: "hsl(0, 0%, 50.3%)",
+  white11: "hsl(0, 0%, 42.5%)",
+  white12: "hsl(0, 0%, 9.0%)",
+  black1: "#050505",
+  black2: "#151515",
+  black3: "#191919",
+  black4: "#232323",
+  black5: "#282828",
+  black6: "#323232",
+  black7: "#424242",
+  black8: "#494949",
+  black9: "#545454",
+  black10: "#626262",
+  black11: "#a5a5a5",
+  black12: "#fff",
+  ...postfixObjKeys(lightColors, "Light"),
+  ...postfixObjKeys(darkColors, "Dark")
+};
+var defaultPalettes2 = (() => {
+  const transparent = /* @__PURE__ */ __name((hsl, opacity = 0) => hsl.replace("%)", `%, ${opacity})`).replace("hsl(", "hsla("), "transparent"), getColorPalette = /* @__PURE__ */ __name((colors, accentColors) => {
+    const colorPalette = Object.values(colors), colorI = colorPalette.length - 4, accentPalette = Object.values(accentColors), accentBackground = accentPalette[0], accentColor = accentPalette[accentPalette.length - 1];
+    return [accentBackground, transparent(colorPalette[0], 0), transparent(colorPalette[0], 0.25), transparent(colorPalette[0], 0.5), transparent(colorPalette[0], 0.75), ...colorPalette, transparent(colorPalette[colorI], 0.75), transparent(colorPalette[colorI], 0.5), transparent(colorPalette[colorI], 0.25), transparent(colorPalette[colorI], 0), accentColor];
+  }, "getColorPalette"), brandColor = {
+    light: color.blue4Light,
+    dark: color.blue4Dark
+  }, lightPalette = [brandColor.light, color.white0, color.white025, color.white05, color.white075, color.white1, color.white2, color.white3, color.white4, color.white5, color.white6, color.white7, color.white8, color.white9, color.white10, color.white11, color.white12, color.black075, color.black05, color.black025, color.black0, brandColor.dark], darkPalette = [brandColor.dark, color.black0, color.black025, color.black05, color.black075, color.black1, color.black2, color.black3, color.black4, color.black5, color.black6, color.black7, color.black8, color.black9, color.black10, color.black11, color.black12, color.white075, color.white05, color.white025, color.white0, brandColor.light], lightColorNames = objectKeys2(colorTokens.light), lightPalettes = objectFromEntries(lightColorNames.map((key, index) => [`light_${key}`, getColorPalette(colorTokens.light[key], colorTokens.light[lightColorNames[(index + 1) % lightColorNames.length]])])), darkColorNames = objectKeys2(colorTokens.dark), darkPalettes = objectFromEntries(darkColorNames.map((key, index) => [`dark_${key}`, getColorPalette(colorTokens.dark[key], colorTokens.dark[darkColorNames[(index + 1) % darkColorNames.length]])])), colorPalettes = {
+    ...lightPalettes,
+    ...darkPalettes
+  };
+  return {
+    light: lightPalette,
+    dark: darkPalette,
+    ...colorPalettes
+  };
+})();
+var getTemplates4 = /* @__PURE__ */ __name(() => {
+  const getBaseTemplates4 = /* @__PURE__ */ __name((scheme) => {
+    const isLight = scheme === "light", bgIndex = 5, lighten = isLight ? -1 : 1, darken = -lighten, borderColor = bgIndex + 3, base = {
+      accentBackground: 0,
+      accentColor: -0,
+      background0: 1,
+      background025: 2,
+      background05: 3,
+      background075: 4,
+      color1: bgIndex,
+      color2: bgIndex + 1,
+      color3: bgIndex + 2,
+      color4: bgIndex + 3,
+      color5: bgIndex + 4,
+      color6: bgIndex + 5,
+      color7: bgIndex + 6,
+      color8: bgIndex + 7,
+      color9: bgIndex + 8,
+      color10: bgIndex + 9,
+      color11: bgIndex + 10,
+      color12: bgIndex + 11,
+      color0: -1,
+      color025: -2,
+      color05: -3,
+      color075: -4,
+      // the background, color, etc keys here work like generics - they make it so you
+      // can publish components for others to use without mandating a specific color scale
+      // the @tamagui/button Button component looks for `$background`, so you set the
+      // dark_red_Button theme to have a stronger background than the dark_red theme.
+      background: bgIndex,
+      backgroundHover: bgIndex + lighten,
+      // always lighten on hover no matter the scheme
+      backgroundPress: bgIndex + darken,
+      // always darken on press no matter the theme
+      backgroundFocus: bgIndex + darken,
+      borderColor,
+      borderColorHover: borderColor + lighten,
+      borderColorPress: borderColor + darken,
+      borderColorFocus: borderColor,
+      color: -bgIndex,
+      colorHover: -bgIndex - 1,
+      colorPress: -bgIndex,
+      colorFocus: -bgIndex - 1,
+      colorTransparent: -1,
+      placeholderColor: -bgIndex - 3,
+      outlineColor: -2
+    }, surface12 = {
+      background: base.background + 1,
+      backgroundHover: base.backgroundHover + 1,
+      backgroundPress: base.backgroundPress + 1,
+      backgroundFocus: base.backgroundFocus + 1,
+      borderColor: base.borderColor + 1,
+      borderColorHover: base.borderColorHover + 1,
+      borderColorFocus: base.borderColorFocus + 1,
+      borderColorPress: base.borderColorPress + 1
+    }, surface22 = {
+      background: base.background + 2,
+      backgroundHover: base.backgroundHover + 2,
+      backgroundPress: base.backgroundPress + 2,
+      backgroundFocus: base.backgroundFocus + 2,
+      borderColor: base.borderColor + 2,
+      borderColorHover: base.borderColorHover + 2,
+      borderColorFocus: base.borderColorFocus + 2,
+      borderColorPress: base.borderColorPress + 2
+    }, surface32 = {
+      background: base.background + 3,
+      backgroundHover: base.backgroundHover + 3,
+      backgroundPress: base.backgroundPress + 3,
+      backgroundFocus: base.backgroundFocus + 3,
+      borderColor: base.borderColor + 3,
+      borderColorHover: base.borderColorHover + 3,
+      borderColorFocus: base.borderColorFocus + 3,
+      borderColorPress: base.borderColorPress + 3
+    }, surfaceActiveBg = {
+      background: base.background + 5,
+      backgroundHover: base.background + 5,
+      backgroundPress: base.backgroundPress + 5,
+      backgroundFocus: base.backgroundFocus + 5
+    }, surfaceActive = {
+      ...surfaceActiveBg,
+      // match border to background when active
+      borderColor: surfaceActiveBg.background,
+      borderColorHover: surfaceActiveBg.backgroundHover,
+      borderColorFocus: surfaceActiveBg.backgroundFocus,
+      borderColorPress: surfaceActiveBg.backgroundPress
+    }, inverseSurface12 = {
+      color: surface12.background,
+      colorHover: surface12.backgroundHover,
+      colorPress: surface12.backgroundPress,
+      colorFocus: surface12.backgroundFocus,
+      background: base.color,
+      backgroundHover: base.colorHover,
+      backgroundPress: base.colorPress,
+      backgroundFocus: base.colorFocus,
+      borderColor: base.color - 2,
+      borderColorHover: base.color - 3,
+      borderColorFocus: base.color - 4,
+      borderColorPress: base.color - 5
+    }, inverseActive = {
+      ...inverseSurface12,
+      background: base.color - 2,
+      backgroundHover: base.colorHover - 2,
+      backgroundPress: base.colorPress - 2,
+      backgroundFocus: base.colorFocus - 2,
+      borderColor: base.color - 2 - 2,
+      borderColorHover: base.color - 3 - 2,
+      borderColorFocus: base.color - 4 - 2,
+      borderColorPress: base.color - 5 - 2
+    }, alt1 = {
+      color: base.color - 1,
+      colorHover: base.colorHover - 1,
+      colorPress: base.colorPress - 1,
+      colorFocus: base.colorFocus - 1
+    }, alt2 = {
+      color: base.color - 2,
+      colorHover: base.colorHover - 2,
+      colorPress: base.colorPress - 2,
+      colorFocus: base.colorFocus - 2
+    };
+    return {
+      base,
+      alt1,
+      alt2,
+      surface1: surface12,
+      surface2: surface22,
+      surface3: surface32,
+      inverseSurface1: inverseSurface12,
+      inverseActive,
+      surfaceActive
+    };
+  }, "getBaseTemplates"), lightTemplates = getBaseTemplates4("light"), darkTemplates = getBaseTemplates4("dark");
+  return {
+    ...objectFromEntries(objectKeys2(lightTemplates).map((name) => [`light_${name}`, lightTemplates[name]])),
+    ...objectFromEntries(objectKeys2(darkTemplates).map((name) => [`dark_${name}`, darkTemplates[name]]))
+  };
+}, "getTemplates");
+var defaultTemplates2 = getTemplates4();
 var shadows = {
   light: {
     shadowColor: lightShadowColorStrong,
@@ -1932,22 +1758,13 @@ var shadows = {
     shadowColorFocus: darkShadowColor
   }
 };
-var colorThemeDefinition = /* @__PURE__ */ __name((colorName) => [{
-  parent: "light",
-  palette: colorName,
-  template: "colorLight"
-}, {
-  parent: "dark",
-  palette: colorName,
-  template: "base"
-}], "colorThemeDefinition");
 var nonInherited = {
   light: {
-    ...lightColors2,
+    ...lightColors,
     ...shadows.light
   },
   dark: {
-    ...darkColors2,
+    ...darkColors,
     ...shadows.dark
   }
 };
@@ -1959,10 +1776,94 @@ var overlayThemeDefinitions = [{
 }, {
   parent: "dark",
   theme: {
-    background: "rgba(0,0,0,0.9)"
+    background: "rgba(0,0,0,0.8)"
   }
 }];
-var themeBuilder = createThemeBuilder().addPalettes(palettes).addTemplates(templates).addMasks(masks).addThemes({
+var inverseSurface1 = [{
+  parent: "active",
+  template: "inverseActive"
+}, {
+  parent: "",
+  template: "inverseSurface1"
+}];
+var surface1 = [{
+  parent: "active",
+  template: "surfaceActive"
+}, {
+  parent: "",
+  template: "surface1"
+}];
+var surface2 = [{
+  parent: "active",
+  template: "surfaceActive"
+}, {
+  parent: "",
+  template: "surface2"
+}];
+var surface3 = [{
+  parent: "active",
+  template: "surfaceActive"
+}, {
+  parent: "",
+  template: "surface3"
+}];
+var defaultComponentThemes2 = {
+  ListItem: {
+    template: "surface1"
+  },
+  SelectTrigger: surface1,
+  Card: surface1,
+  Button: surface3,
+  Checkbox: surface2,
+  Switch: surface2,
+  SwitchThumb: inverseSurface1,
+  TooltipContent: surface2,
+  Progress: {
+    template: "surface1"
+  },
+  RadioGroupItem: surface2,
+  TooltipArrow: {
+    template: "surface1"
+  },
+  SliderTrackActive: {
+    template: "surface3"
+  },
+  SliderTrack: {
+    template: "surface1"
+  },
+  SliderThumb: inverseSurface1,
+  Tooltip: inverseSurface1,
+  ProgressIndicator: inverseSurface1,
+  SheetOverlay: overlayThemeDefinitions,
+  DialogOverlay: overlayThemeDefinitions,
+  ModalOverlay: overlayThemeDefinitions,
+  Input: surface1,
+  TextArea: surface1
+};
+var defaultSubThemes = {
+  alt1: {
+    template: "alt1"
+  },
+  alt2: {
+    template: "alt2"
+  },
+  active: {
+    template: "surface3"
+  },
+  surface1: {
+    template: "surface1"
+  },
+  surface2: {
+    template: "surface2"
+  },
+  surface3: {
+    template: "surface3"
+  },
+  surface4: {
+    template: "surfaceActive"
+  }
+};
+var themeBuilder = createThemeBuilder().addPalettes(defaultPalettes2).addTemplates(defaultTemplates2).addThemes({
   light: {
     template: "base",
     palette: "light",
@@ -1974,159 +1875,210 @@ var themeBuilder = createThemeBuilder().addPalettes(palettes).addTemplates(templ
     nonInheritedValues: nonInherited.dark
   }
 }).addChildThemes({
-  orange: colorThemeDefinition("orange"),
-  yellow: colorThemeDefinition("yellow"),
-  green: colorThemeDefinition("green"),
-  blue: colorThemeDefinition("blue"),
-  purple: colorThemeDefinition("purple"),
-  pink: colorThemeDefinition("pink"),
-  red: colorThemeDefinition("red"),
-  gray: colorThemeDefinition("gray")
-}).addChildThemes({
-  alt1: {
-    mask: "soften",
-    ...maskOptions.alt
+  orange: {
+    palette: "orange",
+    template: "base"
   },
-  alt2: {
-    mask: "soften2Border1",
-    ...maskOptions.alt
+  yellow: {
+    palette: "yellow",
+    template: "base"
   },
-  active: {
-    mask: "soften3FlatBorder",
-    skip: {
-      color: 1
-    }
+  green: {
+    palette: "green",
+    template: "base"
+  },
+  blue: {
+    palette: "blue",
+    template: "base"
+  },
+  purple: {
+    palette: "purple",
+    template: "base"
+  },
+  pink: {
+    palette: "pink",
+    template: "base"
+  },
+  red: {
+    palette: "red",
+    template: "base"
+  },
+  gray: {
+    palette: "gray",
+    template: "base"
   }
-}).addComponentThemes({
-  ListItem: [{
-    parent: "light",
-    avoidNestingWithin: ["active"],
-    mask: "identity",
-    ...maskOptions.component
-  }, {
-    parent: "dark",
-    avoidNestingWithin: ["active"],
-    mask: "identity",
-    ...maskOptions.component
-  }],
-  Card: {
-    mask: "soften",
-    avoidNestingWithin: ["active"],
-    ...maskOptions.component
-  },
-  Button: {
-    mask: "soften2Border1",
-    ...maskOptions.component
-  },
-  Checkbox: {
-    mask: "softenBorder2",
-    ...maskOptions.component
-  },
-  Switch: {
-    mask: "soften2Border1",
-    ...maskOptions.component
-  },
-  SwitchThumb: {
-    mask: "inverseStrengthen2",
-    avoidNestingWithin: ["active"],
-    ...maskOptions.component
-  },
-  TooltipContent: {
-    mask: "soften2Border1",
-    avoidNestingWithin: ["active"],
-    ...maskOptions.component
-  },
-  DrawerFrame: {
-    mask: "soften",
-    avoidNestingWithin: ["active"],
-    ...maskOptions.component
-  },
-  Progress: {
-    mask: "soften",
-    avoidNestingWithin: ["active"],
-    ...maskOptions.component
-  },
-  RadioGroupItem: {
-    mask: "softenBorder2",
-    avoidNestingWithin: ["active"],
-    ...maskOptions.component
-  },
-  TooltipArrow: {
-    mask: "soften",
-    avoidNestingWithin: ["active"],
-    ...maskOptions.component
-  },
-  SliderTrackActive: {
-    mask: "inverseSoften",
-    ...maskOptions.component
-  },
-  SliderTrack: {
-    mask: "soften2Border1",
-    avoidNestingWithin: ["active"],
-    ...maskOptions.component
-  },
-  SliderThumb: {
-    mask: "inverse",
-    avoidNestingWithin: ["active"],
-    ...maskOptions.component
-  },
-  Tooltip: {
-    mask: "inverse",
-    avoidNestingWithin: ["active"],
-    ...maskOptions.component
-  },
-  ProgressIndicator: {
-    mask: "inverse",
-    avoidNestingWithin: ["active"],
-    ...maskOptions.component
-  },
-  SheetOverlay: overlayThemeDefinitions,
-  DialogOverlay: overlayThemeDefinitions,
-  ModalOverlay: overlayThemeDefinitions,
-  Input: {
-    mask: "softenBorder2",
-    ...maskOptions.component
-  },
-  TextArea: {
-    mask: "softenBorder2",
-    ...maskOptions.component
-  }
-}, {
-  // to save bundle size but make alt themes not work on components
-  // avoidNestingWithin: ['alt1', 'alt2'],
+}).addChildThemes(defaultSubThemes).addComponentThemes(defaultComponentThemes2, {
+  avoidNestingWithin: ["alt1", "alt2", "surface1", "surface2", "surface3", "surface4"]
 });
 var themesIn = themeBuilder.build();
 var themes = themesIn;
-function postfixObjKeys2(obj, postfix) {
-  return Object.fromEntries(Object.entries(obj).map(([k, v]) => [`${k}${postfix}`, v]));
+var tokens2 = (0, import_web.createTokens)({
+  color,
+  ...tokens
+});
+
+// node_modules/@tamagui/constants/dist/esm/constants.mjs
+var import_react = __toESM(require("react"), 1);
+var IS_REACT_19 = typeof import_react.default.use < "u";
+var isWeb = true;
+var isWindowDefined = typeof window < "u";
+var isServer = isWeb && !isWindowDefined;
+var isClient = isWeb && isWindowDefined;
+var useIsomorphicLayoutEffect = isServer ? import_react.useEffect : import_react.useLayoutEffect;
+var isChrome = typeof navigator < "u" && /Chrome/.test(navigator.userAgent || "");
+var isWebTouchable = isClient && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+var isIos = process.env.TEST_NATIVE_PLATFORM === "ios";
+
+// node_modules/@tamagui/use-presence/dist/esm/PresenceContext.mjs
+var React2 = __toESM(require("react"), 1);
+var import_jsx_runtime = require("react/jsx-runtime");
+var PresenceContext = React2.createContext(null);
+var ResetPresence = /* @__PURE__ */ __name((props) => {
+  const parent = React2.useContext(PresenceContext);
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PresenceContext.Provider, {
+    value: props.disable ? parent : null,
+    children: props.children
+  });
+}, "ResetPresence");
+
+// node_modules/@tamagui/use-presence/dist/esm/usePresence.mjs
+var React3 = __toESM(require("react"), 1);
+function usePresence() {
+  const context = React3.useContext(PresenceContext);
+  if (!context) return [true, null, context];
+  const {
+    id,
+    isPresent: isPresent2,
+    onExitComplete,
+    register
+  } = context;
+  return React3.useEffect(() => register(id), []), !isPresent2 && onExitComplete ? [false, () => onExitComplete?.(id), context] : [true, void 0, context];
 }
-__name(postfixObjKeys2, "postfixObjKeys");
-function sizeToSpace2(v) {
-  return v === 0 ? 0 : v === 2 ? 0.5 : v === 4 ? 1 : v === 8 ? 1.5 : v <= 16 ? Math.round(v * 0.333) : Math.floor(v * 0.7 - 12);
+__name(usePresence, "usePresence");
+
+// node_modules/@tamagui/animations-css/dist/esm/createAnimations.mjs
+var import_web2 = require("@tamagui/core");
+var import_react2 = __toESM(require("react"), 1);
+function extractDuration(animation) {
+  const msMatch = animation.match(/(\d+(?:\.\d+)?)\s*ms/);
+  if (msMatch) return Number.parseInt(msMatch[1], 10);
+  const sMatch = animation.match(/(\d+(?:\.\d+)?)\s*s/);
+  return sMatch ? Math.round(Number.parseFloat(sMatch[1]) * 1e3) : 300;
 }
-__name(sizeToSpace2, "sizeToSpace");
-function objectFromEntries3(arr) {
-  return Object.fromEntries(arr);
+__name(extractDuration, "extractDuration");
+function createAnimations(animations) {
+  const reactionListeners = /* @__PURE__ */ new WeakMap();
+  return {
+    animations,
+    usePresence,
+    ResetPresence,
+    supportsCSS: true,
+    classNameAnimation: true,
+    useAnimatedNumber(initial) {
+      const [val, setVal] = import_react2.default.useState(initial), [onFinish, setOnFinish] = (0, import_react2.useState)();
+      return useIsomorphicLayoutEffect(() => {
+        onFinish && (onFinish?.(), setOnFinish(void 0));
+      }, [onFinish]), {
+        getInstance() {
+          return setVal;
+        },
+        getValue() {
+          return val;
+        },
+        setValue(next, config2, onFinish2) {
+          setVal(next), setOnFinish(onFinish2);
+        },
+        stop() {
+        }
+      };
+    },
+    useAnimatedNumberReaction({
+      value
+    }, onValue) {
+      import_react2.default.useEffect(() => {
+        const instance = value.getInstance();
+        let queue = reactionListeners.get(instance);
+        if (!queue) {
+          const next = /* @__PURE__ */ new Set();
+          reactionListeners.set(instance, next), queue = next;
+        }
+        return queue.add(onValue), () => {
+          queue?.delete(onValue);
+        };
+      }, []);
+    },
+    useAnimatedNumberStyle(val, getStyle) {
+      return getStyle(val.getValue());
+    },
+    useAnimations: /* @__PURE__ */ __name(({
+      props,
+      presence,
+      style,
+      componentState,
+      stateRef
+    }) => {
+      const isEntering = !!componentState.unmounted, isExiting = presence?.[0] === false, sendExitComplete = presence?.[1], [animationKey, animationConfig] = Array.isArray(props.animation) ? props.animation : [props.animation], animation = animations[animationKey], keys = props.animateOnly ?? ["all"];
+      return useIsomorphicLayoutEffect(() => {
+        const host = stateRef.current.host;
+        if (!sendExitComplete || !isExiting || !host) return;
+        const node = host, fallbackTimeout = animation ? extractDuration(animation) : 200, timeoutId = setTimeout(() => {
+          sendExitComplete?.();
+        }, fallbackTimeout), onFinishAnimation = /* @__PURE__ */ __name(() => {
+          clearTimeout(timeoutId), sendExitComplete?.();
+        }, "onFinishAnimation");
+        return node.addEventListener("transitionend", onFinishAnimation), node.addEventListener("transitioncancel", onFinishAnimation), () => {
+          clearTimeout(timeoutId), node.removeEventListener("transitionend", onFinishAnimation), node.removeEventListener("transitioncancel", onFinishAnimation);
+        };
+      }, [sendExitComplete, isExiting]), animation && (Array.isArray(style.transform) && (style.transform = (0, import_web2.transformsToString)(style.transform)), style.transition = keys.map((key) => {
+        const override = animations[animationConfig?.[key]] ?? animation;
+        return `${key} ${override}`;
+      }).join(", ")), process.env.NODE_ENV === "development" && props.debug === "verbose" && console.info("CSS animation", {
+        props,
+        animations,
+        animation,
+        animationKey,
+        style,
+        isEntering,
+        isExiting
+      }), animation ? {
+        style,
+        className: isEntering ? "t_unmounted" : ""
+      } : null;
+    }, "useAnimations")
+  };
 }
-__name(objectFromEntries3, "objectFromEntries");
-function objectKeys2(obj) {
-  return Object.keys(obj);
-}
-__name(objectKeys2, "objectKeys");
+__name(createAnimations, "createAnimations");
+
+// node_modules/@tamagui/config/dist/esm/animationsCSS.mjs
+var smoothBezier = "cubic-bezier(0.215, 0.610, 0.355, 1.000)";
+var animationsCSS = createAnimations({
+  "75ms": "ease-in 75ms",
+  "100ms": "ease-in 100ms",
+  "200ms": "ease-in 200ms",
+  bouncy: "ease-in 200ms",
+  superBouncy: "ease-in 500ms",
+  lazy: "ease-in 1000ms",
+  medium: "ease-in 300ms",
+  slow: "ease-in 500ms",
+  quick: `${smoothBezier} 400ms`,
+  quicker: `${smoothBezier} 300ms`,
+  quickest: `${smoothBezier} 200ms`,
+  tooltip: "ease-in 400ms"
+});
 
 // node_modules/@tamagui/font-inter/dist/esm/index.mjs
 var import_core = require("@tamagui/core");
 var createInterFont = /* @__PURE__ */ __name((font = {}, {
-  sizeLineHeight = /* @__PURE__ */ __name((size4) => size4 + 10, "sizeLineHeight"),
-  sizeSize = /* @__PURE__ */ __name((size4) => size4 * 1, "sizeSize")
+  sizeLineHeight = /* @__PURE__ */ __name((size3) => size3 + 10, "sizeLineHeight"),
+  sizeSize = /* @__PURE__ */ __name((size3) => size3 * 1, "sizeSize")
 } = {}) => {
-  const size4 = Object.fromEntries(Object.entries({
+  const size3 = Object.fromEntries(Object.entries({
     ...defaultSizes,
     ...font.size
   }).map(([k, v]) => [k, sizeSize(+v)]));
   return (0, import_core.createFont)({
     family: import_core.isWeb ? 'Inter, -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif' : "Inter",
-    lineHeight: Object.fromEntries(Object.entries(size4).map(([k, v]) => [k, sizeLineHeight((0, import_core.getVariableValue)(v))])),
+    lineHeight: Object.fromEntries(Object.entries(size3).map(([k, v]) => [k, sizeLineHeight((0, import_core.getVariableValue)(v))])),
     weight: {
       4: "300"
     },
@@ -2134,7 +2086,7 @@ var createInterFont = /* @__PURE__ */ __name((font = {}, {
       4: 0
     },
     ...font,
-    size: size4
+    size: size3
   });
 }, "createInterFont");
 var defaultSizes = {
@@ -2161,8 +2113,8 @@ var defaultSizes = {
 var import_core2 = require("@tamagui/core");
 var createSilkscreenFont = /* @__PURE__ */ __name((font = {}) => (0, import_core2.createFont)({
   family: import_core2.isWeb ? "Silkscreen, Fira Code, Monaco, Consolas, Ubuntu Mono, monospace" : "Silkscreen",
-  size: size3,
-  lineHeight: Object.fromEntries(Object.entries(font.size || size3).map(([k, v]) => [k, typeof v == "number" ? Math.round(v * 1.2 + 6) : v])),
+  size: size2,
+  lineHeight: Object.fromEntries(Object.entries(font.size || size2).map(([k, v]) => [k, typeof v == "number" ? Math.round(v * 1.2 + 6) : v])),
   weight: {
     4: "300"
   },
@@ -2176,7 +2128,7 @@ var createSilkscreenFont = /* @__PURE__ */ __name((font = {}) => (0, import_core
   },
   ...font
 }), "createSilkscreenFont");
-var size3 = {
+var size2 = {
   1: 11,
   2: 12,
   3: 13,
@@ -2196,7 +2148,7 @@ var size3 = {
 };
 
 // node_modules/@tamagui/config/dist/esm/createGenericFont.mjs
-var import_web4 = require("@tamagui/core");
+var import_web3 = require("@tamagui/core");
 var genericFontSizes = {
   1: 10,
   2: 11,
@@ -2218,11 +2170,11 @@ var genericFontSizes = {
 function createGenericFont(family, font = {}, {
   sizeLineHeight = /* @__PURE__ */ __name((val) => val * 1.35, "sizeLineHeight")
 } = {}) {
-  const size4 = font.size || genericFontSizes;
-  return (0, import_web4.createFont)({
+  const size3 = font.size || genericFontSizes;
+  return (0, import_web3.createFont)({
     family,
-    size: size4,
-    lineHeight: Object.fromEntries(Object.entries(size4).map(([k, v]) => [k, sizeLineHeight(+v)])),
+    size: size3,
+    lineHeight: Object.fromEntries(Object.entries(size3).map(([k, v]) => [k, sizeLineHeight(+v)])),
     weight: {
       0: "300"
     },
@@ -2279,7 +2231,7 @@ var headingFont = createInterFont({
     }
   }
 }, {
-  sizeLineHeight: /* @__PURE__ */ __name((size4) => Math.round(size4 * 1.1 + (size4 < 30 ? 10 : 5)), "sizeLineHeight")
+  sizeLineHeight: /* @__PURE__ */ __name((size3) => Math.round(size3 * 1.1 + (size3 < 30 ? 10 : 5)), "sizeLineHeight")
 });
 var bodyFont = createInterFont({
   weight: {
@@ -2287,8 +2239,8 @@ var bodyFont = createInterFont({
     7: "600"
   }
 }, {
-  sizeSize: /* @__PURE__ */ __name((size4) => Math.round(size4), "sizeSize"),
-  sizeLineHeight: /* @__PURE__ */ __name((size4) => Math.round(size4 * 1.1 + (size4 >= 12 ? 8 : 4)), "sizeLineHeight")
+  sizeSize: /* @__PURE__ */ __name((size3) => Math.round(size3), "sizeSize"),
+  sizeLineHeight: /* @__PURE__ */ __name((size3) => Math.round(size3 * 1.1 + (size3 >= 12 ? 8 : 4)), "sizeLineHeight")
 });
 var monoFont = createGenericFont('"ui-monospace", "SFMono-Regular", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace', {
   weight: {
@@ -2369,38 +2321,37 @@ var mediaQueryDefaultActive = {
   xxs: false
 };
 
-// node_modules/@tamagui/config/dist/esm/v2-base.mjs
+// node_modules/@tamagui/config/dist/esm/v3.mjs
+globalThis.global ||= globalThis;
+var selectionStyles = /* @__PURE__ */ __name((theme) => theme.color5 ? {
+  backgroundColor: theme.color5,
+  color: theme.color11
+} : null, "selectionStyles");
+var themes2 = process.env.TAMAGUI_OPTIMIZE_THEMES === "true" ? {} : themes;
 var config = {
-  themes,
+  animations: animationsCSS,
+  themes: themes2,
   media,
   shorthands,
-  tokens,
+  tokens: tokens2,
   fonts,
-  selectionStyles: /* @__PURE__ */ __name((theme) => theme.color5 ? {
-    backgroundColor: theme.color5,
-    color: theme.color11
-  } : null, "selectionStyles"),
+  selectionStyles,
   settings: {
+    mediaQueryDefaultActive,
     defaultFont: "body",
+    fastSchemeChange: true,
     shouldAddPrefersColorThemes: true,
-    themeClassNameOnRoot: true,
-    mediaQueryDefaultActive
+    themeClassNameOnRoot: true
   }
-};
-
-// node_modules/@tamagui/config/dist/esm/v2.mjs
-var config2 = {
-  ...config,
-  animations
 };
 
 // node_modules/tamagui/dist/esm/createTamagui.mjs
 var import_core3 = require("@tamagui/core");
 var createTamagui = process.env.NODE_ENV !== "development" ? import_core3.createTamagui : (conf) => {
-  const sizeTokenKeys = ["$true"], hasKeys = /* @__PURE__ */ __name((expectedKeys, obj) => expectedKeys.every((k) => typeof obj[k] < "u"), "hasKeys"), tamaguiConfig = (0, import_core3.createTamagui)(conf);
+  const sizeTokenKeys = ["$true"], hasKeys = /* @__PURE__ */ __name((expectedKeys, obj) => expectedKeys.every((k) => typeof obj[k] < "u"), "hasKeys"), tamaguiConfig2 = (0, import_core3.createTamagui)(conf);
   for (const name of ["size", "space"]) {
-    const tokenSet = tamaguiConfig.tokensParsed[name];
-    if (!tokenSet) throw new Error(`Expected tokens for "${name}" in ${Object.keys(tamaguiConfig.tokensParsed).join(", ")}`);
+    const tokenSet = tamaguiConfig2.tokensParsed[name];
+    if (!tokenSet) throw new Error(`Expected tokens for "${name}" in ${Object.keys(tamaguiConfig2.tokensParsed).join(", ")}`);
     if (!hasKeys(sizeTokenKeys, tokenSet)) throw new Error(`
 createTamagui() missing expected tokens.${name}:
 
@@ -2422,9 +2373,9 @@ size: {
 
 `);
   }
-  const expected = Object.keys(tamaguiConfig.tokensParsed.size);
+  const expected = Object.keys(tamaguiConfig2.tokensParsed.size);
   for (const name of ["radius", "zIndex"]) {
-    const tokenSet = tamaguiConfig.tokensParsed[name], received = Object.keys(tokenSet);
+    const tokenSet = tamaguiConfig2.tokensParsed[name], received = Object.keys(tokenSet);
     if (!received.some((rk) => expected.includes(rk))) throw new Error(`
 createTamagui() invalid tokens.${name}:
 
@@ -2434,8 +2385,9 @@ Expected a subset of: ${expected.join(", ")}
 
 `);
   }
-  return tamaguiConfig;
+  return tamaguiConfig2;
 };
 
 // tamagui.config.ts
-var tamagui_config_default = createTamagui(config2);
+var tamaguiConfig = createTamagui(config);
+var tamagui_config_default = tamaguiConfig;

@@ -45,6 +45,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [state, setState] = useState<AuthState>({
     user: null,
     role: null,
+    roleUpdatedAtMs: 0,
     loading: true,
     error: null,
   });
@@ -68,10 +69,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
           .doc(user.uid)
           .onSnapshot(
             (doc) => {
-              const role = doc.exists ? ((doc.data()?.role as Role) || 'user') : 'user';
+              const data = doc.data();
+              const role = doc.exists ? ((data?.role as Role) || 'user') : 'user';
+              const roleUpdatedAtMs = data?._roleUpdatedAtMs || 0;
+
               setState({
                 user,
                 role,
+                roleUpdatedAtMs,
                 loading: false,
                 error: null,
               });
@@ -82,6 +87,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               setState({
                 user,
                 role: 'user',
+                roleUpdatedAtMs: 0,
                 loading: false,
                 error: null,
               });
@@ -92,6 +98,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setState({
           user: null,
           role: null,
+          roleUpdatedAtMs: 0,
           loading: false,
           error: null,
         });

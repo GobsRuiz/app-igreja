@@ -1,3 +1,4 @@
+import { useRolePropagationCheck } from '@features/auth'
 import { onCategoriesChange, type Category } from '@features/categories'
 import {
   createEvent,
@@ -31,6 +32,8 @@ import {
 } from 'tamagui'
 
 export default function AdminEventsPage() {
+  const { isPropagating, timeRemaining } = useRolePropagationCheck()
+
   const [events, setEvents] = useState<Event[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [locations, setLocations] = useState<Location[]>([])
@@ -112,6 +115,17 @@ export default function AdminEventsPage() {
   }
 
   const handleSubmit = async () => {
+    // Bloquear se role foi recém-atualizada (janela de propagação de custom claims)
+    if (isPropagating) {
+      const secondsRemaining = Math.ceil(timeRemaining / 1000)
+
+      toast.warning('Aguarde...', {
+        description: `Suas permissões estão sendo sincronizadas. Tente novamente em ${secondsRemaining}s.`,
+      })
+
+      return
+    }
+
     setSubmitting(true)
 
     if (editingEvent) {
@@ -119,7 +133,7 @@ export default function AdminEventsPage() {
       const { error } = await updateEvent(editingEvent.id, formData)
 
       if (error) {
-        toast.error(error)
+        toast.error('Erro ao atualizar evento', { description: error })
         setSubmitting(false)
         return
       }
@@ -130,7 +144,7 @@ export default function AdminEventsPage() {
       const { error } = await createEvent(formData)
 
       if (error) {
-        toast.error(error)
+        toast.error('Erro ao criar evento', { description: error })
         setSubmitting(false)
         return
       }

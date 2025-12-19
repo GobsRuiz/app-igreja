@@ -64,6 +64,14 @@ export async function createEvent(
   } catch (error: any) {
     console.error('[EventService] Erro ao criar evento:', error)
 
+    // Mensagem amigável para erro de permissão
+    if (error?.code === 'permission-denied' || error?.message?.includes('administradores')) {
+      return {
+        event: null,
+        error: 'Você não tem permissão para criar eventos. Se você foi recentemente promovido a administrador, aguarde alguns segundos e tente novamente.',
+      }
+    }
+
     // Extrair mensagem de erro da Cloud Function
     const errorMessage = error?.message || 'Erro ao criar evento'
     return { event: null, error: errorMessage }
