@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { YStack, XStack, Text, Spinner } from 'tamagui'
-import { Button, EmptyState } from '@shared/ui'
+import { Button, EmptyState, toast } from '@shared/ui'
 import { FlashList } from '@shopify/flash-list'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { SlidersHorizontal, Calendar } from '@tamagui/lucide-icons'
-import { toast } from 'sonner-native'
 
 import { useEventStore, selectFilteredEvents } from '@shared/store'
 import { EventCard } from '@/src/components/EventCard'

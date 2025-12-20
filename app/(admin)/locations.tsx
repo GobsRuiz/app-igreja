@@ -5,14 +5,11 @@ import {
   Text,
   Input,
   ScrollView,
-  Spinner,
-  Sheet,
 } from 'tamagui'
-import { Button, Card, EmptyState, MaskedInput } from '@shared/ui'
+import { Button, Card, EmptyState, MaskedInput, AdminLoadingState, AdminActionButtons, BottomSheetModal, toast } from '@shared/ui'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Plus, Pencil, Trash2, X, MapPin } from '@tamagui/lucide-icons'
+import { Plus, X, MapPin } from '@tamagui/lucide-icons'
 import { Alert } from 'react-native'
-import { toast } from 'sonner-native'
 import {
   onLocationsChange,
   createLocation,
@@ -39,6 +36,9 @@ export default function LocationsPage() {
     zipCode: '',
   })
   const [submitting, setSubmitting] = useState(false)
+
+  // Processing state for action buttons
+  const [processingId, setProcessingId] = useState<string | null>(null)
 
   // Memoized handlers for StateCitySelect to prevent infinite loops
   const handleStateChange = useCallback((state: string) => {
@@ -73,6 +73,7 @@ export default function LocationsPage() {
   }
 
   const handleOpenEdit = (location: Location) => {
+    setProcessingId(location.id)
     setEditingLocation(location)
     setFormData({
       name: location.name,
@@ -82,6 +83,7 @@ export default function LocationsPage() {
       zipCode: location.zipCode || '',
     })
     setSheetOpen(true)
+    setProcessingId(null)
   }
 
   const handleClose = () => {
@@ -127,11 +129,14 @@ export default function LocationsPage() {
   }
 
   const handleDelete = async (location: Location) => {
+    setProcessingId(location.id)
+
     // Check if location is being used by events
     const { inUse, error: checkError } = await checkLocationInUse(location.id)
 
     if (checkError) {
       toast.error(checkError)
+      setProcessingId(null)
       return
     }
 
@@ -139,7 +144,7 @@ export default function LocationsPage() {
       Alert.alert(
         'Não é possível deletar',
         'Este local está sendo usado por eventos.\n\nRemova ou altere o local desses eventos antes de deletá-lo.',
-        [{ text: 'OK', style: 'default' }]
+        [{ text: 'OK', style: 'default', onPress: () => setProcessingId(null) }]
       )
       return
     }
@@ -148,7 +153,11 @@ export default function LocationsPage() {
       'Deletar Local',
       `Tem certeza que deseja deletar "${location.name}"?`,
       [
-        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+          onPress: () => setProcessingId(null),
+        },
         {
           text: 'Deletar',
           style: 'destructive',
@@ -160,6 +169,7 @@ export default function LocationsPage() {
             if (error) {
               toast.error(error)
               setLoading(false)
+              setProcessingId(null)
               return
             }
 
@@ -168,6 +178,7 @@ export default function LocationsPage() {
             // Wait for listener to update data
             setTimeout(() => {
               setLoading(false)
+              setProcessingId(null)
             }, 300)
           },
         },
@@ -194,9 +205,7 @@ export default function LocationsPage() {
 
         {/* Lista ou Loading */}
         {loading ? (
-          <YStack flex={1} alignItems="center" justifyContent="center">
-            <Spinner size="large" color="$color12" />
-          </YStack>
+          <AdminLoadingState />
         ) : locations.length === 0 ? (
           <EmptyState
             icon={<MapPin size={48} color="$foreground" />}
@@ -236,20 +245,12 @@ export default function LocationsPage() {
                       </YStack>
                     </XStack>
 
-                    <XStack gap="$2">
-                      <Button
-                        variant="outlined"
-                        icon={Pencil}
-                        onPress={() => handleOpenEdit(location)}
-                        circular
-                      />
-                      <Button
-                        variant="danger"
-                        icon={Trash2}
-                        onPress={() => handleDelete(location)}
-                        circular
-                      />
-                    </XStack>
+                    <AdminActionButtons
+                      disabled={loading || submitting || sheetOpen}
+                      isProcessing={processingId === location.id}
+                      onEdit={() => handleOpenEdit(location)}
+                      onDelete={() => handleDelete(location)}
+                    />
                   </XStack>
                 </Card>
               ))}
@@ -257,115 +258,108 @@ export default function LocationsPage() {
           </ScrollView>
         )}
 
-        {/* Sheet Create/Edit */}
-        <Sheet
-          modal
-          open={sheetOpen}
-          onOpenChange={setSheetOpen}
-          snapPoints={[85]}
-          dismissOnSnapToBottom
+        {/* Modal Create/Edit */}
+        <BottomSheetModal
+          isOpen={sheetOpen}
+          onClose={handleClose}
+          size="large"
+          header={
+            <Text fontSize="$7" fontWeight="700" color="$foreground">
+              {editingLocation ? 'Editar Local' : 'Novo Local'}
+            </Text>
+          }
+          footer={
+            <XStack gap="$3">
+              <Button
+                flex={1}
+                variant="outlined"
+                icon={X}
+                onPress={handleClose}
+                disabled={submitting}
+                opacity={submitting ? 0.5 : 1}
+              >
+                Cancelar
+              </Button>
+
+              <Button
+                flex={1}
+                variant="primary"
+                onPress={handleSubmit}
+                disabled={
+                  submitting ||
+                  !formData.name.trim() ||
+                  !formData.address.trim() ||
+                  !formData.city.trim() ||
+                  !formData.state.trim()
+                }
+                opacity={
+                  submitting ||
+                  !formData.name.trim() ||
+                  !formData.address.trim() ||
+                  !formData.city.trim() ||
+                  !formData.state.trim()
+                    ? 0.5
+                    : 1
+                }
+              >
+                {submitting ? 'Salvando...' : editingLocation ? 'Atualizar' : 'Criar'}
+              </Button>
+            </XStack>
+          }
+          contentContainerProps={{ padding: '$4', gap: '$4' }}
         >
-          <Sheet.Overlay />
-          <Sheet.Frame padding="$4" backgroundColor="$background">
-            <Sheet.Handle />
-            <YStack gap="$4">
-              <Text fontSize="$7" fontWeight="700" color="$foreground">
-                {editingLocation ? 'Editar Local' : 'Novo Local'}
+          <YStack gap="$4">
+            {/* Nome */}
+            <YStack gap="$2">
+              <Text fontSize="$3" fontWeight="600" color="$color11">
+                Nome *
               </Text>
-
-              <ScrollView showsVerticalScrollIndicator={false}>
-                <YStack gap="$4">
-                  {/* Nome */}
-                  <YStack gap="$2">
-                    <Text fontSize="$3" fontWeight="600" color="$color11">
-                      Nome *
-                    </Text>
-                    <Input
-                      size="$4"
-                      placeholder="Ex: Igreja Central, Templo Norte..."
-                      value={formData.name}
-                      onChangeText={(text) => setFormData({ ...formData, name: text })}
-                    />
-                  </YStack>
-
-                  {/* Endereço */}
-                  <YStack gap="$2">
-                    <Text fontSize="$3" fontWeight="600" color="$color11">
-                      Endereço *
-                    </Text>
-                    <Input
-                      size="$4"
-                      placeholder="Rua, número, bairro"
-                      value={formData.address}
-                      onChangeText={(text) => setFormData({ ...formData, address: text })}
-                    />
-                  </YStack>
-
-                  {/* Estado e Cidade */}
-                  <StateCitySelect
-                    stateValue={formData.state}
-                    cityValue={formData.city}
-                    onStateChange={handleStateChange}
-                    onCityChange={handleCityChange}
-                  />
-
-                  {/* CEP */}
-                  <YStack gap="$2">
-                    <Text fontSize="$3" fontWeight="600" color="$color11">
-                      CEP (opcional)
-                    </Text>
-                    <MaskedInput
-                      preset="CEP"
-                      placeholder="00000-000"
-                      value={formData.zipCode}
-                      onChangeText={(masked, unmasked) =>
-                        setFormData({ ...formData, zipCode: unmasked || '' })
-                      }
-                      keyboardType="numeric"
-                    />
-                  </YStack>
-                </YStack>
-              </ScrollView>
-
-              <XStack gap="$3" marginTop="$4">
-                <Button
-                  flex={1}
-                  variant="outlined"
-                  icon={X}
-                  onPress={handleClose}
-                  disabled={submitting}
-                  opacity={submitting ? 0.5 : 1}
-                >
-                  Cancelar
-                </Button>
-
-                <Button
-                  flex={1}
-                  variant="primary"
-                  onPress={handleSubmit}
-                  disabled={
-                    submitting ||
-                    !formData.name.trim() ||
-                    !formData.address.trim() ||
-                    !formData.city.trim() ||
-                    !formData.state.trim()
-                  }
-                  opacity={
-                    submitting ||
-                    !formData.name.trim() ||
-                    !formData.address.trim() ||
-                    !formData.city.trim() ||
-                    !formData.state.trim()
-                      ? 0.5
-                      : 1
-                  }
-                >
-                  {submitting ? 'Salvando...' : editingLocation ? 'Atualizar' : 'Criar'}
-                </Button>
-              </XStack>
+              <Input
+                size="$4"
+                placeholder="Ex: Igreja Central, Templo Norte..."
+                value={formData.name}
+                onChangeText={(text) => setFormData({ ...formData, name: text })}
+              />
             </YStack>
-          </Sheet.Frame>
-        </Sheet>
+
+            {/* Endereço */}
+            <YStack gap="$2">
+              <Text fontSize="$3" fontWeight="600" color="$color11">
+                Endereço *
+              </Text>
+              <Input
+                size="$4"
+                placeholder="Rua, número, bairro"
+                value={formData.address}
+                onChangeText={(text) => setFormData({ ...formData, address: text })}
+              />
+            </YStack>
+
+            {/* Estado e Cidade */}
+            <StateCitySelect
+              stateValue={formData.state}
+              cityValue={formData.city}
+              onStateChange={handleStateChange}
+              onCityChange={handleCityChange}
+            />
+
+            {/* CEP */}
+            <YStack gap="$2">
+              <Text fontSize="$3" fontWeight="600" color="$color11">
+                CEP (opcional)
+              </Text>
+              <MaskedInput
+                preset="CEP"
+                placeholder="00000-000"
+                value={formData.zipCode}
+                onChangeText={(masked, unmasked) =>
+                  setFormData({ ...formData, zipCode: unmasked || '' })
+                }
+                keyboardType="numeric"
+              />
+            </YStack>
+          </YStack>
+        </BottomSheetModal>
       </YStack>
     </SafeAreaView>
   )

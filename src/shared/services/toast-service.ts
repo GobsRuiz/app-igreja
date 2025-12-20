@@ -1,4 +1,4 @@
-import { toast } from 'sonner-native'
+import { toast } from '@shared/ui'
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning'
 

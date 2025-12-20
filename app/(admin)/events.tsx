@@ -11,20 +11,17 @@ import {
 } from '@features/events'
 import { onLocationsChange, type Location } from '@features/locations'
 import DateTimePicker from '@react-native-community/datetimepicker'
-import { Button, Card, EmptyState } from '@shared/ui'
-import { AlertCircle, Calendar, Eye, MapPin, Pencil, Plus, Tag, Trash2, X } from '@tamagui/lucide-icons'
+import { Button, Card, EmptyState, AdminLoadingState, AdminActionButtons, BottomSheetModal, toast } from '@shared/ui'
+import { AlertCircle, Calendar, Eye, MapPin, Plus, Tag, X } from '@tamagui/lucide-icons'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import React, { useEffect, useState } from 'react'
 import { Alert, Platform } from 'react-native'
 import { Dropdown } from 'react-native-element-dropdown'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { toast } from 'sonner-native'
 import {
   Input,
   ScrollView,
-  Sheet,
-  Spinner,
   Text,
   TextArea,
   XStack,
@@ -50,6 +47,9 @@ export default function AdminEventsPage() {
     locationId: '',
   })
   const [submitting, setSubmitting] = useState(false)
+
+  // Processing state for action buttons
+  const [processingId, setProcessingId] = useState<string | null>(null)
 
   // Date picker
   const [showDatePicker, setShowDatePicker] = useState(false)
@@ -98,6 +98,7 @@ export default function AdminEventsPage() {
   }
 
   const handleOpenEdit = (event: Event) => {
+    setProcessingId(event.id)
     setEditingEvent(event)
     setFormData({
       title: event.title,
@@ -108,6 +109,7 @@ export default function AdminEventsPage() {
       status: event.status,
     })
     setSheetOpen(true)
+    setProcessingId(null)
   }
 
   const handleClose = () => {
@@ -163,8 +165,13 @@ export default function AdminEventsPage() {
   }
 
   const handleDelete = (event: Event) => {
+    setProcessingId(event.id)
     Alert.alert('Deletar Evento', `Tem certeza que deseja deletar "${event.title}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Cancelar',
+        style: 'cancel',
+        onPress: () => setProcessingId(null),
+      },
       {
         text: 'Deletar',
         style: 'destructive',
@@ -176,6 +183,7 @@ export default function AdminEventsPage() {
           if (error) {
             toast.error(error)
             setLoading(false)
+            setProcessingId(null)
             return
           }
 
@@ -184,6 +192,7 @@ export default function AdminEventsPage() {
           // Wait for listener to update data
           setTimeout(() => {
             setLoading(false)
+            setProcessingId(null)
           }, 300)
         },
       },
@@ -225,9 +234,7 @@ export default function AdminEventsPage() {
 
         {/* Lista ou Loading */}
         {loading ? (
-          <YStack flex={1} alignItems="center" justifyContent="center">
-            <Spinner size="large" color="$color12" />
-          </YStack>
+          <AdminLoadingState />
         ) : events.length === 0 ? (
           categories.length === 0 || locations.length === 0 ? (
             <EmptyState
@@ -265,20 +272,12 @@ export default function AdminEventsPage() {
                         </Text>
                       </YStack>
 
-                      <XStack gap="$2">
-                        <Button
-                          variant="outlined"
-                          icon={event.status === 'finished' ? Eye : Pencil}
-                          onPress={() => handleOpenEdit(event)}
-                          circular
-                        />
-                        <Button
-                          variant="danger"
-                          icon={Trash2}
-                          onPress={() => handleDelete(event)}
-                          circular
-                        />
-                      </XStack>
+                      <AdminActionButtons
+                        disabled={loading || submitting || sheetOpen}
+                        isProcessing={processingId === event.id}
+                        onEdit={() => handleOpenEdit(event)}
+                        onDelete={() => handleDelete(event)}
+                      />
                     </XStack>
 
                     {/* Info */}
@@ -342,28 +341,61 @@ export default function AdminEventsPage() {
           </ScrollView>
         )}
 
-        {/* Sheet Create/Edit */}
-        <Sheet
-          modal
-          open={sheetOpen}
-          onOpenChange={setSheetOpen}
-          snapPoints={[90]}
-          dismissOnSnapToBottom
-        >
-          <Sheet.Overlay />
-          <Sheet.Frame padding="$4" backgroundColor="$background">
-            <Sheet.Handle />
-            <YStack gap="$4">
-              <Text fontSize="$7" fontWeight="700" color="$foreground">
-                {editingEvent
-                  ? editingEvent.status === 'finished'
-                    ? 'Visualizar Evento'
-                    : 'Editar Evento'
-                  : 'Novo Evento'}
-              </Text>
+        {/* Modal Create/Edit */}
+        <BottomSheetModal
+          isOpen={sheetOpen}
+          onClose={handleClose}
+          size="large"
+          header={
+            <Text fontSize="$7" fontWeight="700" color="$foreground">
+              {editingEvent
+                ? editingEvent.status === 'finished'
+                  ? 'Visualizar Evento'
+                  : 'Editar Evento'
+                : 'Novo Evento'}
+            </Text>
+          }
+          footer={
+            <XStack gap="$3">
+              <Button
+                flex={editingEvent?.status === 'finished' ? 1 : 1}
+                variant="outlined"
+                icon={X}
+                onPress={handleClose}
+                disabled={submitting}
+                opacity={submitting ? 0.5 : 1}
+              >
+                {editingEvent?.status === 'finished' ? 'Fechar' : 'Cancelar'}
+              </Button>
 
-              <ScrollView showsVerticalScrollIndicator={false}>
-                <YStack gap="$4">
+              {editingEvent?.status !== 'finished' && (
+                <Button
+                  flex={1}
+                  variant="primary"
+                  onPress={handleSubmit}
+                  disabled={
+                    submitting ||
+                    !formData.title.trim() ||
+                    !formData.categoryId ||
+                    !formData.locationId
+                  }
+                  opacity={
+                    submitting ||
+                    !formData.title.trim() ||
+                    !formData.categoryId ||
+                    !formData.locationId
+                      ? 0.5
+                      : 1
+                  }
+                >
+                  {submitting ? 'Salvando...' : editingEvent ? 'Atualizar' : 'Criar'}
+                </Button>
+              )}
+            </XStack>
+          }
+          contentContainerProps={{ padding: '$4', gap: '$4' }}
+        >
+          <YStack gap="$4">
                   {/* Título */}
                   <YStack gap="$2">
                     <Text fontSize="$3" fontWeight="600" color="$color11">
@@ -498,48 +530,8 @@ export default function AdminEventsPage() {
                       />
                     </YStack>
                   )}
-                </YStack>
-              </ScrollView>
-
-              <XStack gap="$3" marginTop="$4">
-                <Button
-                  flex={editingEvent?.status === 'finished' ? 1 : 1}
-                  variant="outlined"
-                  icon={X}
-                  onPress={handleClose}
-                  disabled={submitting}
-                  opacity={submitting ? 0.5 : 1}
-                >
-                  {editingEvent?.status === 'finished' ? 'Fechar' : 'Cancelar'}
-                </Button>
-
-                {editingEvent?.status !== 'finished' && (
-                  <Button
-                    flex={1}
-                    variant="primary"
-                    onPress={handleSubmit}
-                    disabled={
-                      submitting ||
-                      !formData.title.trim() ||
-                      !formData.categoryId ||
-                      !formData.locationId
-                    }
-                    opacity={
-                      submitting ||
-                      !formData.title.trim() ||
-                      !formData.categoryId ||
-                      !formData.locationId
-                        ? 0.5
-                        : 1
-                    }
-                  >
-                    {submitting ? 'Salvando...' : editingEvent ? 'Atualizar' : 'Criar'}
-                  </Button>
-                )}
-              </XStack>
-            </YStack>
-          </Sheet.Frame>
-        </Sheet>
+          </YStack>
+        </BottomSheetModal>
 
         {/* Date Picker */}
         {showDatePicker && (

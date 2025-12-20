@@ -3,14 +3,13 @@
  * Página única que alterna entre Login e Cadastro
  */
 
+import { useAuth } from '@features/auth';
+import { Button, toast } from '@shared/ui';
+import { Eye, EyeOff, Lock, Mail } from '@tamagui/lucide-icons';
 import { useState } from 'react';
-import { YStack, XStack, Card, Input, Text, Separator } from 'tamagui';
-import { Button } from '@shared/ui';
-import { Mail, Lock, Eye, EyeOff } from '@tamagui/lucide-icons';
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { toast } from 'sonner-native';
-import { useAuth } from '@features/auth';
+import { Card, Input, Separator, Text, XStack, YStack } from 'tamagui';
 
 type AuthMode = 'login' | 'signup';
 
@@ -48,7 +47,6 @@ export default function AuthScreen() {
       }
 
       // Sucesso - _layout.tsx fará o redirect automaticamente
-      toast.success('Login realizado!');
     } else {
       const { error } = await signUp(email, password, confirmPassword);
 
@@ -58,7 +56,6 @@ export default function AuthScreen() {
       }
 
       // Sucesso - _layout.tsx fará o redirect automaticamente
-      toast.success('Cadastro realizado!');
     }
   };
 
@@ -184,10 +181,12 @@ export default function AuthScreen() {
                   paddingLeft="$3"
                 />
                 <Button
-                  unstyled
+                  variant="transparent"
                   onPress={() => setShowPassword(!showPassword)}
                   padding="$2"
                   disabled={loading}
+                  paddingHorizontal="$0"
+                  paddingVertical="$0"
                 >
                   {showPassword ? (
                     <EyeOff size={18} color="$color11" />
@@ -227,10 +226,12 @@ export default function AuthScreen() {
                     paddingLeft="$3"
                   />
                   <Button
-                    unstyled
+                    variant="transparent"
                     onPress={() => setShowConfirmPassword(!showConfirmPassword)}
                     padding="$2"
                     disabled={loading}
+                     paddingHorizontal="$0"
+                    paddingVertical="$0"
                   >
                     {showConfirmPassword ? (
                       <EyeOff size={18} color="$color11" />
@@ -257,14 +258,16 @@ export default function AuthScreen() {
           </Button>
 
           {/* Link alternativo */}
-          <XStack justifyContent="center" gap="$2" marginTop="$2">
+          <XStack justifyContent="center" alignItems="center" gap="$2" marginTop="$2">
             <Text fontSize="$3" color="$color11">
               {isLoginMode ? 'Não tem uma conta?' : 'Já tem uma conta?'}
             </Text>
             <Button
-              unstyled
+              variant="transparent"
               onPress={toggleMode}
               disabled={loading}
+              paddingHorizontal="$0"
+              paddingVertical="$0"
             >
               <Text fontSize="$3" fontWeight="600" color="$color12">
                 {isLoginMode ? 'Cadastre-se' : 'Faça login'}

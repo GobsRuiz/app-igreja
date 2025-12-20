@@ -1,8 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { StyleSheet } from 'react-native'
-import { BottomSheetModal, BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet'
+import { useState } from 'react'
 import { YStack, XStack, Text, Separator } from 'tamagui'
-import { Button } from '@shared/ui'
+import { BottomSheetModal, Button } from '@shared/ui'
 import { Calendar, Clock, MapPin, User, Star, Bell, Map } from '@tamagui/lucide-icons'
 import { Event } from '@shared/types/event'
 import { Formatters } from '@shared/utils/formatters'
@@ -19,8 +17,6 @@ interface EventDetailModalProps {
 }
 
 export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalProps) {
-  const bottomSheetRef = useRef<BottomSheetModal>(null)
-  const snapPoints = useMemo(() => ['50%', '90%', '95%'], [])
   const [isTogglingNotification, setIsTogglingNotification] = useState(false)
 
   const toggleFavorite = useEventStore((state) => state.toggleFavorite)
@@ -28,21 +24,9 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
 
   // Busca o evento atualizado diretamente do allEvents para garantir reatividade
   const eventFromStore = useEventStore((state) =>
-    event ? state.allEvents.find(e => e.id === event.id) : undefined
+    event ? state.allEvents.find((e) => e.id === event.id) : undefined
   )
   const displayEvent = eventFromStore || event
-
-  useEffect(() => {
-    if (isOpen && event) {
-      bottomSheetRef.current?.present()
-      // Abre em 90%
-      setTimeout(() => {
-        bottomSheetRef.current?.snapToIndex(1)
-      }, 100)
-    } else {
-      bottomSheetRef.current?.dismiss()
-    }
-  }, [isOpen, event])
 
   if (!displayEvent) return null
 
@@ -58,7 +42,11 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
     }
 
     try {
-      await MapService.openMapsWithAddress(displayEvent.zipCode, displayEvent.address, displayEvent.church)
+      await MapService.openMapsWithAddress(
+        displayEvent.zipCode,
+        displayEvent.address,
+        displayEvent.church
+      )
     } catch {
       ToastService.error('Não foi possível abrir o mapa')
     }
@@ -67,9 +55,7 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
   const handleFavoritePress = () => {
     const wasFavorite = displayEvent.isFavorite
     toggleFavorite(displayEvent.id)
-    ToastService.success(
-      wasFavorite ? 'Removido dos favoritos' : 'Adicionado aos favoritos'
-    )
+    ToastService.success(wasFavorite ? 'Removido dos favoritos' : 'Adicionado aos favoritos')
   }
 
   const handleNotificationPress = async () => {
@@ -110,168 +96,163 @@ export function EventDetailModal({ event, isOpen, onClose }: EventDetailModalPro
 
   return (
     <BottomSheetModal
-      ref={bottomSheetRef}
-      snapPoints={snapPoints}
-      enablePanDownToClose
-      onDismiss={onClose}
-      backdropComponent={(props) => (
-        <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
-      )}
+      isOpen={isOpen}
+      onClose={onClose}
+      snapPoints={['50%', '90%']}
+      initialSnapIndex={1}
+      contentContainerProps={{ padding: '$4', gap: '$4' }}
+      scrollContentContainerStyle={{ paddingBottom: 40 }}
     >
-      <BottomSheetScrollView contentContainerStyle={styles.contentContainer}>
-        <YStack padding="$4" gap="$4">
-          {/* Cabeçalho: Categoria + Título + Descrição */}
-          <YStack gap="$2">
-            {/* Badge do Tipo */}
-            {displayEvent.categoryName && (
-              <XStack>
-                <Text
-                  fontSize="$2"
-                  fontWeight="600"
-                  color="$color11"
-                  backgroundColor="$color3"
-                  paddingHorizontal="$2"
-                  paddingVertical="$1"
-                  borderRadius="$2"
-                >
-                  {displayEvent.categoryName}
-                </Text>
-              </XStack>
-            )}
-
-            {/* Título */}
-            <Text fontSize="$8" fontWeight="700" color="$color12">
-              {displayEvent.title}
-            </Text>
-
-            {/* Descrição */}
-            <Text fontSize="$4" color="$color11" lineHeight={22}>
-              {displayEvent.description}
-            </Text>
-          </YStack>
-
-          {/* Botões de Ação */}
-          <XStack gap="$2">
-            <Button
-              flex={1}
-              variant="primary"
-              icon={<Map size={16} color="$color1" />}
-              onPress={handleMapPress}
+      {/* Cabeçalho: Categoria + Título + Descrição */}
+      <YStack gap="$2">
+        {/* Badge do Tipo */}
+        {displayEvent.categoryName && (
+          <XStack>
+            <Text
+              fontSize="$2"
+              fontWeight="600"
+              color="$color11"
+              backgroundColor="$color3"
+              paddingHorizontal="$2"
+              paddingVertical="$1"
+              borderRadius="$2"
             >
-              Mapa
-            </Button>
-            {showFavoriteButton && (
-              <Button
-                flex={1}
-                variant={displayEvent.isFavorite ? 'primary' : 'outlined'}
-                icon={<Star size={16} color={displayEvent.isFavorite ? '$color1' : '$color11'} fill={displayEvent.isFavorite ? '$color1' : 'transparent'} />}
-                onPress={handleFavoritePress}
-              >
-                {displayEvent.isFavorite ? 'Favoritado' : 'Favoritar'}
-              </Button>
-            )}
-            {showNotificationButton && (
-              <Button
-                flex={1}
-                variant={displayEvent.isNotifying ? 'primary' : 'outlined'}
-                icon={Bell}
-                onPress={handleNotificationPress}
-                disabled={isTogglingNotification}
-                opacity={isTogglingNotification ? 0.5 : 1}
-              >
-                {displayEvent.isNotifying ? 'Notificará' : 'Notificar'}
-              </Button>
-            )}
+              {displayEvent.categoryName}
+            </Text>
           </XStack>
+        )}
 
-          <Separator />
+        {/* Título */}
+        <Text fontSize="$8" fontWeight="700" color="$color12">
+          {displayEvent.title}
+        </Text>
 
-          {/* Data e Hora */}
-          <YStack gap="$2">
-            <XStack gap="$2" alignItems="center">
-              <Calendar size={20} color="$color11" />
-              <Text fontSize="$4" fontWeight="600" color="$color12">
-                Data e Hora
-              </Text>
-            </XStack>
-            <YStack paddingLeft="$7" gap="$1">
-              <Text fontSize="$4" color="$color12">
-                {Formatters.formatDateFull(displayEvent.date)}
-              </Text>
-              <XStack gap="$2" alignItems="center">
-                <Clock size={16} color="$color11" />
-                <Text fontSize="$3" color="$color11">
-                  {displayEvent.time}
-                </Text>
-              </XStack>
-            </YStack>
-          </YStack>
+        {/* Descrição */}
+        <Text fontSize="$4" color="$color11" lineHeight={22}>
+          {displayEvent.description}
+        </Text>
+      </YStack>
 
-          <Separator />
+      {/* Botões de Ação */}
+      <XStack gap="$2">
+        <Button
+          flex={1}
+          variant="primary"
+          icon={<Map size={16} color="$color1" />}
+          onPress={handleMapPress}
+        >
+          Mapa
+        </Button>
+        {showFavoriteButton && (
+          <Button
+            flex={1}
+            variant={displayEvent.isFavorite ? 'primary' : 'outlined'}
+            icon={
+              <Star
+                size={16}
+                color={displayEvent.isFavorite ? '$color1' : '$color11'}
+                fill={displayEvent.isFavorite ? '$color1' : 'transparent'}
+              />
+            }
+            onPress={handleFavoritePress}
+          >
+            {displayEvent.isFavorite ? 'Favoritado' : 'Favoritar'}
+          </Button>
+        )}
+        {showNotificationButton && (
+          <Button
+            flex={1}
+            variant={displayEvent.isNotifying ? 'primary' : 'outlined'}
+            icon={Bell}
+            onPress={handleNotificationPress}
+            disabled={isTogglingNotification}
+            opacity={isTogglingNotification ? 0.5 : 1}
+          >
+            {displayEvent.isNotifying ? 'Notificará' : 'Notificar'}
+          </Button>
+        )}
+      </XStack>
 
-          {/* Local */}
-          <YStack gap="$2">
-            <XStack gap="$2" alignItems="center">
-              <MapPin size={20} color="$color11" />
-              <Text fontSize="$4" fontWeight="600" color="$color12">
-                Local
-              </Text>
-            </XStack>
-            <YStack paddingLeft="$7" gap="$1">
-              <Text fontSize="$4" color="$color12">
-                {displayEvent.church}
-              </Text>
-              <Text fontSize="$3" color="$color11">
-                {displayEvent.address}
-              </Text>
-              <Text fontSize="$3" color="$color11">
-                {displayEvent.city}, {displayEvent.state} - CEP {displayEvent.zipCode}
-              </Text>
-            </YStack>
-          </YStack>
+      <Separator />
 
-          {/* Regente - só exibe se tiver valor */}
-          {displayEvent.conductor && (
-            <>
-              <Separator />
-              <YStack gap="$2">
-                <XStack gap="$2" alignItems="center">
-                  <User size={20} color="$color11" />
-                  <Text fontSize="$4" fontWeight="600" color="$color12">
-                    Regente
-                  </Text>
-                </XStack>
-                <Text fontSize="$4" color="$color12" paddingLeft="$7">
-                  {displayEvent.conductor}
-                </Text>
-              </YStack>
-            </>
-          )}
-
-          {/* Anexos */}
-          {displayEvent.attachments.length > 0 && (
-            <>
-              <Separator />
-              <YStack gap="$2">
-                <Text fontSize="$4" fontWeight="600" color="$color12">
-                  Anexos
-                </Text>
-                {displayEvent.attachments.map((attachment, index) => (
-                  <Text key={index} fontSize="$3" color="$color11">
-                    {attachment.name || attachment}
-                  </Text>
-                ))}
-              </YStack>
-            </>
-          )}
+      {/* Data e Hora */}
+      <YStack gap="$2">
+        <XStack gap="$2" alignItems="center">
+          <Calendar size={20} color="$color11" />
+          <Text fontSize="$4" fontWeight="600" color="$color12">
+            Data e Hora
+          </Text>
+        </XStack>
+        <YStack paddingLeft="$7" gap="$1">
+          <Text fontSize="$4" color="$color12">
+            {Formatters.formatDateFull(displayEvent.date)}
+          </Text>
+          <XStack gap="$2" alignItems="center">
+            <Clock size={16} color="$color11" />
+            <Text fontSize="$3" color="$color11">
+              {displayEvent.time}
+            </Text>
+          </XStack>
         </YStack>
-      </BottomSheetScrollView>
+      </YStack>
+
+      <Separator />
+
+      {/* Local */}
+      <YStack gap="$2">
+        <XStack gap="$2" alignItems="center">
+          <MapPin size={20} color="$color11" />
+          <Text fontSize="$4" fontWeight="600" color="$color12">
+            Local
+          </Text>
+        </XStack>
+        <YStack paddingLeft="$7" gap="$1">
+          <Text fontSize="$4" color="$color12">
+            {displayEvent.church}
+          </Text>
+          <Text fontSize="$3" color="$color11">
+            {displayEvent.address}
+          </Text>
+          <Text fontSize="$3" color="$color11">
+            {displayEvent.city}, {displayEvent.state} - CEP {displayEvent.zipCode}
+          </Text>
+        </YStack>
+      </YStack>
+
+      {/* Regente - só exibe se tiver valor */}
+      {displayEvent.conductor && (
+        <>
+          <Separator />
+          <YStack gap="$2">
+            <XStack gap="$2" alignItems="center">
+              <User size={20} color="$color11" />
+              <Text fontSize="$4" fontWeight="600" color="$color12">
+                Regente
+              </Text>
+            </XStack>
+            <Text fontSize="$4" color="$color12" paddingLeft="$7">
+              {displayEvent.conductor}
+            </Text>
+          </YStack>
+        </>
+      )}
+
+      {/* Anexos */}
+      {displayEvent.attachments.length > 0 && (
+        <>
+          <Separator />
+          <YStack gap="$2">
+            <Text fontSize="$4" fontWeight="600" color="$color12">
+              Anexos
+            </Text>
+            {displayEvent.attachments.map((attachment, index) => (
+              <Text key={index} fontSize="$3" color="$color11">
+                {attachment.name || attachment}
+              </Text>
+            ))}
+          </YStack>
+        </>
+      )}
     </BottomSheetModal>
   )
 }
-
-const styles = StyleSheet.create({
-  contentContainer: {
-    paddingBottom: 40,
-  },
-})

@@ -2,7 +2,7 @@ import { forwardRef } from 'react'
 import { Button as TamaguiButton, ButtonProps as TamaguiButtonProps } from 'tamagui'
 import type { IconProps } from '@tamagui/helpers-icon'
 
-export type ButtonVariant = 'primary' | 'outlined' | 'ghost' | 'danger' | 'info' | 'success'
+export type ButtonVariant = 'primary' | 'outlined' | 'ghost' | 'danger' | 'info' | 'success' | 'transparent'
 
 export interface ButtonProps extends Omit<TamaguiButtonProps, 'variant' | 'backgroundColor' | 'color' | 'borderColor' | 'icon' | 'iconAfter'> {
   variant?: ButtonVariant
@@ -80,6 +80,17 @@ export const Button = forwardRef<any, ButtonProps>(
         },
         pressStyle: {
           backgroundColor: '$green9',
+        },
+      },
+      transparent: {
+        backgroundColor: 'transparent',
+        borderWidth: 0,
+        color: '$color12',
+        hoverStyle: {
+          opacity: 0.7,
+        },
+        pressStyle: {
+          opacity: 0.5,
         },
       },
     }

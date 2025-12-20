@@ -1,11 +1,10 @@
-import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView } from '@gorhom/bottom-sheet'
 import Slider from '@react-native-community/slider'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { Calendar, MapPin, Tag } from '@tamagui/lucide-icons'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Platform, StyleSheet } from 'react-native'
+import { useCallback, useEffect, useState } from 'react'
+import { Platform } from 'react-native'
 import { Text, useTheme, XStack, YStack } from 'tamagui'
-import { Button } from '@shared/ui'
+import { Button, BottomSheetModal } from '@shared/ui'
 
 import { useEventStore } from '@shared/store/use-event-store'
 import { useLocationStore } from '@shared/store/use-location-store'
@@ -19,8 +18,6 @@ interface FilterModalProps {
 }
 
 export function FilterModal({ isOpen, onClose }: FilterModalProps) {
-  const bottomSheetRef = useRef<BottomSheet>(null)
-  const snapPoints = useMemo(() => ['90%'], [])
   const theme = useTheme()
 
   // Store global
@@ -59,7 +56,7 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
   useEffect(() => {
     const unsubscribeCategories = onCategoriesChange(
       (data) => setCategories(data),
-      (error) => console.error('Erro ao carregar categorias:', error)
+      (error) => console.error('Error loading categories:', error)
     )
 
     return () => {
@@ -78,9 +75,6 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
       setLocalStartDate(startDate)
       setLocalEndDate(endDate)
       setLocalCategoryIds(new Set(selectedCategoryIds))
-      bottomSheetRef.current?.snapToIndex(0)
-    } else {
-      bottomSheetRef.current?.close()
     }
   }, [isOpen, userCity, userState, radiusKm, startDate, endDate, selectedCategoryIds])
 
@@ -114,7 +108,23 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
     })
 
     onClose()
-  }, [localCity, localRadius, localStartDate, localEndDate, localCategoryIds, selectedCity, radiusKm, startDate, endDate, selectedCategoryIds, setSelectedCity, setRadiusKm, setDateRange, toggleCategoryId, onClose])
+  }, [
+    localCity,
+    localRadius,
+    localStartDate,
+    localEndDate,
+    localCategoryIds,
+    selectedCity,
+    radiusKm,
+    startDate,
+    endDate,
+    selectedCategoryIds,
+    setSelectedCity,
+    setRadiusKm,
+    setDateRange,
+    toggleCategoryId,
+    onClose,
+  ])
 
   const handleClear = useCallback(() => {
     setLocalState('SP')
@@ -144,169 +154,145 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
   }
 
   return (
-    <BottomSheet
-      ref={bottomSheetRef}
-      snapPoints={snapPoints}
-      index={isOpen ? 0 : -1}
-      enablePanDownToClose
+    <BottomSheetModal
+      isOpen={isOpen}
       onClose={onClose}
-      backdropComponent={(props) => (
-        <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
-      )}
+      size="large"
+      header={
+        <Text fontSize="$6" fontWeight="700" color="$color12">
+          Filtros
+        </Text>
+      }
+      footer={
+        <XStack gap="$3">
+          <Button flex={1} variant="outlined" onPress={handleClear}>
+            Limpar
+          </Button>
+          <Button flex={1} variant="primary" onPress={handleApply}>
+            Aplicar
+          </Button>
+        </XStack>
+      }
+      contentContainerProps={{ padding: '$4', gap: '$5' }}
     >
-      <YStack flex={1}>
-        {/* Header */}
-        <YStack padding="$4" borderBottomWidth={1} borderBottomColor="$borderColor">
-          <Text fontSize="$6" fontWeight="700" color="$color12">
-            Filtros
+      {/* Localização */}
+      <YStack gap="$3">
+        <XStack gap="$2" alignItems="center">
+          <MapPin size={20} color="$color11" />
+          <Text fontSize="$4" fontWeight="600" color="$color12">
+            Localização
           </Text>
-        </YStack>
+        </XStack>
 
-        {/* Content */}
-        <BottomSheetScrollView contentContainerStyle={styles.scrollContent}>
-          <YStack padding="$4" gap="$5">
-            {/* Localização */}
-            <YStack gap="$3">
-              <XStack gap="$2" alignItems="center">
-                <MapPin size={20} color="$color11" />
-                <Text fontSize="$4" fontWeight="600" color="$color12">
-                  Localização
-                </Text>
-              </XStack>
+        <YStack gap="$3">
+          <StateCitySelect
+            stateValue={localState}
+            cityValue={localCity}
+            onStateChange={setLocalState}
+            onCityChange={setLocalCity}
+          />
 
-              <YStack gap="$3">
-                <StateCitySelect
-                  stateValue={localState}
-                  cityValue={localCity}
-                  onStateChange={setLocalState}
-                  onCityChange={setLocalCity}
-                />
-
-                <YStack gap="$1">
-                  <XStack justifyContent="space-between">
-                    <Text fontSize="$3" color="$color11">Raio de busca</Text>
-                    <Text fontSize="$3" fontWeight="600" color="$color12">{localRadius} km</Text>
-                  </XStack>
-                  <Slider
-                    style={{ width: '100%', height: 40 }}
-                    minimumValue={1}
-                    maximumValue={50}
-                    step={1}
-                    value={localRadius}
-                    onValueChange={setLocalRadius}
-                    minimumTrackTintColor="#333333"
-                    maximumTrackTintColor="#e5e5e5"
-                    thumbTintColor="#333333"
-                  />
-                </YStack>
-              </YStack>
-            </YStack>
-
-            {/* Período */}
-            <YStack gap="$3">
-              <XStack gap="$2" alignItems="center">
-                <Calendar size={20} color="$color11" />
-                <Text fontSize="$4" fontWeight="600" color="$color12">
-                  Período
-                </Text>
-              </XStack>
-
-              <XStack gap="$3">
-                <YStack flex={1} gap="$1">
-                  <Text fontSize="$3" color="$color11">Data início</Text>
-                  <Button
-                    variant="outlined"
-                    onPress={() => setShowStartPicker(true)}
-                  >
-                    {formatDateForDisplay(localStartDate)}
-                  </Button>
-                  {showStartPicker && (
-                    <DateTimePicker
-                      value={localStartDate || new Date()}
-                      mode="date"
-                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                      onChange={(_, date) => {
-                        setShowStartPicker(Platform.OS === 'ios')
-                        if (date) setLocalStartDate(date)
-                      }}
-                    />
-                  )}
-                </YStack>
-
-                <YStack flex={1} gap="$1">
-                  <Text fontSize="$3" color="$color11">Data fim</Text>
-                  <Button
-                    variant="outlined"
-                    onPress={() => setShowEndPicker(true)}
-                  >
-                    {formatDateForDisplay(localEndDate)}
-                  </Button>
-                  {showEndPicker && (
-                    <DateTimePicker
-                      value={localEndDate || new Date()}
-                      mode="date"
-                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                      onChange={(_, date) => {
-                        setShowEndPicker(Platform.OS === 'ios')
-                        if (date) setLocalEndDate(date)
-                      }}
-                    />
-                  )}
-                </YStack>
-              </XStack>
-            </YStack>
-
-            {/* Categorias */}
-            <YStack gap="$3">
-              <XStack gap="$2" alignItems="center">
-                <Tag size={20} color="$color11" />
-                <Text fontSize="$4" fontWeight="600" color="$color12">
-                  Categorias
-                </Text>
-              </XStack>
-
-              <XStack flexWrap="wrap" gap="$2">
-                {categories.map((category) => (
-                  <Button
-                    key={category.id}
-                    size="$3"
-                    variant="outlined"
-                    backgroundColor={localCategoryIds.has(category.id) ? '$color3' : 'transparent'}
-                    borderColor={localCategoryIds.has(category.id) ? '$color8' : '$borderColor'}
-                    color={localCategoryIds.has(category.id) ? '$color12' : '$color11'}
-                    onPress={() => handleToggleCategory(category.id)}
-                  >
-                    {category.name}
-                  </Button>
-                ))}
-              </XStack>
-            </YStack>
+          <YStack gap="$1">
+            <XStack justifyContent="space-between">
+              <Text fontSize="$3" color="$color11">
+                Raio de busca
+              </Text>
+              <Text fontSize="$3" fontWeight="600" color="$color12">
+                {localRadius} km
+              </Text>
+            </XStack>
+            <Slider
+              style={{ width: '100%', height: 40 }}
+              minimumValue={1}
+              maximumValue={50}
+              step={1}
+              value={localRadius}
+              onValueChange={setLocalRadius}
+              minimumTrackTintColor={theme.color12?.val || '#333333'}
+              maximumTrackTintColor={theme.borderColor?.val || '#e5e5e5'}
+              thumbTintColor={theme.color12?.val || '#333333'}
+            />
           </YStack>
-        </BottomSheetScrollView>
-
-        {/* Footer */}
-        <YStack
-          padding="$4"
-          borderTopWidth={1}
-          borderTopColor="$borderColor"
-          backgroundColor="$background"
-        >
-          <XStack gap="$3">
-            <Button flex={1} variant="outlined" onPress={handleClear}>
-              Limpar
-            </Button>
-            <Button flex={1} variant="primary" onPress={handleApply}>
-              Aplicar
-            </Button>
-          </XStack>
         </YStack>
       </YStack>
-    </BottomSheet>
+
+      {/* Período */}
+      <YStack gap="$3">
+        <XStack gap="$2" alignItems="center">
+          <Calendar size={20} color="$color11" />
+          <Text fontSize="$4" fontWeight="600" color="$color12">
+            Período
+          </Text>
+        </XStack>
+
+        <XStack gap="$3">
+          <YStack flex={1} gap="$1">
+            <Text fontSize="$3" color="$color11">
+              Data início
+            </Text>
+            <Button variant="outlined" onPress={() => setShowStartPicker(true)}>
+              {formatDateForDisplay(localStartDate)}
+            </Button>
+            {showStartPicker && (
+              <DateTimePicker
+                value={localStartDate || new Date()}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={(_, date) => {
+                  setShowStartPicker(Platform.OS === 'ios')
+                  if (date) setLocalStartDate(date)
+                }}
+              />
+            )}
+          </YStack>
+
+          <YStack flex={1} gap="$1">
+            <Text fontSize="$3" color="$color11">
+              Data fim
+            </Text>
+            <Button variant="outlined" onPress={() => setShowEndPicker(true)}>
+              {formatDateForDisplay(localEndDate)}
+            </Button>
+            {showEndPicker && (
+              <DateTimePicker
+                value={localEndDate || new Date()}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={(_, date) => {
+                  setShowEndPicker(Platform.OS === 'ios')
+                  if (date) setLocalEndDate(date)
+                }}
+              />
+            )}
+          </YStack>
+        </XStack>
+      </YStack>
+
+      {/* Categorias */}
+      <YStack gap="$3">
+        <XStack gap="$2" alignItems="center">
+          <Tag size={20} color="$color11" />
+          <Text fontSize="$4" fontWeight="600" color="$color12">
+            Categorias
+          </Text>
+        </XStack>
+
+        <XStack flexWrap="wrap" gap="$2">
+          {categories.map((category) => (
+            <Button
+              key={category.id}
+              size="$3"
+              variant="outlined"
+              backgroundColor={localCategoryIds.has(category.id) ? '$color3' : 'transparent'}
+              borderColor={localCategoryIds.has(category.id) ? '$color8' : '$borderColor'}
+              color={localCategoryIds.has(category.id) ? '$color12' : '$color11'}
+              onPress={() => handleToggleCategory(category.id)}
+            >
+              {category.name}
+            </Button>
+          ))}
+        </XStack>
+      </YStack>
+    </BottomSheetModal>
   )
 }
-
-const styles = StyleSheet.create({
-  scrollContent: {
-    flexGrow: 1,
-  },
-})

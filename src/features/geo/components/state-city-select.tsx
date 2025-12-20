@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react'
 import { Dropdown } from 'react-native-element-dropdown'
 import { Text, useTheme, YStack, XStack, Button } from 'tamagui'
 import { Star } from '@tamagui/lucide-icons'
-import { toast } from 'sonner-native'
 
 import { onStatesChange, onCitiesChange, onCitiesByStateChange, type State, type City } from '../services'
 import { useFavoriteCitiesStore } from '@shared/store'
+import { toast } from '@shared/ui'
 
 interface StateCitySelectProps {
   stateValue: string

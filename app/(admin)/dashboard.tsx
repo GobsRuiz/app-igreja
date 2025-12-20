@@ -1,12 +1,35 @@
-import React from 'react'
-import { YStack, XStack, Text } from 'tamagui'
-import { Button, Card } from '@shared/ui'
+import React, { useState, useEffect } from 'react'
+import { YStack, XStack, Text, Spinner } from 'tamagui'
+import { Button, Card, toast } from '@shared/ui'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ArrowLeft, LayoutDashboard } from '@tamagui/lucide-icons'
 import { useRouter } from 'expo-router'
+import { fetchDashboardStats, type DashboardStats } from '@features/dashboard'
 
 export default function DashboardPage() {
   const router = useRouter()
+
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  // Fetch stats on mount
+  useEffect(() => {
+    async function loadStats() {
+      setLoading(true)
+      const { stats, error } = await fetchDashboardStats()
+
+      if (error) {
+        toast.error(error)
+        setLoading(false)
+        return
+      }
+
+      setStats(stats)
+      setLoading(false)
+    }
+
+    loadStats()
+  }, [])
 
   const handleBackToUser = () => {
     router.replace('/(tabs)')
@@ -46,35 +69,32 @@ export default function DashboardPage() {
             </Text>
           </Card>
 
-          {/* Cards de estatísticas (placeholder) */}
-          <XStack gap="$3">
-            <Card flex={1} backgroundColor="$blue2">
-              <Text fontSize="$8" fontWeight="700" color="$blue10">
-                0
-              </Text>
-              <Text fontSize="$3" color="$blue11">
-                Categorias
-              </Text>
-            </Card>
+          {/* Stats cards */}
+          {loading ? (
+            <YStack alignItems="center" justifyContent="center" paddingVertical="$8">
+              <Spinner size="large" color="$color12" />
+            </YStack>
+          ) : (
+            <XStack gap="$3">
+              <Card flex={1} backgroundColor="$blue2">
+                <Text fontSize="$8" fontWeight="700" color="$blue10">
+                  {stats?.usersCount ?? 0}
+                </Text>
+                <Text fontSize="$3" color="$blue11">
+                  Usuários Cadastrados
+                </Text>
+              </Card>
 
-            <Card flex={1} backgroundColor="$green2">
-              <Text fontSize="$8" fontWeight="700" color="$green10">
-                0
-              </Text>
-              <Text fontSize="$3" color="$green11">
-                Locais
-              </Text>
-            </Card>
-          </XStack>
-
-          <Card backgroundColor="$purple2">
-            <Text fontSize="$8" fontWeight="700" color="$purple10">
-              0
-            </Text>
-            <Text fontSize="$3" color="$purple11">
-              Eventos Cadastrados
-            </Text>
-          </Card>
+              <Card flex={1} backgroundColor="$green2">
+                <Text fontSize="$8" fontWeight="700" color="$green10">
+                  {stats?.eventsCount ?? 0}
+                </Text>
+                <Text fontSize="$3" color="$green11">
+                  Eventos Cadastrados
+                </Text>
+              </Card>
+            </XStack>
+          )}
         </YStack>
       </YStack>
     </SafeAreaView>

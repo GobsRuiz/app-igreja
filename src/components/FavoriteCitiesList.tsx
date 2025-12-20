@@ -1,21 +1,20 @@
-import { useState } from 'react'
 import { YStack, XStack, Text, Separator } from 'tamagui'
 import { FlashList } from '@shopify/flash-list'
 import { MapPin, Trash2, Eye, Plus } from '@tamagui/lucide-icons'
-import { toast } from 'sonner-native'
 import { useRouter } from 'expo-router'
 
 import { useFavoriteCitiesStore, parseCityKey, useEventStore } from '@shared/store'
-import { EmptyState, Button, Card } from '@shared/ui'
-import { AddFavoriteCityModal } from './AddFavoriteCityModal'
+import { EmptyState, Button, Card, toast } from '@shared/ui'
 
-export function FavoriteCitiesList() {
+interface FavoriteCitiesListProps {
+  onOpenAddModal: () => void
+}
+
+export function FavoriteCitiesList({ onOpenAddModal }: FavoriteCitiesListProps) {
   const router = useRouter()
   const favoriteCities = useFavoriteCitiesStore((state) => state.favoriteCities)
   const removeFavorite = useFavoriteCitiesStore((state) => state.removeFavorite)
   const setSelectedCity = useEventStore((state) => state.setSelectedCity)
-
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
 
   const handleRemoveFavorite = (cityKey: string) => {
     const parsed = parseCityKey(cityKey)
@@ -49,16 +48,11 @@ export function FavoriteCitiesList() {
 
         <Button
           size="$4"
-          onPress={() => setIsAddModalOpen(true)}
+          onPress={onOpenAddModal}
           icon={<Plus size={20} />}
         >
           Adicionar Cidade
         </Button>
-
-        <AddFavoriteCityModal
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
-        />
       </YStack>
     )
   }
@@ -131,18 +125,12 @@ export function FavoriteCitiesList() {
         <Button
           size="$4"
           variant="primary"
-          onPress={() => setIsAddModalOpen(true)}
+          onPress={onOpenAddModal}
           icon={<Plus size={20} />}
         >
           Adicionar Cidade
         </Button>
       </YStack>
-
-      {/* Modal */}
-      <AddFavoriteCityModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-      />
     </YStack>
   )
 }

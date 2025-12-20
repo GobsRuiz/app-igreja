@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react'
-import { YStack, XStack, Text, Button } from 'tamagui'
 import { FlashList } from '@shopify/flash-list'
+import { MapPin, Star } from '@tamagui/lucide-icons'
+import React, { useEffect, useState } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Star, MapPin } from '@tamagui/lucide-icons'
-import { toast } from 'sonner-native'
+import { Button, Text, XStack, YStack } from 'tamagui'
 
-import { useEventStore, selectFavoriteEvents, useFavoriteCitiesStore } from '@shared/store'
+import { AddFavoriteCityModal } from '@/src/components/AddFavoriteCityModal'
 import { EventCard } from '@/src/components/EventCard'
 import { EventDetailModal } from '@/src/components/EventDetailModal'
 import { FavoriteCitiesList } from '@/src/components/FavoriteCitiesList'
 import { MapService } from '@shared/services/map-service'
-import { EmptyState } from '@shared/ui'
+import { selectFavoriteEvents, useEventStore, useFavoriteCitiesStore } from '@shared/store'
 import type { Event } from '@shared/types'
+import { EmptyState, toast } from '@shared/ui'
 
 type TabValue = 'events' | 'cities'
 
@@ -21,6 +21,7 @@ export default function FavoritesPage() {
 
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
+  const [isAddCityModalOpen, setIsAddCityModalOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<TabValue>('events')
 
   // Carregar favoritos de cidades do cache
@@ -115,11 +116,11 @@ export default function FavoritesPage() {
             )
           ) : (
             // Tab Cidades
-            <FavoriteCitiesList />
+            <FavoriteCitiesList onOpenAddModal={() => setIsAddCityModalOpen(true)} />
           )}
         </YStack>
 
-        {/* Modal */}
+        {/* Modals - renderizados fora do conteúdo para z-index correto */}
         <EventDetailModal
           event={selectedEvent}
           isOpen={isDetailModalOpen && selectedEvent !== null}
@@ -127,6 +128,11 @@ export default function FavoritesPage() {
             setIsDetailModalOpen(false)
             setSelectedEvent(null)
           }}
+        />
+
+        <AddFavoriteCityModal
+          isOpen={isAddCityModalOpen}
+          onClose={() => setIsAddCityModalOpen(false)}
         />
       </YStack>
     </SafeAreaView>

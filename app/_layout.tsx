@@ -12,7 +12,7 @@ import tamaguiConfig from '../tamagui.config'
 import '@core/config/firebase.config'
 import { AuthProvider, useAuth } from '@features/auth'
 import { isAdmin } from '@shared/constants/permissions'
-import { toast } from 'sonner-native'
+import { toast } from '@shared/ui'
 
 export const unstable_settings = {
   anchor: '(tabs)',

@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { YStack, XStack, Text, Spinner, ScrollView, Input, Sheet } from 'tamagui'
+import { YStack, XStack, Text, ScrollView, Input } from 'tamagui'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { User as UserIcon, Mail, Phone, Shield, Clock, Plus, Pencil, Trash2, X } from '@tamagui/lucide-icons'
-import { Badge, Card, EmptyState, Button } from '@shared/ui'
-import { toast } from 'sonner-native'
+import { User as UserIcon, Mail, Phone, Shield, Clock, Plus, X } from '@tamagui/lucide-icons'
+import { Badge, Card, EmptyState, Button, AdminLoadingState, AdminActionButtons, BottomSheetModal, toast, AdminModalFooter, FormField } from '@shared/ui'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Alert } from 'react-native'
@@ -41,6 +40,9 @@ export default function UsersPage() {
   })
   const [submitting, setSubmitting] = useState(false)
 
+  // Processing state for action buttons
+  const [processingId, setProcessingId] = useState<string | null>(null)
+
   // Listener em tempo real
   useEffect(() => {
     const unsubscribe = onUsersChange(
@@ -71,6 +73,7 @@ export default function UsersPage() {
   }
 
   const handleOpenEdit = (user: User) => {
+    setProcessingId(user.id)
     setEditingUser(user)
     setFormData({
       email: user.email,
@@ -80,6 +83,7 @@ export default function UsersPage() {
       role: user.role,
     })
     setSheetOpen(true)
+    setProcessingId(null)
   }
 
   const handleClose = () => {
@@ -135,11 +139,16 @@ export default function UsersPage() {
   }
 
   const handleDelete = (user: User) => {
+    setProcessingId(user.id)
     Alert.alert(
       'Deletar Usuário',
       `Tem certeza que deseja deletar "${user.displayName || user.email}"?`,
       [
-        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+          onPress: () => setProcessingId(null),
+        },
         {
           text: 'Deletar',
           style: 'destructive',
@@ -151,6 +160,7 @@ export default function UsersPage() {
             if (error) {
               toast.error(error)
               setLoading(false)
+              setProcessingId(null)
               return
             }
 
@@ -159,6 +169,7 @@ export default function UsersPage() {
             // Wait for listener to update data
             setTimeout(() => {
               setLoading(false)
+              setProcessingId(null)
             }, 300)
           },
         },
@@ -193,9 +204,7 @@ export default function UsersPage() {
 
         {/* Lista ou Loading */}
         {loading ? (
-          <YStack flex={1} alignItems="center" justifyContent="center">
-            <Spinner size="large" color="$color12" />
-          </YStack>
+          <AdminLoadingState />
         ) : users.length === 0 ? (
           <EmptyState
             icon={<UserIcon size={48} color="$foreground" />}
@@ -282,20 +291,12 @@ export default function UsersPage() {
                     </XStack>
 
                     {/* Botões de ação */}
-                    <XStack gap="$2">
-                      <Button
-                        variant="outlined"
-                        icon={Pencil}
-                        onPress={() => handleOpenEdit(user)}
-                        circular
-                      />
-                      <Button
-                        variant="danger"
-                        icon={Trash2}
-                        onPress={() => handleDelete(user)}
-                        circular
-                      />
-                    </XStack>
+                    <AdminActionButtons
+                      disabled={loading || submitting || sheetOpen}
+                      isProcessing={processingId === user.id}
+                      onEdit={() => handleOpenEdit(user)}
+                      onDelete={() => handleDelete(user)}
+                    />
                   </XStack>
                 </Card>
               ))}
@@ -303,148 +304,105 @@ export default function UsersPage() {
           </ScrollView>
         )}
 
-        {/* Sheet Create/Edit */}
-        <Sheet
-          modal
-          open={sheetOpen}
-          onOpenChange={setSheetOpen}
-          snapPoints={[85]}
-          dismissOnSnapToBottom
+        {/* Modal Create/Edit */}
+        <BottomSheetModal
+          isOpen={sheetOpen}
+          onClose={handleClose}
+          size="large"
+          header={
+            <Text fontSize="$7" fontWeight="700" color="$foreground">
+              {editingUser ? 'Editar Usuário' : 'Novo Usuário'}
+            </Text>
+          }
+          footer={
+            <AdminModalFooter
+              onCancel={handleClose}
+              onConfirm={handleSubmit}
+              confirmText={submitting ? 'Salvando...' : editingUser ? 'Atualizar' : 'Criar'}
+              confirmDisabled={
+                submitting ||
+                !formData.email.trim() ||
+                (!editingUser && !formData.password.trim())
+              }
+              submitting={submitting}
+            />
+          }
+          contentContainerProps={{ padding: '$4', gap: '$4' }}
         >
-          <Sheet.Overlay />
-          <Sheet.Frame padding="$4" backgroundColor="$background">
-            <Sheet.Handle />
-            <YStack gap="$4">
-              <Text fontSize="$7" fontWeight="700" color="$foreground">
-                {editingUser ? 'Editar Usuário' : 'Novo Usuário'}
-              </Text>
+          <YStack gap="$4">
+            {/* Email */}
+            <FormField label="E-mail" required>
+              <Input
+                size="$4"
+                placeholder="usuario@exemplo.com"
+                value={formData.email}
+                onChangeText={(text) => setFormData({ ...formData, email: text })}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                disabled={!!editingUser} // Não permite editar email
+                opacity={editingUser ? 0.6 : 1}
+              />
+              {editingUser && (
+                <Text fontSize="$2" color="$color10">
+                  O e-mail não pode ser alterado
+                </Text>
+              )}
+            </FormField>
 
-              <ScrollView showsVerticalScrollIndicator={false}>
-                <YStack gap="$4">
-                  {/* Email */}
-                  <YStack gap="$2">
-                    <Text fontSize="$3" fontWeight="600" color="$color11">
-                      E-mail *
-                    </Text>
-                    <Input
-                      size="$4"
-                      placeholder="usuario@exemplo.com"
-                      value={formData.email}
-                      onChangeText={(text) => setFormData({ ...formData, email: text })}
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      disabled={!!editingUser} // Não permite editar email
-                      opacity={editingUser ? 0.6 : 1}
-                    />
-                    {editingUser && (
-                      <Text fontSize="$2" color="$color10">
-                        O e-mail não pode ser alterado
-                      </Text>
-                    )}
-                  </YStack>
+            {/* Senha (apenas no create) */}
+            {!editingUser && (
+              <FormField label="Senha" required>
+                <Input
+                  size="$4"
+                  placeholder="Mínimo 6 caracteres"
+                  value={formData.password}
+                  onChangeText={(text) => setFormData({ ...formData, password: text })}
+                  secureTextEntry
+                />
+              </FormField>
+            )}
 
-                  {/* Senha (apenas no create) */}
-                  {!editingUser && (
-                    <YStack gap="$2">
-                      <Text fontSize="$3" fontWeight="600" color="$color11">
-                        Senha *
-                      </Text>
-                      <Input
-                        size="$4"
-                        placeholder="Mínimo 6 caracteres"
-                        value={formData.password}
-                        onChangeText={(text) => setFormData({ ...formData, password: text })}
-                        secureTextEntry
-                      />
-                    </YStack>
-                  )}
+            {/* Nome */}
+            <FormField label="Nome (opcional)">
+              <Input
+                size="$4"
+                placeholder="Nome completo"
+                value={formData.displayName}
+                onChangeText={(text) => setFormData({ ...formData, displayName: text })}
+              />
+            </FormField>
 
-                  {/* Nome */}
-                  <YStack gap="$2">
-                    <Text fontSize="$3" fontWeight="600" color="$color11">
-                      Nome (opcional)
-                    </Text>
-                    <Input
-                      size="$4"
-                      placeholder="Nome completo"
-                      value={formData.displayName}
-                      onChangeText={(text) => setFormData({ ...formData, displayName: text })}
-                    />
-                  </YStack>
+            {/* Telefone */}
+            <FormField label="Telefone (opcional)">
+              <Input
+                size="$4"
+                placeholder="(00) 00000-0000"
+                value={formData.phone}
+                onChangeText={(text) => setFormData({ ...formData, phone: text })}
+                keyboardType="phone-pad"
+              />
+            </FormField>
 
-                  {/* Telefone */}
-                  <YStack gap="$2">
-                    <Text fontSize="$3" fontWeight="600" color="$color11">
-                      Telefone (opcional)
-                    </Text>
-                    <Input
-                      size="$4"
-                      placeholder="(00) 00000-0000"
-                      value={formData.phone}
-                      onChangeText={(text) => setFormData({ ...formData, phone: text })}
-                      keyboardType="phone-pad"
-                    />
-                  </YStack>
-
-                  {/* Role */}
-                  <YStack gap="$2">
-                    <Text fontSize="$3" fontWeight="600" color="$color11">
-                      Permissão *
-                    </Text>
-                    <Dropdown
-                      data={ROLES}
-                      labelField="label"
-                      valueField="value"
-                      value={formData.role}
-                      onChange={(item) => setFormData({ ...formData, role: item.value })}
-                      placeholder="Selecione uma permissão"
-                      style={{
-                        height: 50,
-                        borderWidth: 1,
-                        borderColor: '#e5e5e5',
-                        borderRadius: 8,
-                        paddingHorizontal: 12,
-                      }}
-                    />
-                  </YStack>
-                </YStack>
-              </ScrollView>
-
-              <XStack gap="$3" marginTop="$4">
-                <Button
-                  flex={1}
-                  variant="outlined"
-                  icon={X}
-                  onPress={handleClose}
-                  disabled={submitting}
-                  opacity={submitting ? 0.5 : 1}
-                >
-                  Cancelar
-                </Button>
-
-                <Button
-                  flex={1}
-                  variant="primary"
-                  onPress={handleSubmit}
-                  disabled={
-                    submitting ||
-                    !formData.email.trim() ||
-                    (!editingUser && !formData.password.trim())
-                  }
-                  opacity={
-                    submitting ||
-                    !formData.email.trim() ||
-                    (!editingUser && !formData.password.trim())
-                      ? 0.5
-                      : 1
-                  }
-                >
-                  {submitting ? 'Salvando...' : editingUser ? 'Atualizar' : 'Criar'}
-                </Button>
-              </XStack>
-            </YStack>
-          </Sheet.Frame>
-        </Sheet>
+            {/* Role */}
+            <FormField label="Permissão" required>
+              <Dropdown
+                data={ROLES}
+                labelField="label"
+                valueField="value"
+                value={formData.role}
+                onChange={(item) => setFormData({ ...formData, role: item.value })}
+                placeholder="Selecione uma permissão"
+                style={{
+                  height: 50,
+                  borderWidth: 1,
+                  borderColor: '#e5e5e5',
+                  borderRadius: 8,
+                  paddingHorizontal: 12,
+                }}
+              />
+            </FormField>
+          </YStack>
+        </BottomSheetModal>
       </YStack>
     </SafeAreaView>
   )

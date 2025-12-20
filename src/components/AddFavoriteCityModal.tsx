@@ -1,9 +1,6 @@
-import { useState, useCallback, useMemo, useRef } from 'react'
-import { YStack, XStack, Text, Button } from 'tamagui'
-import { X } from '@tamagui/lucide-icons'
-import { toast } from 'sonner-native'
-import BottomSheet, { BottomSheetView, BottomSheetBackdrop } from '@gorhom/bottom-sheet'
-import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet'
+import { useState, useCallback } from 'react'
+import { YStack, XStack, Text } from 'tamagui'
+import { BottomSheetModal, Button, toast } from '@shared/ui'
 
 import { StateCitySelect } from '@features/geo/components/state-city-select'
 import { useFavoriteCitiesStore } from '@shared/store'
@@ -14,14 +11,13 @@ interface AddFavoriteCityModalProps {
 }
 
 export function AddFavoriteCityModal({ isOpen, onClose }: AddFavoriteCityModalProps) {
-  const bottomSheetRef = useRef<BottomSheet>(null)
   const [selectedState, setSelectedState] = useState('')
   const [selectedCity, setSelectedCity] = useState('')
 
   const toggleFavorite = useFavoriteCitiesStore((state) => state.toggleFavorite)
-  const isFavorite = useFavoriteCitiesStore((state) => state.isFavorite(selectedState, selectedCity))
-
-  const snapPoints = useMemo(() => ['75%'], [])
+  const isFavorite = useFavoriteCitiesStore((state) =>
+    state.isFavorite(selectedState, selectedCity)
+  )
 
   const handleAddFavorite = useCallback(() => {
     if (!selectedState || !selectedCity || selectedCity === '') {
@@ -37,88 +33,60 @@ export function AddFavoriteCityModal({ isOpen, onClose }: AddFavoriteCityModalPr
     toggleFavorite(selectedState, selectedCity)
     toast.success(`${selectedCity} adicionada aos favoritos`)
 
-    // Resetar e fechar
+    // Reset and close
     setSelectedState('')
     setSelectedCity('')
-    bottomSheetRef.current?.close()
-  }, [selectedState, selectedCity, isFavorite, toggleFavorite])
+    onClose()
+  }, [selectedState, selectedCity, isFavorite, toggleFavorite, onClose])
 
   const handleClose = useCallback(() => {
     setSelectedState('')
     setSelectedCity('')
-    bottomSheetRef.current?.close()
-  }, [])
-
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-        onPress={handleClose}
-      />
-    ),
-    [handleClose]
-  )
-
-  // Sincronizar isOpen com bottomSheet
-  if (isOpen && bottomSheetRef.current) {
-    bottomSheetRef.current.snapToIndex(0)
-  } else if (!isOpen && bottomSheetRef.current) {
-    bottomSheetRef.current.close()
-  }
+    onClose()
+  }, [onClose])
 
   return (
-    <BottomSheet
-      ref={bottomSheetRef}
-      index={isOpen ? 0 : -1}
-      snapPoints={snapPoints}
-      enablePanDownToClose
-      onClose={onClose}
-      backdropComponent={renderBackdrop}
-      backgroundStyle={{ backgroundColor: 'white' }}
+    <BottomSheetModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      size="large"
+      header={
+        <Text fontSize="$6" fontWeight="700" color="$color12">
+          Adicionar Cidade Favorita
+        </Text>
+      }
+      footer={
+        <XStack gap="$3">
+          <Button flex={1} variant="outlined" onPress={handleClose}>
+            Cancelar
+          </Button>
+          <Button
+            flex={1}
+            variant="primary"
+            onPress={handleAddFavorite}
+            disabled={!selectedState || !selectedCity || selectedCity === ''}
+          >
+            Adicionar
+          </Button>
+        </XStack>
+      }
+      contentContainerProps={{ padding: '$4', gap: '$4' }}
     >
-      <BottomSheetView style={{ flex: 1, padding: 20 }}>
-        <YStack gap="$4" flex={1}>
-          {/* Header */}
-          <XStack justifyContent="space-between" alignItems="center">
-            <Text fontSize="$6" fontWeight="700">
-              Adicionar Cidade Favorita
-            </Text>
-            <Button
-              size="$3"
-              circular
-              chromeless
-              onPress={handleClose}
-              icon={<X size={20} />}
-            />
-          </XStack>
+      <YStack gap="$3">
+        <Text fontSize="$3" color="$color11">
+          Selecione seu estado e cidade para adicionar aos favoritos
+        </Text>
 
-          {/* Selector */}
-          <StateCitySelect
-            stateValue={selectedState}
-            cityValue={selectedCity}
-            onStateChange={setSelectedState}
-            onCityChange={setSelectedCity}
-            showStateLabel={true}
-            showCityLabel={true}
-            showFavoriteButton={false}
-          />
-
-          {/* Actions */}
-          <XStack gap="$3" justifyContent="flex-end">
-            <Button variant="outlined" onPress={handleClose}>
-              Cancelar
-            </Button>
-            <Button
-              onPress={handleAddFavorite}
-              disabled={!selectedState || !selectedCity || selectedCity === ''}
-            >
-              Adicionar
-            </Button>
-          </XStack>
-        </YStack>
-      </BottomSheetView>
-    </BottomSheet>
+        <StateCitySelect
+          stateValue={selectedState}
+          cityValue={selectedCity}
+          onStateChange={setSelectedState}
+          onCityChange={setSelectedCity}
+          showStateLabel={true}
+          showCityLabel={true}
+          showFavoriteButton={false}
+        />
+      </YStack>
+    </BottomSheetModal>
   )
 }

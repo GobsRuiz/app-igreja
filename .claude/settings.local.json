@@ -21,7 +21,10 @@
       "Bash(dir:*)",
       "Bash(findstr:*)",
       "Bash(npm run build:*)",
-      "Bash(firebase functions:list:*)"
+      "Bash(firebase functions:list:*)",
+      "Bash(ls:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []
