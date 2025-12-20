@@ -1,21 +1,23 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { YStack, XStack, Text, ScrollView, Input } from 'tamagui'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { User as UserIcon, Mail, Phone, Shield, Clock, Plus, X } from '@tamagui/lucide-icons'
-import { Badge, Card, EmptyState, Button, AdminLoadingState, AdminActionButtons, BottomSheetModal, toast, AdminModalFooter, FormField } from '@shared/ui'
+import { User as UserIcon, Mail, Shield, Clock, Plus, X, SlidersHorizontal, Search } from '@tamagui/lucide-icons'
+import { Badge, Card, EmptyState, Button, AdminLoadingState, AdminActionButtons, BottomSheetModal, toast, AdminModalFooter, FormField, AdminFilterModal } from '@shared/ui'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { Alert } from 'react-native'
 import { Dropdown } from 'react-native-element-dropdown'
 import {
   onUsersChange,
   createUser,
   updateUser,
   deleteUser,
+  checkCanDeleteUser,
   type User,
   type CreateUserData,
 } from '@features/users'
 import type { Role } from '@shared/constants/permissions'
+import { useAdminDelete } from '@shared/hooks'
+import { useAuth } from '@features/auth'
 
 // Roles disponíveis
 const ROLES: Array<{ label: string; value: Role }> = [
@@ -25,6 +27,7 @@ const ROLES: Array<{ label: string; value: Role }> = [
 ]
 
 export default function UsersPage() {
+  const { user: currentUser } = useAuth()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -35,23 +38,71 @@ export default function UsersPage() {
     email: '',
     password: '',
     displayName: '',
-    phone: '',
     role: 'user',
   })
   const [submitting, setSubmitting] = useState(false)
 
-  // Processing state for action buttons
-  const [processingId, setProcessingId] = useState<string | null>(null)
+  // Delete state (blocks all buttons during delete process)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  // Processing states for action buttons (separated for better UX)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
+  // Filter states - LOCAL (edited in modal, not yet applied)
+  const [localSearchQuery, setLocalSearchQuery] = useState('')
+  const [localRoleFilter, setLocalRoleFilter] = useState<Role | 'all'>('all')
+
+  // Filter states - APPLIED (used for filtering the list)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [roleFilter, setRoleFilter] = useState<Role | 'all'>('all')
+
+  // Filter modal state
+  const [filterModalOpen, setFilterModalOpen] = useState(false)
+
+  // Delete handler with validation
+  const { handleDelete } = useAdminDelete<User>({
+    entityName: 'Usuário',
+    getItemName: (user) => user.displayName || user.email,
+    deleteAction: deleteUser,
+    checkInUse: async (userId) => {
+      // Validações customizadas para usuários
+      if (!currentUser) {
+        return { inUse: true, error: 'Usuário não autenticado' }
+      }
+
+      const { canDelete, error } = await checkCanDeleteUser(userId, currentUser.uid)
+
+      if (!canDelete) {
+        return { inUse: true, error: error || 'Não é possível deletar este usuário' }
+      }
+
+      return { inUse: false, error: null }
+    },
+    setLoading,
+    setProcessingId: setDeletingId,
+    setIsDeleting, // Blocks all buttons globally (like sheetOpen)
+  })
 
   // Listener em tempo real
   useEffect(() => {
     const unsubscribe = onUsersChange(
       (data) => {
-        setUsers(data)
+        // Ordena usuários do mais recente para o mais antigo (por createdAt se existir, senão por nome/email)
+        const sortedUsers = [...data].sort((a, b) => {
+          // Se tiver createdAt, ordena por data
+          if (a.createdAt && b.createdAt) {
+            return b.createdAt.getTime() - a.createdAt.getTime()
+          }
+          // Senão, ordena alfabeticamente por displayName ou email
+          const nameA = a.displayName || a.email
+          const nameB = b.displayName || b.email
+          return nameA.localeCompare(nameB)
+        })
+        setUsers(sortedUsers)
         setLoading(false)
       },
-      (error) => {
-        console.error('Erro ao carregar usuários:', error)
+      () => {
         toast.error('Erro ao carregar usuários')
         setLoading(false)
       }
@@ -66,24 +117,22 @@ export default function UsersPage() {
       email: '',
       password: '',
       displayName: '',
-      phone: '',
       role: 'user',
     })
     setSheetOpen(true)
   }
 
   const handleOpenEdit = (user: User) => {
-    setProcessingId(user.id)
+    setEditingId(user.id)
     setEditingUser(user)
     setFormData({
       email: user.email,
       password: '', // Não permitimos editar senha
       displayName: user.displayName || '',
-      phone: user.phone || '',
       role: user.role,
     })
     setSheetOpen(true)
-    setProcessingId(null)
+    setEditingId(null)
   }
 
   const handleClose = () => {
@@ -97,7 +146,6 @@ export default function UsersPage() {
       // Update
       const { error } = await updateUser(editingUser.id, {
         displayName: formData.displayName,
-        phone: formData.phone,
         role: formData.role,
       })
 
@@ -127,7 +175,6 @@ export default function UsersPage() {
       email: '',
       password: '',
       displayName: '',
-      phone: '',
       role: 'user',
     })
 
@@ -138,44 +185,45 @@ export default function UsersPage() {
     }, 300)
   }
 
-  const handleDelete = (user: User) => {
-    setProcessingId(user.id)
-    Alert.alert(
-      'Deletar Usuário',
-      `Tem certeza que deseja deletar "${user.displayName || user.email}"?`,
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-          onPress: () => setProcessingId(null),
-        },
-        {
-          text: 'Deletar',
-          style: 'destructive',
-          onPress: async () => {
-            setLoading(true)
-
-            const { error } = await deleteUser(user.id)
-
-            if (error) {
-              toast.error(error)
-              setLoading(false)
-              setProcessingId(null)
-              return
-            }
-
-            toast.success('Usuário deletado!')
-
-            // Wait for listener to update data
-            setTimeout(() => {
-              setLoading(false)
-              setProcessingId(null)
-            }, 300)
-          },
-        },
-      ]
-    )
+  // Filter handlers
+  const handleOpenFilter = () => {
+    // Sync local state with applied filters when opening modal
+    setLocalSearchQuery(searchQuery)
+    setLocalRoleFilter(roleFilter)
+    setFilterModalOpen(true)
   }
+
+  const handleApplyFilter = () => {
+    // Apply filters from local state
+    setSearchQuery(localSearchQuery)
+    setRoleFilter(localRoleFilter)
+    setFilterModalOpen(false)
+  }
+
+  const handleClearFilter = () => {
+    // Clear only local state (preview)
+    setLocalSearchQuery('')
+    setLocalRoleFilter('all')
+  }
+
+  // Filtered users - memoized for performance
+  const filteredUsers = useMemo(() => {
+    return users.filter((user) => {
+      // Search filter (name or email)
+      const matchesSearch =
+        !searchQuery.trim() ||
+        (user.displayName && user.displayName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        user.email.toLowerCase().includes(searchQuery.toLowerCase())
+
+      // Role filter
+      const matchesRole = roleFilter === 'all' || user.role === roleFilter
+
+      return matchesSearch && matchesRole
+    })
+  }, [users, searchQuery, roleFilter])
+
+  // Check if filters are active
+  const hasActiveFilters = searchQuery.trim() !== '' || roleFilter !== 'all'
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['top']}>
@@ -186,16 +234,21 @@ export default function UsersPage() {
             Usuários
           </Text>
           <XStack gap="$3" alignItems="center">
-            <XStack
-              backgroundColor="$gray3"
-              paddingHorizontal="$3"
-              paddingVertical="$2"
-              borderRadius="$3"
+            {/* Botão Filtros */}
+            <Button
+              variant="outlined"
+              icon={SlidersHorizontal}
+              onPress={handleOpenFilter}
+              {...(hasActiveFilters && {
+                style: {
+                  backgroundColor: '$color3',
+                  borderColor: '$color8',
+                },
+              })}
             >
-              <Text fontSize="$4" fontWeight="600" color="$gray11">
-                {users.length} {users.length === 1 ? 'usuário' : 'usuários'}
-              </Text>
-            </XStack>
+              Filtros
+            </Button>
+
             <Button variant="primary" icon={Plus} onPress={handleOpenCreate}>
               Novo
             </Button>
@@ -205,16 +258,24 @@ export default function UsersPage() {
         {/* Lista ou Loading */}
         {loading ? (
           <AdminLoadingState />
-        ) : users.length === 0 ? (
+        ) : filteredUsers.length === 0 ? (
           <EmptyState
             icon={<UserIcon size={48} color="$foreground" />}
-            message="Nenhum usuário cadastrado"
-            description="Clique em &quot;Novo&quot; para criar"
+            message={
+              users.length === 0
+                ? 'Nenhum usuário cadastrado'
+                : 'Nenhum usuário encontrado com os filtros aplicados'
+            }
+            description={
+              users.length === 0
+                ? 'Clique em "Novo" para criar'
+                : 'Tente ajustar os filtros'
+            }
           />
         ) : (
           <ScrollView showsVerticalScrollIndicator={false}>
             <YStack gap="$3">
-              {users.map((user) => (
+              {filteredUsers.map((user) => (
                 <Card key={user.id}>
                   <XStack alignItems="flex-start" justifyContent="space-between">
                     <XStack alignItems="flex-start" gap="$3" flex={1}>
@@ -249,16 +310,6 @@ export default function UsersPage() {
                           </XStack>
                         </YStack>
 
-                        {/* Telefone (se houver) */}
-                        {user.phone && (
-                          <XStack alignItems="center" gap="$2">
-                            <Phone size={14} color="$color10" />
-                            <Text fontSize="$3" color="$color11">
-                              {user.phone}
-                            </Text>
-                          </XStack>
-                        )}
-
                         {/* Role e Data de cadastro */}
                         <XStack alignItems="center" gap="$3" marginTop="$1">
                           {/* Role Badge */}
@@ -292,8 +343,9 @@ export default function UsersPage() {
 
                     {/* Botões de ação */}
                     <AdminActionButtons
-                      disabled={loading || submitting || sheetOpen}
-                      isProcessing={processingId === user.id}
+                      disabled={loading || submitting || sheetOpen || isDeleting}
+                      isEditProcessing={editingId === user.id}
+                      isDeleteProcessing={deletingId === user.id}
                       onEdit={() => handleOpenEdit(user)}
                       onDelete={() => handleDelete(user)}
                     />
@@ -322,6 +374,7 @@ export default function UsersPage() {
               confirmDisabled={
                 submitting ||
                 !formData.email.trim() ||
+                !formData.displayName.trim() ||
                 (!editingUser && !formData.password.trim())
               }
               submitting={submitting}
@@ -363,23 +416,12 @@ export default function UsersPage() {
             )}
 
             {/* Nome */}
-            <FormField label="Nome (opcional)">
+            <FormField label="Nome" required>
               <Input
                 size="$4"
                 placeholder="Nome completo"
                 value={formData.displayName}
                 onChangeText={(text) => setFormData({ ...formData, displayName: text })}
-              />
-            </FormField>
-
-            {/* Telefone */}
-            <FormField label="Telefone (opcional)">
-              <Input
-                size="$4"
-                placeholder="(00) 00000-0000"
-                value={formData.phone}
-                onChangeText={(text) => setFormData({ ...formData, phone: text })}
-                keyboardType="phone-pad"
               />
             </FormField>
 
@@ -403,6 +445,61 @@ export default function UsersPage() {
             </FormField>
           </YStack>
         </BottomSheetModal>
+
+        {/* Modal de Filtros */}
+        <AdminFilterModal
+          isOpen={filterModalOpen}
+          onClose={() => setFilterModalOpen(false)}
+          onApply={handleApplyFilter}
+          onClear={handleClearFilter}
+          title="Filtrar Usuários"
+        >
+          {/* Busca por texto */}
+          <YStack gap="$3">
+            <XStack gap="$2" alignItems="center">
+              <Search size={20} color="$color11" />
+              <Text fontSize="$4" fontWeight="600" color="$color12">
+                Busca
+              </Text>
+            </XStack>
+            <Input
+              size="$4"
+              placeholder="Nome ou e-mail..."
+              value={localSearchQuery}
+              onChangeText={setLocalSearchQuery}
+            />
+          </YStack>
+
+          {/* Filtro por Role */}
+          <YStack gap="$3">
+            <XStack gap="$2" alignItems="center">
+              <Shield size={20} color="$color11" />
+              <Text fontSize="$4" fontWeight="600" color="$color12">
+                Permissão
+              </Text>
+            </XStack>
+            <Dropdown
+              data={[
+                { label: 'Todos', value: 'all' },
+                { label: 'Usuário', value: 'user' },
+                { label: 'Admin', value: 'admin' },
+                { label: 'Super Admin', value: 'superadmin' },
+              ]}
+              labelField="label"
+              valueField="value"
+              value={localRoleFilter}
+              onChange={(item) => setLocalRoleFilter(item.value as Role | 'all')}
+              placeholder="Selecione uma permissão"
+              style={{
+                height: 50,
+                borderWidth: 1,
+                borderColor: '#e5e5e5',
+                borderRadius: 8,
+                paddingHorizontal: 12,
+              }}
+            />
+          </YStack>
+        </AdminFilterModal>
       </YStack>
     </SafeAreaView>
   )

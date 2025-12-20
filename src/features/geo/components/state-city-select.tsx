@@ -44,7 +44,9 @@ export function StateCitySelect({
   useEffect(() => {
     const unsubscribeStates = onStatesChange(
       (data) => setStates(data),
-      (error) => console.error('Erro ao carregar estados:', error)
+      () => {
+        // Error loading states
+      }
     )
 
     return () => {
@@ -58,7 +60,9 @@ export function StateCitySelect({
     if (!stateValue) {
       const unsubscribe = onCitiesChange(
         (data) => setCities(data),
-        (error) => console.error('Erro ao carregar cidades:', error)
+        () => {
+          // Error loading cities
+        }
       )
       return () => unsubscribe()
     }
@@ -67,7 +71,9 @@ export function StateCitySelect({
     const unsubscribe = onCitiesByStateChange(
       stateValue,
       (data) => setCities(data),
-      (error) => console.error('Erro ao carregar cidades:', error)
+      () => {
+        // Error loading cities
+      }
     )
 
     return () => unsubscribe()

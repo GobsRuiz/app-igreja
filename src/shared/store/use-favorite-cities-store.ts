@@ -103,12 +103,10 @@ export const useFavoriteCitiesStore = create<FavoriteCitiesState>((set, get) => 
     try {
       // Validação de inputs
       if (!stateCode || typeof stateCode !== 'string') {
-        console.warn('[FavoriteCitiesStore] Invalid state code')
         return
       }
 
       if (!cityName || typeof cityName !== 'string' || cityName === '') {
-        console.warn('[FavoriteCitiesStore] Invalid city name (cannot favorite "Todo o estado")')
         return
       }
 
@@ -125,7 +123,6 @@ export const useFavoriteCitiesStore = create<FavoriteCitiesState>((set, get) => 
         } else {
           // ADICIONAR favorito (verificar limite)
           if (state.favoriteCities.length >= MAX_FAVORITE_CITIES) {
-            console.warn(`[FavoriteCitiesStore] Maximum ${MAX_FAVORITE_CITIES} favorite cities reached`)
             return state
           }
 
@@ -138,7 +135,7 @@ export const useFavoriteCitiesStore = create<FavoriteCitiesState>((set, get) => 
       // Salvar no cache
       get().saveToCache()
     } catch (error) {
-      console.error('[FavoriteCitiesStore] Error toggling favorite:', error)
+      // Error toggling favorite
     }
   },
 
@@ -149,7 +146,6 @@ export const useFavoriteCitiesStore = create<FavoriteCitiesState>((set, get) => 
       const cityKey = createCityKey(stateCode, cityName)
       return get().favoriteCities.includes(cityKey)
     } catch (error) {
-      console.error('[FavoriteCitiesStore] Error checking favorite:', error)
       return false
     }
   },
@@ -157,7 +153,6 @@ export const useFavoriteCitiesStore = create<FavoriteCitiesState>((set, get) => 
   removeFavorite: (cityKey) => {
     // Validação
     if (!cityKey || typeof cityKey !== 'string') {
-      console.warn('[FavoriteCitiesStore] Invalid city key')
       return
     }
 
@@ -172,7 +167,7 @@ export const useFavoriteCitiesStore = create<FavoriteCitiesState>((set, get) => 
   clearAll: () => {
     set({ favoriteCities: [] })
     AsyncStorage.removeItem(FAVORITES_STORAGE_KEY).catch((error) => {
-      console.error('[FavoriteCitiesStore] Error clearing cache:', error)
+      // Error clearing cache
     })
   },
 
@@ -185,7 +180,6 @@ export const useFavoriteCitiesStore = create<FavoriteCitiesState>((set, get) => 
       const cached = await AsyncStorage.getItem(FAVORITES_STORAGE_KEY)
 
       if (!cached) {
-        console.log('[FavoriteCitiesStore] No cached favorites found')
         return
       }
 
@@ -195,18 +189,13 @@ export const useFavoriteCitiesStore = create<FavoriteCitiesState>((set, get) => 
       const result = FavoriteCitiesSchema.safeParse(parsed)
 
       if (!result.success) {
-        console.warn(
-          '[FavoriteCitiesStore] Invalid cached favorites, clearing cache:',
-          result.error.errors
-        )
         await AsyncStorage.removeItem(FAVORITES_STORAGE_KEY)
         return
       }
 
       set({ favoriteCities: result.data })
-      console.log(`[FavoriteCitiesStore] Loaded ${result.data.length} favorites from cache`)
     } catch (error) {
-      console.error('[FavoriteCitiesStore] Error loading from cache:', error)
+      // Error loading from cache
     }
   },
 
@@ -215,10 +204,8 @@ export const useFavoriteCitiesStore = create<FavoriteCitiesState>((set, get) => 
       const { favoriteCities } = get()
 
       await AsyncStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favoriteCities))
-
-      console.log(`[FavoriteCitiesStore] Saved ${favoriteCities.length} favorites to cache`)
     } catch (error) {
-      console.error('[FavoriteCitiesStore] Error saving to cache:', error)
+      // Error saving to cache
     }
   },
 }))

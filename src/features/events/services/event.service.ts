@@ -2,6 +2,7 @@ import { firebaseFirestore, firebaseAuth, firebaseFunctions } from '@core/config
 import firestore from '@react-native-firebase/firestore'
 import type { Event, CreateEventData, UpdateEventData } from '../types/event.types'
 import { mapFirestoreEvent } from '../types/event.types'
+import { ErrorHandler } from '@shared/services'
 
 const COLLECTION = 'events'
 
@@ -62,9 +63,7 @@ export async function createEvent(
 
     return { event, error: null }
   } catch (error: any) {
-    console.error('[EventService] Erro ao criar evento:', error)
-
-    // Mensagem amigável para erro de permissão
+    // Mensagem amigável para erro de permissão (específico de evento)
     if (error?.code === 'permission-denied' || error?.message?.includes('administradores')) {
       return {
         event: null,
@@ -72,8 +71,8 @@ export async function createEvent(
       }
     }
 
-    // Extrair mensagem de erro da Cloud Function
-    const errorMessage = error?.message || 'Erro ao criar evento'
+    // Parse genérico com sanitização
+    const errorMessage = ErrorHandler.parseFirebaseError(error, 'Erro ao criar evento')
     return { event: null, error: errorMessage }
   }
 }
@@ -103,8 +102,8 @@ export async function listEvents(): Promise<{
 
     return { events, error: null }
   } catch (error: any) {
-    console.error('[EventService] Erro ao listar eventos:', error)
-    return { events: [], error: 'Erro ao carregar eventos' }
+    const errorMessage = ErrorHandler.parseFirebaseError(error, 'Erro ao carregar eventos')
+    return { events: [], error: errorMessage }
   }
 }
 
@@ -155,8 +154,8 @@ export async function updateEvent(
 
     return { error: null }
   } catch (error: any) {
-    console.error('[EventService] Erro ao atualizar evento:', error)
-    return { error: 'Erro ao atualizar evento' }
+    const errorMessage = ErrorHandler.parseFirebaseError(error, 'Erro ao atualizar evento')
+    return { error: errorMessage }
   }
 }
 
@@ -168,8 +167,8 @@ export async function deleteEvent(eventId: string): Promise<{ error: string | nu
     await firebaseFirestore.collection(COLLECTION).doc(eventId).delete()
     return { error: null }
   } catch (error: any) {
-    console.error('[EventService] Erro ao deletar evento:', error)
-    return { error: 'Erro ao deletar evento' }
+    const errorMessage = ErrorHandler.parseFirebaseError(error, 'Erro ao deletar evento')
+    return { error: errorMessage }
   }
 }
 
@@ -198,7 +197,6 @@ export function onEventsChange(
         callback(events)
       },
       (error) => {
-        console.error('[EventService] Erro no listener:', error)
         if (onError) {
           onError(error)
         }
@@ -217,8 +215,8 @@ export async function markEventAsFinished(eventId: string): Promise<{ error: str
     })
     return { error: null }
   } catch (error: any) {
-    console.error('[EventService] Erro ao marcar evento como finalizado:', error)
-    return { error: 'Erro ao marcar evento como finalizado' }
+    const errorMessage = ErrorHandler.parseFirebaseError(error, 'Erro ao marcar evento como finalizado')
+    return { error: errorMessage }
   }
 }
 
@@ -232,7 +230,7 @@ export async function markEventAsCancelled(eventId: string): Promise<{ error: st
     })
     return { error: null }
   } catch (error: any) {
-    console.error('[EventService] Erro ao marcar evento como cancelado:', error)
-    return { error: 'Erro ao marcar evento como cancelado' }
+    const errorMessage = ErrorHandler.parseFirebaseError(error, 'Erro ao marcar evento como cancelado')
+    return { error: errorMessage }
   }
 }

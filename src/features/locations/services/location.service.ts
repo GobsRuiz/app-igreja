@@ -6,6 +6,7 @@ import type {
   UpdateLocationData,
 } from '../types/location.types'
 import { mapFirestoreLocation } from '../types/location.types'
+import { ErrorHandler } from '@shared/services'
 
 const COLLECTION = 'locations'
 
@@ -59,8 +60,8 @@ export async function createLocation(
 
     return { location, error: null }
   } catch (error: any) {
-    console.error('[LocationService] Erro ao criar local:', error)
-    return { location: null, error: 'Erro ao criar local' }
+    const errorMessage = ErrorHandler.parseFirebaseError(error, 'Erro ao criar local')
+    return { location: null, error: errorMessage }
   }
 }
 
@@ -88,8 +89,8 @@ export async function listLocations(): Promise<{
 
     return { locations, error: null }
   } catch (error: any) {
-    console.error('[LocationService] Erro ao listar locais:', error)
-    return { locations: [], error: 'Erro ao carregar locais' }
+    const errorMessage = ErrorHandler.parseFirebaseError(error, 'Erro ao carregar locais')
+    return { locations: [], error: errorMessage }
   }
 }
 
@@ -148,8 +149,8 @@ export async function updateLocation(
 
     return { error: null }
   } catch (error: any) {
-    console.error('[LocationService] Erro ao atualizar local:', error)
-    return { error: 'Erro ao atualizar local' }
+    const errorMessage = ErrorHandler.parseFirebaseError(error, 'Erro ao atualizar local')
+    return { error: errorMessage }
   }
 }
 
@@ -173,8 +174,8 @@ export async function checkLocationInUse(locationId: string): Promise<{
       error: null,
     }
   } catch (error: any) {
-    console.error('[LocationService] Erro ao verificar uso do local:', error)
-    return { inUse: false, error: 'Erro ao verificar dependências' }
+    const errorMessage = ErrorHandler.parseFirebaseError(error, 'Erro ao verificar dependências')
+    return { inUse: false, error: errorMessage }
   }
 }
 
@@ -186,8 +187,8 @@ export async function deleteLocation(locationId: string): Promise<{ error: strin
     await firebaseFirestore.collection(COLLECTION).doc(locationId).delete()
     return { error: null }
   } catch (error: any) {
-    console.error('[LocationService] Erro ao deletar local:', error)
-    return { error: 'Erro ao deletar local' }
+    const errorMessage = ErrorHandler.parseFirebaseError(error, 'Erro ao deletar local')
+    return { error: errorMessage }
   }
 }
 
@@ -215,7 +216,6 @@ export function onLocationsChange(
         callback(locations)
       },
       (error) => {
-        console.error('[LocationService] Erro no listener:', error)
         if (onError) {
           onError(error)
         }

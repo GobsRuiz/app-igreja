@@ -28,7 +28,6 @@ export async function listCities(): Promise<{
 
     return { cities, error: null }
   } catch (error: any) {
-    console.error('[CityService] Erro ao listar cidades:', error)
     return { cities: [], error: 'Erro ao carregar cidades' }
   }
 }
@@ -57,7 +56,6 @@ export async function listCitiesByState(
 
     return { cities, error: null }
   } catch (error: any) {
-    console.error('[CityService] Erro ao listar cidades por estado:', error)
     return { cities: [], error: 'Erro ao carregar cidades' }
   }
 }
@@ -86,7 +84,6 @@ export function onCitiesChange(
         callback(cities)
       },
       (error) => {
-        console.error('[CityService] Erro no listener:', error)
         if (onError) {
           onError(error)
         }
@@ -120,7 +117,6 @@ export function onCitiesByStateChange(
         callback(cities)
       },
       (error) => {
-        console.error('[CityService] Erro no listener:', error)
         if (onError) {
           onError(error)
         }
@@ -143,7 +139,6 @@ export async function getStateByCity(
       .get()
 
     if (snapshot.empty) {
-      console.warn('[CityService] Cidade não encontrada:', cityName)
       return { state: null, error: 'Cidade não encontrada' }
     }
 
@@ -155,7 +150,6 @@ export async function getStateByCity(
 
     return { state: city.state, error: null }
   } catch (error: any) {
-    console.error('[CityService] Erro ao buscar estado da cidade:', error)
     return { state: null, error: 'Erro ao buscar estado' }
   }
 }

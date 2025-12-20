@@ -12,6 +12,7 @@ Seja mais crítico e rigoroso
 Boa, sua implementação está correta, profissional, segura, confiável, bem estruturada? Sua implementação segue boas práticas? Viola algo? Tem problemas, erros, falhas ou bugs?
 Pense muito mais a respeito disso.
 Seja mais crítico e rigoroso
+Não faça nada/Não execute nada
 ============================
 
 

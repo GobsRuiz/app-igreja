@@ -42,8 +42,7 @@ export function CategoryFilterSlider() {
         setCategories(data)
         setLoading(false)
       },
-      (error) => {
-        console.error('Error loading categories:', error)
+      () => {
         setLoading(false)
       }
     )

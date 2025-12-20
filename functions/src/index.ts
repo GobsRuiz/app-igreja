@@ -277,3 +277,162 @@ export const updateFinishedEvents = functions
       throw error
     }
   })
+
+/**
+ * Cloud Function: Create User (Admin Only)
+ *
+ * Cria um novo usuário usando Firebase Admin SDK sem afetar a sessão do admin logado
+ *
+ * Validações:
+ * - Usuário autenticado e é admin/superadmin
+ * - Email, password e displayName obrigatórios
+ * - Email válido
+ * - Password >= 6 caracteres
+ *
+ * @param data - { email: string, password: string, displayName: string, role: 'user' | 'admin' | 'superadmin' }
+ * @returns { uid: string } ou erro
+ */
+export const createUser = functions
+  .region('southamerica-east1')
+  .https
+  .onCall(async (data, context) => {
+    try {
+      // 1. Validar autenticação
+      if (!context.auth) {
+        throw new functions.https.HttpsError(
+          'unauthenticated',
+          'Usuário não autenticado'
+        )
+      }
+
+      // 2. Validar se é admin
+      const userRole = context.auth.token.role
+      if (userRole !== 'admin' && userRole !== 'superadmin') {
+        throw new functions.https.HttpsError(
+          'permission-denied',
+          'Apenas administradores podem criar usuários'
+        )
+      }
+
+      // 3. Validar campos obrigatórios
+      const { email, password, displayName, role } = data
+
+      if (!email || typeof email !== 'string' || !email.trim()) {
+        throw new functions.https.HttpsError(
+          'invalid-argument',
+          'E-mail é obrigatório'
+        )
+      }
+
+      // Validar formato de email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(email.trim())) {
+        throw new functions.https.HttpsError(
+          'invalid-argument',
+          'E-mail inválido'
+        )
+      }
+
+      if (!password || typeof password !== 'string') {
+        throw new functions.https.HttpsError(
+          'invalid-argument',
+          'Senha é obrigatória'
+        )
+      }
+
+      if (password.length < 6) {
+        throw new functions.https.HttpsError(
+          'invalid-argument',
+          'A senha deve ter no mínimo 6 caracteres'
+        )
+      }
+
+      if (!displayName || typeof displayName !== 'string' || !displayName.trim()) {
+        throw new functions.https.HttpsError(
+          'invalid-argument',
+          'Nome é obrigatório'
+        )
+      }
+
+      // 4. Validar role
+      const validRoles = ['user', 'admin', 'superadmin']
+      const userRoleToSet = role || 'user'
+
+      if (!validRoles.includes(userRoleToSet)) {
+        throw new functions.https.HttpsError(
+          'invalid-argument',
+          'Permissão inválida'
+        )
+      }
+
+      functions.logger.info(`[createUser] Creating user with email: ${email.trim()}`)
+
+      // 5. Criar usuário no Firebase Auth usando Admin SDK
+      // IMPORTANTE: Não afeta a sessão do admin logado no client
+      const userRecord = await admin.auth().createUser({
+        email: email.trim(),
+        password: password,
+        displayName: displayName.trim(),
+        emailVerified: false,
+      })
+
+      functions.logger.info(`[createUser] ✅ User created in Auth: ${userRecord.uid}`)
+
+      // 6. Criar documento no Firestore
+      await admin.firestore().collection('users').doc(userRecord.uid).set({
+        email: email.trim(),
+        displayName: displayName.trim(),
+        role: userRoleToSet,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      })
+
+      functions.logger.info(`[createUser] ✅ User document created in Firestore: ${userRecord.uid}`)
+
+      // 7. Definir custom claim inicial
+      await admin.auth().setCustomUserClaims(userRecord.uid, {
+        role: userRoleToSet,
+      })
+
+      functions.logger.info(`[createUser] ✅ Custom claim set: ${userRecord.uid} → role: ${userRoleToSet}`)
+
+      return {
+        success: true,
+        uid: userRecord.uid,
+      }
+    } catch (error: any) {
+      functions.logger.error('[createUser] ❌ Error:', error)
+
+      // Se já é HttpsError, relançar
+      if (error instanceof functions.https.HttpsError) {
+        throw error
+      }
+
+      // Tratar erros específicos do Firebase Auth
+      if (error.code === 'auth/email-already-exists') {
+        throw new functions.https.HttpsError(
+          'already-exists',
+          'Este e-mail já está cadastrado'
+        )
+      }
+
+      if (error.code === 'auth/invalid-email') {
+        throw new functions.https.HttpsError(
+          'invalid-argument',
+          'E-mail inválido'
+        )
+      }
+
+      if (error.code === 'auth/invalid-password') {
+        throw new functions.https.HttpsError(
+          'invalid-argument',
+          'A senha deve ter no mínimo 6 caracteres'
+        )
+      }
+
+      // Erro genérico
+      throw new functions.https.HttpsError(
+        'internal',
+        'Erro ao criar usuário'
+      )
+    }
+  })

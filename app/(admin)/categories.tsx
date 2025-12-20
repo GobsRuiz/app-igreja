@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
   YStack,
   XStack,
@@ -6,7 +6,7 @@ import {
   Input,
   ScrollView,
 } from 'tamagui'
-import { Button, Card, EmptyState, AdminLoadingState, AdminActionButtons, BottomSheetModal, toast } from '@shared/ui'
+import { Button, Card, EmptyState, AdminLoadingState, AdminActionButtons, BottomSheetModal, toast, AdminModalFooter, FormField, AdminFilterModal } from '@shared/ui'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import {
   Plus,
@@ -20,8 +20,9 @@ import {
   Users,
   Home,
   Tag,
+  SlidersHorizontal,
+  Search,
 } from '@tamagui/lucide-icons'
-import { Alert } from 'react-native'
 import {
   onCategoriesChange,
   createCategory,
@@ -31,6 +32,7 @@ import {
   type Category,
   type CreateCategoryData,
 } from '@features/categories'
+import { useAdminDelete } from '@shared/hooks'
 
 // Cores disponíveis para seleção
 const COLORS = [
@@ -76,15 +78,43 @@ export default function CategoriesPage() {
   // Processing state for action buttons
   const [processingId, setProcessingId] = useState<string | null>(null)
 
+  // Filter states - LOCAL (edited in modal, not yet applied)
+  const [localSearchQuery, setLocalSearchQuery] = useState('')
+
+  // Filter states - APPLIED (used for filtering the list)
+  const [searchQuery, setSearchQuery] = useState('')
+
+  // Filter modal state
+  const [filterModalOpen, setFilterModalOpen] = useState(false)
+
+  // Delete handler
+  const { handleDelete } = useAdminDelete<Category>({
+    entityName: 'Categoria',
+    getItemName: (category) => category.name,
+    deleteAction: deleteCategory,
+    checkInUse: checkCategoryInUse,
+    setLoading,
+    setProcessingId,
+    successMessage: 'Categoria deletada!',
+  })
+
   // Listener em tempo real
   useEffect(() => {
     const unsubscribe = onCategoriesChange(
       (data) => {
-        setCategories(data)
+        // Ordena categorias do mais recente para o mais antigo (por createdAt se existir, senão por nome)
+        const sortedCategories = [...data].sort((a, b) => {
+          // Se tiver createdAt, ordena por data
+          if (a.createdAt && b.createdAt) {
+            return b.createdAt.getTime() - a.createdAt.getTime()
+          }
+          // Senão, ordena alfabeticamente por nome
+          return a.name.localeCompare(b.name)
+        })
+        setCategories(sortedCategories)
         setLoading(false)
       },
-      (error) => {
-        console.error('Erro ao carregar categorias:', error)
+      () => {
         toast.error('Erro ao carregar categorias')
         setLoading(false)
       }
@@ -153,63 +183,35 @@ export default function CategoriesPage() {
     }, 300)
   }
 
-  const handleDelete = async (category: Category) => {
-    setProcessingId(category.id)
-
-    // Check if category is being used by events
-    const { inUse, error: checkError } = await checkCategoryInUse(category.id)
-
-    if (checkError) {
-      toast.error(checkError)
-      setProcessingId(null)
-      return
-    }
-
-    if (inUse) {
-      Alert.alert(
-        'Não é possível deletar',
-        'Esta categoria está sendo usada por eventos.\n\nRemova ou altere a categoria desses eventos antes de deletá-la.',
-        [{ text: 'OK', style: 'default', onPress: () => setProcessingId(null) }]
-      )
-      return
-    }
-
-    Alert.alert(
-      'Deletar Categoria',
-      `Tem certeza que deseja deletar "${category.name}"?`,
-      [
-        {
-          text: 'Cancelar',
-          style: 'cancel',
-          onPress: () => setProcessingId(null),
-        },
-        {
-          text: 'Deletar',
-          style: 'destructive',
-          onPress: async () => {
-            setLoading(true)
-
-            const { error } = await deleteCategory(category.id)
-
-            if (error) {
-              toast.error(error)
-              setLoading(false)
-              setProcessingId(null)
-              return
-            }
-
-            toast.success('Categoria deletada!')
-
-            // Wait for listener to update data
-            setTimeout(() => {
-              setLoading(false)
-              setProcessingId(null)
-            }, 300)
-          },
-        },
-      ]
-    )
+  // Filter handlers
+  const handleOpenFilter = () => {
+    setLocalSearchQuery(searchQuery)
+    setFilterModalOpen(true)
   }
+
+  const handleApplyFilter = () => {
+    setSearchQuery(localSearchQuery)
+    setFilterModalOpen(false)
+  }
+
+  const handleClearFilter = () => {
+    setLocalSearchQuery('')
+  }
+
+  // Filtered categories - memoized for performance
+  const filteredCategories = useMemo(() => {
+    return categories.filter((category) => {
+      // Search filter (name)
+      const matchesSearch =
+        !searchQuery.trim() ||
+        category.name.toLowerCase().includes(searchQuery.toLowerCase())
+
+      return matchesSearch
+    })
+  }, [categories, searchQuery])
+
+  // Check if filters are active
+  const hasActiveFilters = searchQuery.trim() !== ''
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['top']}>
@@ -219,28 +221,49 @@ export default function CategoriesPage() {
           <Text fontSize="$8" fontWeight="700" color="$foreground">
             Categorias
           </Text>
-          <Button
-            variant="primary"
-            icon={Plus}
-            onPress={handleOpenCreate}
-          >
-            Nova
-          </Button>
+          <XStack gap="$3" alignItems="center">
+            {/* Botão Filtros */}
+            <Button
+              variant="outlined"
+              icon={SlidersHorizontal}
+              onPress={handleOpenFilter}
+              {...(hasActiveFilters && {
+                style: {
+                  backgroundColor: '$color3',
+                  borderColor: '$color8',
+                },
+              })}
+            >
+              Filtros
+            </Button>
+
+            <Button variant="primary" icon={Plus} onPress={handleOpenCreate}>
+              Nova
+            </Button>
+          </XStack>
         </XStack>
 
         {/* Lista ou Loading */}
         {loading ? (
           <AdminLoadingState />
-        ) : categories.length === 0 ? (
+        ) : filteredCategories.length === 0 ? (
           <EmptyState
             icon={<Tag size={48} color="$foreground" />}
-            message="Nenhuma categoria cadastrada"
-            description="Clique em &quot;Nova&quot; para criar"
+            message={
+              categories.length === 0
+                ? 'Nenhuma categoria cadastrada'
+                : 'Nenhuma categoria encontrada com os filtros aplicados'
+            }
+            description={
+              categories.length === 0
+                ? 'Clique em "Nova" para criar'
+                : 'Tente ajustar os filtros'
+            }
           />
         ) : (
           <ScrollView showsVerticalScrollIndicator={false}>
             <YStack gap="$3">
-              {categories.map((category) => (
+              {filteredCategories.map((category) => (
                 <Card key={category.id}>
                   <XStack alignItems="center" justifyContent="space-between">
                     <XStack alignItems="center" gap="$3" flex={1}>
@@ -268,7 +291,8 @@ export default function CategoriesPage() {
 
                     <AdminActionButtons
                       disabled={loading || submitting || sheetOpen}
-                      isProcessing={processingId === category.id}
+                      isEditProcessing={processingId === category.id}
+                      isDeleteProcessing={processingId === category.id}
                       onEdit={() => handleOpenEdit(category)}
                       onDelete={() => handleDelete(category)}
                       deleteVariant="outlined"
@@ -291,50 +315,30 @@ export default function CategoriesPage() {
             </Text>
           }
           footer={
-            <XStack gap="$3">
-              <Button
-                flex={1}
-                variant="outlined"
-                icon={X}
-                onPress={handleClose}
-                disabled={submitting}
-                opacity={submitting ? 0.5 : 1}
-              >
-                Cancelar
-              </Button>
-
-              <Button
-                flex={1}
-                variant="primary"
-                onPress={handleSubmit}
-                disabled={submitting || !formData.name.trim()}
-                opacity={submitting || !formData.name.trim() ? 0.5 : 1}
-              >
-                {submitting ? 'Salvando...' : editingCategory ? 'Atualizar' : 'Criar'}
-              </Button>
-            </XStack>
+            <AdminModalFooter
+              cancelText="Cancelar"
+              confirmText={submitting ? 'Salvando...' : editingCategory ? 'Atualizar' : 'Criar'}
+              onCancel={handleClose}
+              onConfirm={handleSubmit}
+              confirmDisabled={submitting || !formData.name.trim()}
+              submitting={submitting}
+            />
           }
           contentContainerProps={{ padding: '$4', gap: '$4' }}
         >
           <YStack gap="$4">
             {/* Nome */}
-            <YStack gap="$2">
-              <Text fontSize="$3" fontWeight="600" color="$color11">
-                Nome
-              </Text>
+            <FormField label="Nome">
               <Input
                 size="$4"
                 placeholder="Ex: Culto, Célula, Retiro..."
                 value={formData.name}
                 onChangeText={(text) => setFormData({ ...formData, name: text })}
               />
-            </YStack>
+            </FormField>
 
             {/* Cor */}
-            <YStack gap="$2">
-              <Text fontSize="$3" fontWeight="600" color="$color11">
-                Cor
-              </Text>
+            <FormField label="Cor">
               <XStack gap="$2" flexWrap="wrap">
                 {COLORS.map((color) => (
                   <Button
@@ -352,13 +356,10 @@ export default function CategoriesPage() {
                   </Button>
                 ))}
               </XStack>
-            </YStack>
+            </FormField>
 
             {/* Ícone */}
-            <YStack gap="$2">
-              <Text fontSize="$3" fontWeight="600" color="$color11">
-                Ícone
-              </Text>
+            <FormField label="Ícone">
               <XStack gap="$2" flexWrap="wrap">
                 {ICONS.map((iconName) => {
                   const IconComponent = ICON_MAP[iconName]
@@ -373,9 +374,34 @@ export default function CategoriesPage() {
                   )
                 })}
               </XStack>
-            </YStack>
+            </FormField>
           </YStack>
         </BottomSheetModal>
+
+        {/* Modal de Filtros */}
+        <AdminFilterModal
+          isOpen={filterModalOpen}
+          onClose={() => setFilterModalOpen(false)}
+          onApply={handleApplyFilter}
+          onClear={handleClearFilter}
+          title="Filtrar Categorias"
+        >
+          {/* Busca por texto */}
+          <YStack gap="$3">
+            <XStack gap="$2" alignItems="center">
+              <Search size={20} color="$color11" />
+              <Text fontSize="$4" fontWeight="600" color="$color12">
+                Busca
+              </Text>
+            </XStack>
+            <Input
+              size="$4"
+              placeholder="Nome da categoria..."
+              value={localSearchQuery}
+              onChangeText={setLocalSearchQuery}
+            />
+          </YStack>
+        </AdminFilterModal>
       </YStack>
     </SafeAreaView>
   )

@@ -42,8 +42,5 @@ firebaseFirestore.settings({
 });
 
 /**
- * Log de inicialização (apenas em dev)
+ * Configuração concluída
  */
-if (__DEV__) {
-  console.log('[Firebase] Configurado');
-}

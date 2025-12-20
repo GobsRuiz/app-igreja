@@ -13,7 +13,7 @@ interface ToastOptions {
 /**
  * Custom toast service with project-specific configurations
  * - Success: 4s duration
- * - Error: 60s duration
+ * - Error: 8s duration
  * - Warning: 4s duration
  * - Info: 4s duration
  */
@@ -29,12 +29,12 @@ export const toast = {
   },
 
   /**
-   * Error toast (red) - 60s duration
+   * Error toast (red) - 8s duration
    */
   error: (message: string, options?: ToastOptions) => {
     return sonnerToast.error(message, {
       description: options?.description,
-      duration: options?.duration ?? 60000, // 60 seconds for errors
+      duration: options?.duration ?? 8000, // 8 seconds for errors
     })
   },
 

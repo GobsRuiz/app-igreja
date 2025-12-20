@@ -1,4 +1,4 @@
-import { firebaseFirestore, firebaseAuth } from '@core/config/firebase.config'
+import { firebaseFirestore, firebaseFunctions } from '@core/config/firebase.config'
 import firestore from '@react-native-firebase/firestore'
 import type { User, CreateUserData, UpdateUserData } from '../types/user.types'
 import { mapFirestoreUser } from '../types/user.types'
@@ -22,12 +22,13 @@ function isValidPassword(password: string): boolean {
 
 /**
  * Cria um novo usuário (Admin apenas)
+ * IMPORTANTE: Usa Cloud Function para não afetar a sessão do admin logado
  */
 export async function createUser(
   data: CreateUserData
 ): Promise<{ user: User | null; error: string | null }> {
   try {
-    // Validações
+    // Validações client-side (segurança em camadas)
     if (!data.email.trim()) {
       return { user: null, error: 'E-mail é obrigatório' }
     }
@@ -44,30 +45,25 @@ export async function createUser(
       return { user: null, error: 'A senha deve ter no mínimo 6 caracteres' }
     }
 
-    // Criar no Firebase Auth
-    const userCredential = await firebaseAuth.createUserWithEmailAndPassword(
-      data.email.trim(),
-      data.password
-    )
+    if (!data.displayName.trim()) {
+      return { user: null, error: 'Nome é obrigatório' }
+    }
 
-    const userId = userCredential.user.uid
+    // Chamar Cloud Function (não afeta sessão atual)
+    const createUserFunction = firebaseFunctions.httpsCallable('createUser')
 
-    // Criar documento no Firestore
-    const userData: any = {
+    const result = await createUserFunction({
       email: data.email.trim(),
+      password: data.password,
+      displayName: data.displayName.trim(),
       role: data.role || 'user',
-      createdAt: firestore.FieldValue.serverTimestamp(),
-    }
+    })
 
-    if (data.displayName?.trim()) {
-      userData.displayName = data.displayName.trim()
-    }
+    const userId = result.data.uid
 
-    if (data.phone?.trim()) {
-      userData.phone = data.phone.trim()
+    if (!userId) {
+      return { user: null, error: 'Erro ao criar usuário' }
     }
-
-    await firebaseFirestore.collection(COLLECTION).doc(userId).set(userData)
 
     // Buscar documento criado
     const doc = await firebaseFirestore.collection(COLLECTION).doc(userId).get()
@@ -79,19 +75,21 @@ export async function createUser(
 
     return { user, error: null }
   } catch (error: any) {
-    console.error('[UserService] Erro ao criar usuário:', error)
-
-    // Tratar erros específicos do Firebase Auth
-    if (error.code === 'auth/email-already-in-use') {
+    // Tratar erros da Cloud Function
+    if (error.code === 'already-exists') {
       return { user: null, error: 'Este e-mail já está cadastrado' }
     }
 
-    if (error.code === 'auth/invalid-email') {
-      return { user: null, error: 'E-mail inválido' }
+    if (error.code === 'invalid-argument') {
+      return { user: null, error: error.message || 'Dados inválidos' }
     }
 
-    if (error.code === 'auth/weak-password') {
-      return { user: null, error: 'A senha deve ter no mínimo 6 caracteres' }
+    if (error.code === 'permission-denied') {
+      return { user: null, error: 'Você não tem permissão para criar usuários' }
+    }
+
+    if (error.code === 'unauthenticated') {
+      return { user: null, error: 'Você precisa estar autenticado' }
     }
 
     return { user: null, error: 'Erro ao criar usuário' }
@@ -112,10 +110,6 @@ export async function updateUser(
       updateData.displayName = data.displayName.trim() || null
     }
 
-    if (data.phone !== undefined) {
-      updateData.phone = data.phone.trim() || null
-    }
-
     if (data.role !== undefined) {
       updateData.role = data.role
     }
@@ -128,20 +122,71 @@ export async function updateUser(
 
     return { error: null }
   } catch (error: any) {
-    console.error('[UserService] Erro ao atualizar usuário:', error)
     return { error: 'Erro ao atualizar usuário' }
   }
 }
 
 /**
+ * Verifica se um usuário pode ser deletado
+ * Regras:
+ * 1. Não pode deletar a si mesmo (currentUserId)
+ * 2. Não pode deletar o último superadmin do sistema
+ */
+export async function checkCanDeleteUser(
+  userId: string,
+  currentUserId: string
+): Promise<{ canDelete: boolean; error: string | null }> {
+  try {
+    // Regra 1: Não pode deletar a si mesmo
+    if (userId === currentUserId) {
+      return {
+        canDelete: false,
+        error: 'Você não pode deletar sua própria conta',
+      }
+    }
+
+    // Buscar o usuário a ser deletado
+    const userDoc = await firebaseFirestore.collection(COLLECTION).doc(userId).get()
+
+    if (!userDoc.exists) {
+      return { canDelete: false, error: 'Usuário não encontrado' }
+    }
+
+    const userData = userDoc.data()
+    const userRole = userData?.role
+
+    // Regra 2: Se é superadmin, verificar se é o último
+    if (userRole === 'superadmin') {
+      const superadminsSnapshot = await firebaseFirestore
+        .collection(COLLECTION)
+        .where('role', '==', 'superadmin')
+        .get()
+
+      const superadminCount = superadminsSnapshot.size
+
+      if (superadminCount <= 1) {
+        return {
+          canDelete: false,
+          error: 'Não é possível deletar o último Super Admin do sistema',
+        }
+      }
+    }
+
+    return { canDelete: true, error: null }
+  } catch (error: any) {
+    return { canDelete: false, error: 'Erro ao verificar permissões de deleção' }
+  }
+}
+
+/**
  * Deleta um usuário (apenas do Firestore, não do Auth por segurança)
+ * IMPORTANTE: Use checkCanDeleteUser antes de chamar esta função
  */
 export async function deleteUser(userId: string): Promise<{ error: string | null }> {
   try {
     await firebaseFirestore.collection(COLLECTION).doc(userId).delete()
     return { error: null }
   } catch (error: any) {
-    console.error('[UserService] Erro ao deletar usuário:', error)
     return { error: 'Erro ao deletar usuário' }
   }
 }
@@ -170,7 +215,6 @@ export async function listUsers(): Promise<{
 
     return { users, error: null }
   } catch (error: any) {
-    console.error('[UserService] Erro ao listar usuários:', error)
     return { users: [], error: 'Erro ao carregar usuários' }
   }
 }
@@ -199,7 +243,6 @@ export function onUsersChange(
         callback(users)
       },
       (error) => {
-        console.error('[UserService] Erro no listener:', error)
         if (onError) {
           onError(error)
         }
@@ -225,7 +268,6 @@ export async function getUserById(userId: string): Promise<{
 
     return { user, error: null }
   } catch (error: any) {
-    console.error('[UserService] Erro ao buscar usuário:', error)
     return { user: null, error: 'Erro ao buscar usuário' }
   }
 }

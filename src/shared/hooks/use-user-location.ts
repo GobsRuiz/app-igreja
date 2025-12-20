@@ -75,7 +75,7 @@ async function openLocationSettings() {
     try {
       await Linking.openSettings()
     } catch (error) {
-      console.error('[useUserLocation] Failed to open settings:', error)
+      // Failed to open settings
     }
   }
 }
@@ -88,7 +88,6 @@ async function getCurrentPositionWithFallback(): Promise<Location.LocationObject
   for (const accuracy of ACCURACY_LEVELS) {
     try {
       const timeout = TIMEOUT_BY_ACCURACY[accuracy] || 15000
-      console.log(`[useUserLocation] Trying accuracy: ${accuracy} (timeout: ${timeout}ms)`)
 
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error('Location timeout')), timeout)
@@ -97,11 +96,8 @@ async function getCurrentPositionWithFallback(): Promise<Location.LocationObject
       const locationPromise = Location.getCurrentPositionAsync({ accuracy })
       const position = await Promise.race([locationPromise, timeoutPromise])
 
-      console.log(`[useUserLocation] Success with accuracy: ${accuracy}`)
       return position
     } catch (error: any) {
-      console.warn(`[useUserLocation] Failed with accuracy ${accuracy}:`, error.message)
-
       // If settings error, no point trying lower accuracy
       if (isSettingsError(error)) {
         throw error
@@ -173,7 +169,6 @@ export function useUserLocation(): UseUserLocationReturn {
         })
 
         if (!geocode) {
-          console.warn('[useUserLocation] No geocode result')
           return null
         }
 
@@ -181,13 +176,11 @@ export function useUserLocation(): UseUserLocationReturn {
         const city = geocode.city || geocode.subregion || geocode.region
 
         if (!city) {
-          console.warn('[useUserLocation] No city found in geocode:', geocode)
           return null
         }
 
         return city
       } catch (error) {
-        console.error('[useUserLocation] Reverse geocoding error:', error)
         return null
       }
     },
@@ -223,7 +216,6 @@ export function useUserLocation(): UseUserLocationReturn {
         // 2. Se offline, tenta usar cache
         if (!isConnected) {
           if (cityRef.current && isCacheRecent()) {
-            console.log('[useUserLocation] Offline - using cached location')
             setLoading(false)
             return
           }
@@ -236,7 +228,6 @@ export function useUserLocation(): UseUserLocationReturn {
 
         // 3. Tenta última posição conhecida (cache do sistema) - apenas se não forçar nova
         if (!forceNew) {
-          console.log('[useUserLocation] Trying last known position...')
           const lastKnown = await Location.getLastKnownPositionAsync()
 
           if (lastKnown) {
@@ -245,12 +236,6 @@ export function useUserLocation(): UseUserLocationReturn {
 
             // Se última posição é recente (< 1 hora), usa ela
             if (age < CACHE_MAX_AGE) {
-              console.log(
-                '[useUserLocation] Using last known position (age: ' +
-                  Math.floor(age / 60000) +
-                  'min)'
-              )
-
               const detectedCity = await getCityFromCoordinates(
                 lastKnown.coords.latitude,
                 lastKnown.coords.longitude
@@ -264,7 +249,6 @@ export function useUserLocation(): UseUserLocationReturn {
                   setLocation(detectedCity, detectedState)
                 } else {
                   // Fallback: salva só cidade se não encontrar estado
-                  console.warn('[useUserLocation] Estado não encontrado para cidade:', detectedCity)
                   setLocation(detectedCity, 'SP') // Default SP
                 }
 
@@ -275,12 +259,9 @@ export function useUserLocation(): UseUserLocationReturn {
               }
             }
           }
-        } else {
-          console.log('[useUserLocation] Forcing new position (skipping cache)...')
         }
 
         // 4. Get new position with fallback accuracy
-        console.log('[useUserLocation] Getting new position with fallback accuracy...')
         const position = await getCurrentPositionWithFallback()
 
         if (!position) {
@@ -303,7 +284,6 @@ export function useUserLocation(): UseUserLocationReturn {
             setLocation(detectedCity, detectedState)
           } else {
             // Fallback: salva só cidade se não encontrar estado
-            console.warn('[useUserLocation] Estado não encontrado para cidade:', detectedCity)
             setLocation(detectedCity, 'SP') // Default SP
           }
 
@@ -316,7 +296,6 @@ export function useUserLocation(): UseUserLocationReturn {
 
         setLoading(false)
       } catch (error: any) {
-        console.error('[useUserLocation] Error detecting location:', error)
 
         // ============================================
         // SPECIFIC ERROR HANDLING

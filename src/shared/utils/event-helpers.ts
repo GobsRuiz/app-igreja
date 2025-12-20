@@ -17,7 +17,6 @@ export function getMinutesUntilEvent(event: Event): number {
     const now = new Date()
     return differenceInMinutes(eventDateTime, now)
   } catch (error) {
-    console.error('[EventHelpers] Error calculating minutes until event:', error)
     return 0
   }
 }
@@ -30,7 +29,6 @@ export function isEventPast(event: Event): boolean {
     const eventDateTime = parseISO(`${event.date}T${event.time}`)
     return isPast(eventDateTime)
   } catch (error) {
-    console.error('[EventHelpers] Error checking if event is past:', error)
     return false
   }
 }

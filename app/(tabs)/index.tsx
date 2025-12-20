@@ -29,7 +29,6 @@ export default function HomePage() {
 
     // Cleanup listener on unmount
     return () => {
-      console.log('[HomePage] Cleaning up Firestore listener')
       unsubscribe()
     }
   }, [initializeFirestoreListener])

@@ -85,31 +85,24 @@ export async function signUp(
     }
 
     // Criar usuário no Firebase Auth
-    console.log('🔥 [AUTH] Criando usuário no Firebase Auth...');
     const userCredential = await firebaseAuth.createUserWithEmailAndPassword(email, password);
     const user = mapFirebaseUser(userCredential.user);
-    console.log('✅ [AUTH] Usuário criado no Auth:', user?.uid);
 
     // Criar documento do usuário na collection users/
     if (user) {
-      console.log('🔥 [FIRESTORE] Tentando criar documento em users/...');
       try {
         await firebaseFirestore.collection('users').doc(user.uid).set({
           email: user.email,
           role: 'user', // Todos começam como usuários
           createdAt: firestore.FieldValue.serverTimestamp(),
         });
-        console.log('✅ [FIRESTORE] Documento criado com sucesso!');
       } catch (firestoreError: any) {
-        console.error('❌ [FIRESTORE] ERRO ao criar documento:', firestoreError);
-        console.error('❌ [FIRESTORE] Código do erro:', firestoreError.code);
-        console.error('❌ [FIRESTORE] Mensagem:', firestoreError.message);
+        // Error creating user document
       }
     }
 
     return { user, error: null };
   } catch (error: any) {
-    console.error('❌ [AUTH] Erro geral:', error);
     const errorMessage = mapAuthError(error, true);
     return { user: null, error: errorMessage };
   }

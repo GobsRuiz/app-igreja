@@ -82,7 +82,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
               });
             },
             (error) => {
-              console.error('Erro ao obter role do usuário:', error);
               // Fallback seguro
               setState({
                 user,

@@ -46,9 +46,6 @@ export class ErrorHandler {
    * @param context - Contexto do erro (opcional)
    */
   static handle(error: unknown, context?: string): void {
-    // Log estruturado no console (dev)
-    console.error(`[ErrorHandler]${context ? ` ${context}:` : ''}`, error)
-
     // Parse mensagem amigável
     const message = this.parseErrorMessage(error)
 
@@ -69,8 +66,6 @@ export class ErrorHandler {
    * @param error - Erro de rede
    */
   static handleNetworkError(error: unknown): void {
-    console.error('[ErrorHandler] Network error:', error)
-
     let message = 'Erro de conexão'
     let description = 'Verifique sua internet e tente novamente'
 
@@ -95,8 +90,6 @@ export class ErrorHandler {
    * @param error - Erro de validação
    */
   static handleValidationError(error: unknown): void {
-    console.warn('[ErrorHandler] Validation error:', error)
-
     const message = this.parseErrorMessage(error)
     const sanitizedMessage = this.sanitizeMessage(message)
 
@@ -113,8 +106,6 @@ export class ErrorHandler {
    * @param error - Erro de API (axios, fetch, etc)
    */
   static handleApiError(error: unknown): void {
-    console.error('[ErrorHandler] API error:', error)
-
     let message = 'Erro no servidor'
     let description = 'Tente novamente em alguns instantes'
 
@@ -167,11 +158,102 @@ export class ErrorHandler {
   }
 
   /**
+   * Parse e sanitiza erros do Firebase/Firestore
+   * Trata códigos comuns e retorna mensagem amigável
+   * Usado principalmente em services para retornar string sanitizada
+   *
+   * @param error - Erro do Firebase/Firestore
+   * @param fallback - Mensagem padrão se erro não for reconhecido
+   * @returns Mensagem de erro sanitizada
+   *
+   * @example
+   * ```typescript
+   * catch (error: any) {
+   *   const msg = ErrorHandler.parseFirebaseError(error, 'Erro ao criar categoria')
+   *   return { category: null, error: msg }
+   * }
+   * ```
+   */
+  static parseFirebaseError(error: any, fallback: string): string {
+    // Códigos Firestore comuns
+    if (error?.code === 'permission-denied') {
+      return 'Você não tem permissão para esta ação'
+    }
+
+    if (error?.code === 'not-found') {
+      return 'Recurso não encontrado'
+    }
+
+    if (error?.code === 'unavailable') {
+      return 'Servidor indisponível. Tente novamente'
+    }
+
+    if (error?.code === 'unauthenticated') {
+      return 'Você precisa estar autenticado'
+    }
+
+    if (error?.code === 'already-exists') {
+      return 'Este recurso já existe'
+    }
+
+    if (error?.code === 'deadline-exceeded') {
+      return 'Tempo esgotado. Tente novamente'
+    }
+
+    if (error?.code === 'cancelled') {
+      return 'Operação cancelada'
+    }
+
+    if (error?.code === 'resource-exhausted') {
+      return 'Limite de recursos excedido. Tente novamente mais tarde'
+    }
+
+    if (error?.code === 'failed-precondition') {
+      return 'Operação não permitida no estado atual'
+    }
+
+    if (error?.code === 'aborted') {
+      return 'Operação abortada devido a conflito'
+    }
+
+    if (error?.code === 'out-of-range') {
+      return 'Valor fora do intervalo permitido'
+    }
+
+    if (error?.code === 'unimplemented') {
+      return 'Operação não implementada'
+    }
+
+    if (error?.code === 'internal') {
+      return 'Erro interno do servidor'
+    }
+
+    if (error?.code === 'data-loss') {
+      return 'Perda de dados detectada'
+    }
+
+    // Network errors
+    if (error?.message?.includes('network')) {
+      return 'Erro de conexão. Verifique sua internet'
+    }
+
+    // Parse mensagem do erro e sanitiza
+    const message = this.parseErrorMessage(error)
+    const sanitized = this.sanitizeMessage(message)
+
+    // Se sanitização resultou em string vazia ou genérica, usa fallback
+    if (!sanitized || sanitized === 'Ocorreu um erro inesperado') {
+      return fallback
+    }
+
+    return sanitized
+  }
+
+  /**
    * Parse de mensagem de erro de diferentes tipos
    *
    * @param error - Erro a ser parseado
    * @returns Mensagem de erro legível
-   * @private
    */
   private static parseErrorMessage(error: unknown): string {
     // String simples
@@ -215,9 +297,8 @@ export class ErrorHandler {
    *
    * @param message - Mensagem a ser sanitizada
    * @returns Mensagem sanitizada e truncada se necessário
-   * @private
    */
-  private static sanitizeMessage(message: string): string {
+  static sanitizeMessage(message: string): string {
     // Trunca ENTRADA se muito longa (evita processar megabytes de texto)
     const maxInputLength = 5000
     const input = message.length > maxInputLength

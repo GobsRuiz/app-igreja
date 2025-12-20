@@ -68,12 +68,10 @@ export const useLocationStore = create<LocationState>((set, get) => ({
   setLocation: (city, state) => {
     // Validação básica
     if (!city || typeof city !== 'string' || !city.trim()) {
-      console.warn('[LocationStore] Invalid city name')
       return
     }
 
     if (!state || typeof state !== 'string' || !state.trim()) {
-      console.warn('[LocationStore] Invalid state code')
       return
     }
 
@@ -94,11 +92,9 @@ export const useLocationStore = create<LocationState>((set, get) => ({
 
   setCity: (city) => {
     // @deprecated - mantido para compatibilidade
-    console.warn('[LocationStore] setCity is deprecated, use setLocation instead')
 
     // Validação básica
     if (!city || typeof city !== 'string' || !city.trim()) {
-      console.warn('[LocationStore] Invalid city name')
       return
     }
 
@@ -140,7 +136,6 @@ export const useLocationStore = create<LocationState>((set, get) => ({
       const cached = await AsyncStorage.getItem(STORAGE_KEY)
 
       if (!cached) {
-        console.log('[LocationStore] No cached location found')
         return
       }
 
@@ -149,7 +144,6 @@ export const useLocationStore = create<LocationState>((set, get) => ({
 
       // Validação dos dados do cache
       if (!city || typeof city !== 'string') {
-        console.warn('[LocationStore] Invalid cached data')
         await AsyncStorage.removeItem(STORAGE_KEY)
         return
       }
@@ -159,18 +153,15 @@ export const useLocationStore = create<LocationState>((set, get) => ({
 
       // Verifica se cache está válido (< 1 hora)
       if (age < CACHE_MAX_AGE) {
-        console.log('[LocationStore] Loaded location from cache:', city, state || '(no state)')
         set({
           city,
           state: state || null, // Pode não ter estado em cache antigo
           lastUpdated,
           error: null,
         })
-      } else {
-        console.log('[LocationStore] Cached location is too old')
       }
     } catch (error) {
-      console.error('[LocationStore] Error loading from cache:', error)
+      // Error loading from cache
     }
   },
 
@@ -182,9 +173,8 @@ export const useLocationStore = create<LocationState>((set, get) => ({
         lastUpdated: Date.now(),
       }
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-      console.log('[LocationStore] Saved location to cache:', city, state)
     } catch (error) {
-      console.error('[LocationStore] Error saving to cache:', error)
+      // Error saving to cache
     }
   },
 
@@ -199,7 +189,7 @@ export const useLocationStore = create<LocationState>((set, get) => ({
       lastUpdated: null,
     })
     AsyncStorage.removeItem(STORAGE_KEY).catch((error) => {
-      console.error('[LocationStore] Error removing cache:', error)
+      // Error removing cache
     })
   },
 }))

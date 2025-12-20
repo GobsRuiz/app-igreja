@@ -6,6 +6,7 @@ import type {
   UpdateCategoryData,
 } from '../types/category.types'
 import { mapFirestoreCategory } from '../types/category.types'
+import { ErrorHandler } from '@shared/services'
 
 const COLLECTION = 'categories'
 
@@ -53,8 +54,8 @@ export async function createCategory(
 
     return { category, error: null }
   } catch (error: any) {
-    console.error('[CategoryService] Erro ao criar categoria:', error)
-    return { category: null, error: 'Erro ao criar categoria' }
+    const errorMessage = ErrorHandler.parseFirebaseError(error, 'Erro ao criar categoria')
+    return { category: null, error: errorMessage }
   }
 }
 
@@ -82,8 +83,8 @@ export async function listCategories(): Promise<{
 
     return { categories, error: null }
   } catch (error: any) {
-    console.error('[CategoryService] Erro ao listar categorias:', error)
-    return { categories: [], error: 'Erro ao carregar categorias' }
+    const errorMessage = ErrorHandler.parseFirebaseError(error, 'Erro ao carregar categorias')
+    return { categories: [], error: errorMessage }
   }
 }
 
@@ -122,8 +123,8 @@ export async function updateCategory(
 
     return { error: null }
   } catch (error: any) {
-    console.error('[CategoryService] Erro ao atualizar categoria:', error)
-    return { error: 'Erro ao atualizar categoria' }
+    const errorMessage = ErrorHandler.parseFirebaseError(error, 'Erro ao atualizar categoria')
+    return { error: errorMessage }
   }
 }
 
@@ -147,8 +148,8 @@ export async function checkCategoryInUse(categoryId: string): Promise<{
       error: null,
     }
   } catch (error: any) {
-    console.error('[CategoryService] Erro ao verificar uso da categoria:', error)
-    return { inUse: false, error: 'Erro ao verificar dependências' }
+    const errorMessage = ErrorHandler.parseFirebaseError(error, 'Erro ao verificar dependências')
+    return { inUse: false, error: errorMessage }
   }
 }
 
@@ -160,8 +161,8 @@ export async function deleteCategory(categoryId: string): Promise<{ error: strin
     await firebaseFirestore.collection(COLLECTION).doc(categoryId).delete()
     return { error: null }
   } catch (error: any) {
-    console.error('[CategoryService] Erro ao deletar categoria:', error)
-    return { error: 'Erro ao deletar categoria' }
+    const errorMessage = ErrorHandler.parseFirebaseError(error, 'Erro ao deletar categoria')
+    return { error: errorMessage }
   }
 }
 
@@ -189,7 +190,6 @@ export function onCategoriesChange(
         callback(categories)
       },
       (error) => {
-        console.error('[CategoryService] Erro no listener:', error)
         if (onError) {
           onError(error)
         }

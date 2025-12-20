@@ -9,7 +9,6 @@ export interface User {
   email: string
   displayName?: string
   photoUrl?: string
-  phone?: string
   role: Role
   createdAt: Date
 }
@@ -20,8 +19,7 @@ export interface User {
 export interface CreateUserData {
   email: string
   password: string
-  displayName?: string
-  phone?: string
+  displayName: string
   role: Role
 }
 
@@ -30,7 +28,6 @@ export interface CreateUserData {
  */
 export interface UpdateUserData {
   displayName?: string
-  phone?: string
   role?: Role
 }
 
@@ -50,7 +47,6 @@ export function mapFirestoreUser(
     email: data.email,
     displayName: data.displayName,
     photoUrl: data.photoUrl,
-    phone: data.phone,
     role: data.role || 'user',
     createdAt: data.createdAt?.toDate() || new Date(),
   }

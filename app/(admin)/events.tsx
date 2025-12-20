@@ -1,5 +1,5 @@
 import { useRolePropagationCheck } from '@features/auth'
-import { onCategoriesChange, type Category } from '@features/categories'
+import { CategorySelect, onCategoriesChange, type Category } from '@features/categories'
 import {
   createEvent,
   deleteEvent,
@@ -9,14 +9,15 @@ import {
   type Event,
   type EventStatus,
 } from '@features/events'
-import { onLocationsChange, type Location } from '@features/locations'
+import { LocationSelect, onLocationsChange, type Location } from '@features/locations'
 import DateTimePicker from '@react-native-community/datetimepicker'
-import { Button, Card, EmptyState, AdminLoadingState, AdminActionButtons, BottomSheetModal, toast } from '@shared/ui'
-import { AlertCircle, Calendar, Eye, MapPin, Plus, Tag, X } from '@tamagui/lucide-icons'
+import { useAdminDelete } from '@shared/hooks'
+import { AdminActionButtons, AdminLoadingState, AdminModalFooter, BottomSheetModal, Button, Card, EmptyState, FormField, toast, AdminFilterModal } from '@shared/ui'
+import { AlertCircle, Calendar, MapPin, Plus, Tag, SlidersHorizontal, Search } from '@tamagui/lucide-icons'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import React, { useEffect, useState } from 'react'
-import { Alert, Platform } from 'react-native'
+import React, { useEffect, useState, useMemo } from 'react'
+import { Platform } from 'react-native'
 import { Dropdown } from 'react-native-element-dropdown'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import {
@@ -51,6 +52,30 @@ export default function AdminEventsPage() {
   // Processing state for action buttons
   const [processingId, setProcessingId] = useState<string | null>(null)
 
+  // Filter states - LOCAL (edited in modal, not yet applied)
+  const [localSearchQuery, setLocalSearchQuery] = useState('')
+  const [localCategoryFilter, setLocalCategoryFilter] = useState<string>('all')
+  const [localLocationFilter, setLocalLocationFilter] = useState<string>('all')
+  const [localStatusFilter, setLocalStatusFilter] = useState<EventStatus | 'all'>('all')
+
+  // Filter states - APPLIED (used for filtering the list)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState<string>('all')
+  const [locationFilter, setLocationFilter] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useState<EventStatus | 'all'>('all')
+
+  // Filter modal state
+  const [filterModalOpen, setFilterModalOpen] = useState(false)
+
+  // Delete handler
+  const { handleDelete } = useAdminDelete<Event>({
+    entityName: 'Evento',
+    getItemName: (event) => event.title,
+    deleteAction: deleteEvent,
+    setLoading,
+    setProcessingId,
+  })
+
   // Date picker
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [showTimePicker, setShowTimePicker] = useState(false)
@@ -59,11 +84,14 @@ export default function AdminEventsPage() {
   useEffect(() => {
     const unsubscribeEvents = onEventsChange(
       (data) => {
-        setEvents(data)
+        // Ordena eventos do mais recente para o mais antigo
+        const sortedEvents = [...data].sort((a, b) => {
+          return b.date.getTime() - a.date.getTime()
+        })
+        setEvents(sortedEvents)
         setLoading(false)
       },
-      (error) => {
-        console.error('Erro ao carregar eventos:', error)
+      () => {
         toast.error('Erro ao carregar eventos')
         setLoading(false)
       }
@@ -164,40 +192,58 @@ export default function AdminEventsPage() {
     }, 300)
   }
 
-  const handleDelete = (event: Event) => {
-    setProcessingId(event.id)
-    Alert.alert('Deletar Evento', `Tem certeza que deseja deletar "${event.title}"?`, [
-      {
-        text: 'Cancelar',
-        style: 'cancel',
-        onPress: () => setProcessingId(null),
-      },
-      {
-        text: 'Deletar',
-        style: 'destructive',
-        onPress: async () => {
-          setLoading(true)
-
-          const { error } = await deleteEvent(event.id)
-
-          if (error) {
-            toast.error(error)
-            setLoading(false)
-            setProcessingId(null)
-            return
-          }
-
-          toast.success('Evento deletado!')
-
-          // Wait for listener to update data
-          setTimeout(() => {
-            setLoading(false)
-            setProcessingId(null)
-          }, 300)
-        },
-      },
-    ])
+  // Filter handlers
+  const handleOpenFilter = () => {
+    setLocalSearchQuery(searchQuery)
+    setLocalCategoryFilter(categoryFilter)
+    setLocalLocationFilter(locationFilter)
+    setLocalStatusFilter(statusFilter)
+    setFilterModalOpen(true)
   }
+
+  const handleApplyFilter = () => {
+    setSearchQuery(localSearchQuery)
+    setCategoryFilter(localCategoryFilter)
+    setLocationFilter(localLocationFilter)
+    setStatusFilter(localStatusFilter)
+    setFilterModalOpen(false)
+  }
+
+  const handleClearFilter = () => {
+    setLocalSearchQuery('')
+    setLocalCategoryFilter('all')
+    setLocalLocationFilter('all')
+    setLocalStatusFilter('all')
+  }
+
+  // Filtered events - memoized for performance
+  const filteredEvents = useMemo(() => {
+    return events.filter((event) => {
+      // Search filter (title or description)
+      const matchesSearch =
+        !searchQuery.trim() ||
+        event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        event.description.toLowerCase().includes(searchQuery.toLowerCase())
+
+      // Category filter
+      const matchesCategory = categoryFilter === 'all' || event.categoryId === categoryFilter
+
+      // Location filter
+      const matchesLocation = locationFilter === 'all' || event.locationId === locationFilter
+
+      // Status filter
+      const matchesStatus = statusFilter === 'all' || event.status === statusFilter
+
+      return matchesSearch && matchesCategory && matchesLocation && matchesStatus
+    })
+  }, [events, searchQuery, categoryFilter, locationFilter, statusFilter])
+
+  // Check if filters are active
+  const hasActiveFilters =
+    searchQuery.trim() !== '' ||
+    categoryFilter !== 'all' ||
+    locationFilter !== 'all' ||
+    statusFilter !== 'all'
 
   const getCategoryName = (categoryId: string) => {
     return categories.find((c) => c.id === categoryId)?.name || 'N/A'
@@ -221,44 +267,69 @@ export default function AdminEventsPage() {
           <Text fontSize="$8" fontWeight="700" color="$foreground">
             Eventos
           </Text>
-          <Button
-            variant="primary"
-            icon={Plus}
-            onPress={handleOpenCreate}
-            disabled={categories.length === 0 || locations.length === 0}
-            opacity={categories.length === 0 || locations.length === 0 ? 0.5 : 1}
-          >
-            Novo
-          </Button>
+          <XStack gap="$3" alignItems="center">
+            {/* Botão Filtros */}
+            <Button
+              variant="outlined"
+              icon={SlidersHorizontal}
+              onPress={handleOpenFilter}
+              {...(hasActiveFilters && {
+                style: {
+                  backgroundColor: '$color3',
+                  borderColor: '$color8',
+                },
+              })}
+            >
+              Filtros
+            </Button>
+
+            <Button
+              variant="primary"
+              icon={Plus}
+              onPress={handleOpenCreate}
+              disabled={categories.length === 0 || locations.length === 0}
+              opacity={categories.length === 0 || locations.length === 0 ? 0.5 : 1}
+            >
+              Novo
+            </Button>
+          </XStack>
         </XStack>
 
         {/* Lista ou Loading */}
         {loading ? (
           <AdminLoadingState />
-        ) : events.length === 0 ? (
-          categories.length === 0 || locations.length === 0 ? (
-            <EmptyState
-              icon={<AlertCircle size={48} color="$foreground" />}
-              message={
-                categories.length === 0 && locations.length === 0
-                  ? 'Cadastre categorias e locais antes'
-                  : categories.length === 0
-                  ? 'Cadastre pelo menos uma categoria'
-                  : 'Cadastre pelo menos um local'
-              }
-              description="Acesse as abas correspondentes para criar"
-            />
+        ) : filteredEvents.length === 0 ? (
+          events.length === 0 ? (
+            categories.length === 0 || locations.length === 0 ? (
+              <EmptyState
+                icon={<AlertCircle size={48} color="$foreground" />}
+                message={
+                  categories.length === 0 && locations.length === 0
+                    ? 'Cadastre categorias e locais antes'
+                    : categories.length === 0
+                    ? 'Cadastre pelo menos uma categoria'
+                    : 'Cadastre pelo menos um local'
+                }
+                description="Acesse as abas correspondentes para criar"
+              />
+            ) : (
+              <EmptyState
+                icon={<Calendar size={48} color="$foreground" />}
+                message="Nenhum evento cadastrado"
+                description="Clique em &quot;Novo&quot; para criar"
+              />
+            )
           ) : (
             <EmptyState
               icon={<Calendar size={48} color="$foreground" />}
-              message="Nenhum evento cadastrado"
-              description="Clique em &quot;Novo&quot; para criar"
+              message="Nenhum evento encontrado com os filtros aplicados"
+              description="Tente ajustar os filtros"
             />
           )
         ) : (
           <ScrollView showsVerticalScrollIndicator={false}>
             <YStack gap="$3">
-              {events.map((event) => (
+              {filteredEvents.map((event) => (
                 <Card key={event.id}>
                   <YStack gap="$3">
                     {/* Header do card */}
@@ -274,7 +345,8 @@ export default function AdminEventsPage() {
 
                       <AdminActionButtons
                         disabled={loading || submitting || sheetOpen}
-                        isProcessing={processingId === event.id}
+                        isEditProcessing={processingId === event.id}
+                        isDeleteProcessing={processingId === event.id}
                         onEdit={() => handleOpenEdit(event)}
                         onDelete={() => handleDelete(event)}
                       />
@@ -356,51 +428,26 @@ export default function AdminEventsPage() {
             </Text>
           }
           footer={
-            <XStack gap="$3">
-              <Button
-                flex={editingEvent?.status === 'finished' ? 1 : 1}
-                variant="outlined"
-                icon={X}
-                onPress={handleClose}
-                disabled={submitting}
-                opacity={submitting ? 0.5 : 1}
-              >
-                {editingEvent?.status === 'finished' ? 'Fechar' : 'Cancelar'}
-              </Button>
-
-              {editingEvent?.status !== 'finished' && (
-                <Button
-                  flex={1}
-                  variant="primary"
-                  onPress={handleSubmit}
-                  disabled={
-                    submitting ||
-                    !formData.title.trim() ||
-                    !formData.categoryId ||
-                    !formData.locationId
-                  }
-                  opacity={
-                    submitting ||
-                    !formData.title.trim() ||
-                    !formData.categoryId ||
-                    !formData.locationId
-                      ? 0.5
-                      : 1
-                  }
-                >
-                  {submitting ? 'Salvando...' : editingEvent ? 'Atualizar' : 'Criar'}
-                </Button>
-              )}
-            </XStack>
+            <AdminModalFooter
+              cancelText={editingEvent?.status === 'finished' ? 'Fechar' : 'Cancelar'}
+              onCancel={handleClose}
+              onConfirm={handleSubmit}
+              confirmText={submitting ? 'Salvando...' : editingEvent ? 'Atualizar' : 'Criar'}
+              confirmDisabled={
+                submitting ||
+                !formData.title.trim() ||
+                !formData.categoryId ||
+                !formData.locationId
+              }
+              submitting={submitting}
+              hideConfirm={editingEvent?.status === 'finished'}
+            />
           }
-          contentContainerProps={{ padding: '$4', gap: '$4' }}
+          contentContainerProps={{ padding: '$4', gap: '$4'}}
         >
           <YStack gap="$4">
                   {/* Título */}
-                  <YStack gap="$2">
-                    <Text fontSize="$3" fontWeight="600" color="$color11">
-                      Título *
-                    </Text>
+                  <FormField label="Título" required>
                     <Input
                       size="$4"
                       placeholder="Ex: Culto de Domingo"
@@ -409,13 +456,10 @@ export default function AdminEventsPage() {
                       disabled={editingEvent?.status === 'finished'}
                       opacity={editingEvent?.status === 'finished' ? 0.6 : 1}
                     />
-                  </YStack>
+                  </FormField>
 
                   {/* Descrição */}
-                  <YStack gap="$2">
-                    <Text fontSize="$3" fontWeight="600" color="$color11">
-                      Descrição
-                    </Text>
+                  <FormField label="Descrição">
                     <TextArea
                       size="$4"
                       placeholder="Detalhes do evento (opcional)..."
@@ -425,13 +469,10 @@ export default function AdminEventsPage() {
                       disabled={editingEvent?.status === 'finished'}
                       opacity={editingEvent?.status === 'finished' ? 0.6 : 1}
                     />
-                  </YStack>
+                  </FormField>
 
                   {/* Data e Hora */}
-                  <YStack gap="$2">
-                    <Text fontSize="$3" fontWeight="600" color="$color11">
-                      Data e Hora *
-                    </Text>
+                  <FormField label="Data e Hora" required>
                     <XStack gap="$2">
                       <Button
                         flex={1}
@@ -454,62 +495,31 @@ export default function AdminEventsPage() {
                         {format(formData.date, 'HH:mm', { locale: ptBR })}
                       </Button>
                     </XStack>
-                  </YStack>
+                  </FormField>
 
                   {/* Categoria */}
-                  <YStack gap="$2">
-                    <Text fontSize="$3" fontWeight="600" color="$color11">
-                      Categoria *
-                    </Text>
-                    <Dropdown
-                      data={categories.map((cat) => ({ label: cat.name, value: cat.id }))}
-                      labelField="label"
-                      valueField="value"
+                  <FormField label="Categoria" required>
+                    <CategorySelect
                       value={formData.categoryId}
-                      onChange={(item) => setFormData({ ...formData, categoryId: item.value })}
+                      onChange={(categoryId) => setFormData({ ...formData, categoryId })}
                       placeholder="Selecione uma categoria"
-                      disable={editingEvent?.status === 'finished'}
-                      style={{
-                        height: 50,
-                        borderWidth: 1,
-                        borderColor: '#e5e5e5',
-                        borderRadius: 8,
-                        paddingHorizontal: 12,
-                        opacity: editingEvent?.status === 'finished' ? 0.6 : 1,
-                      }}
+                      disabled={editingEvent?.status === 'finished'}
                     />
-                  </YStack>
+                  </FormField>
 
                   {/* Local */}
-                  <YStack gap="$2">
-                    <Text fontSize="$3" fontWeight="600" color="$color11">
-                      Local *
-                    </Text>
-                    <Dropdown
-                      data={locations.map((loc) => ({ label: loc.name, value: loc.id }))}
-                      labelField="label"
-                      valueField="value"
+                  <FormField label="Local" required>
+                    <LocationSelect
                       value={formData.locationId}
-                      onChange={(item) => setFormData({ ...formData, locationId: item.value })}
+                      onChange={(locationId) => setFormData({ ...formData, locationId })}
                       placeholder="Selecione um local"
-                      disable={editingEvent?.status === 'finished'}
-                      style={{
-                        height: 50,
-                        borderWidth: 1,
-                        borderColor: '#e5e5e5',
-                        borderRadius: 8,
-                        paddingHorizontal: 12,
-                        opacity: editingEvent?.status === 'finished' ? 0.6 : 1,
-                      }}
+                      disabled={editingEvent?.status === 'finished'}
                     />
-                  </YStack>
+                  </FormField>
 
-                  {/* Status - Só aparece se NÃO for finished */}
-                  {editingEvent?.status !== 'finished' && (
-                    <YStack gap="$2">
-                      <Text fontSize="$3" fontWeight="600" color="$color11">
-                        Status *
-                      </Text>
+                  {/* Status - Só aparece na EDIÇÃO (não na criação) e se NÃO for finished */}
+                  {editingEvent && editingEvent.status !== 'finished' && (
+                    <FormField label="Status" required>
                       <Dropdown
                         data={[
                           { label: 'Ativo', value: 'active' },
@@ -528,7 +538,7 @@ export default function AdminEventsPage() {
                           paddingHorizontal: 12,
                         }}
                       />
-                    </YStack>
+                    </FormField>
                   )}
           </YStack>
         </BottomSheetModal>
@@ -570,6 +580,117 @@ export default function AdminEventsPage() {
             }}
           />
         )}
+
+        {/* Modal de Filtros */}
+        <AdminFilterModal
+          isOpen={filterModalOpen}
+          onClose={() => setFilterModalOpen(false)}
+          onApply={handleApplyFilter}
+          onClear={handleClearFilter}
+          title="Filtrar Eventos"
+        >
+          {/* Busca por texto */}
+          <YStack gap="$3">
+            <XStack gap="$2" alignItems="center">
+              <Search size={20} color="$color11" />
+              <Text fontSize="$4" fontWeight="600" color="$color12">
+                Busca
+              </Text>
+            </XStack>
+            <Input
+              size="$4"
+              placeholder="Título ou descrição..."
+              value={localSearchQuery}
+              onChangeText={setLocalSearchQuery}
+            />
+          </YStack>
+
+          {/* Filtro por Categoria */}
+          <YStack gap="$3">
+            <XStack gap="$2" alignItems="center">
+              <Tag size={20} color="$color11" />
+              <Text fontSize="$4" fontWeight="600" color="$color12">
+                Categoria
+              </Text>
+            </XStack>
+            <Dropdown
+              data={[
+                { label: 'Todas', value: 'all' },
+                ...categories.map((c) => ({ label: c.name, value: c.id })),
+              ]}
+              labelField="label"
+              valueField="value"
+              value={localCategoryFilter}
+              onChange={(item) => setLocalCategoryFilter(item.value)}
+              placeholder="Selecione uma categoria"
+              style={{
+                height: 50,
+                borderWidth: 1,
+                borderColor: '#e5e5e5',
+                borderRadius: 8,
+                paddingHorizontal: 12,
+              }}
+            />
+          </YStack>
+
+          {/* Filtro por Local */}
+          <YStack gap="$3">
+            <XStack gap="$2" alignItems="center">
+              <MapPin size={20} color="$color11" />
+              <Text fontSize="$4" fontWeight="600" color="$color12">
+                Local
+              </Text>
+            </XStack>
+            <Dropdown
+              data={[
+                { label: 'Todos', value: 'all' },
+                ...locations.map((l) => ({ label: l.name, value: l.id })),
+              ]}
+              labelField="label"
+              valueField="value"
+              value={localLocationFilter}
+              onChange={(item) => setLocalLocationFilter(item.value)}
+              placeholder="Selecione um local"
+              style={{
+                height: 50,
+                borderWidth: 1,
+                borderColor: '#e5e5e5',
+                borderRadius: 8,
+                paddingHorizontal: 12,
+              }}
+            />
+          </YStack>
+
+          {/* Filtro por Status */}
+          <YStack gap="$3">
+            <XStack gap="$2" alignItems="center">
+              <AlertCircle size={20} color="$color11" />
+              <Text fontSize="$4" fontWeight="600" color="$color12">
+                Status
+              </Text>
+            </XStack>
+            <Dropdown
+              data={[
+                { label: 'Todos', value: 'all' },
+                { label: 'Ativo', value: 'active' },
+                { label: 'Cancelado', value: 'cancelled' },
+                { label: 'Finalizado', value: 'finished' },
+              ]}
+              labelField="label"
+              valueField="value"
+              value={localStatusFilter}
+              onChange={(item) => setLocalStatusFilter(item.value as EventStatus | 'all')}
+              placeholder="Selecione um status"
+              style={{
+                height: 50,
+                borderWidth: 1,
+                borderColor: '#e5e5e5',
+                borderRadius: 8,
+                paddingHorizontal: 12,
+              }}
+            />
+          </YStack>
+        </AdminFilterModal>
       </YStack>
     </SafeAreaView>
   )

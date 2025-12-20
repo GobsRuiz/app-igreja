@@ -56,7 +56,9 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
   useEffect(() => {
     const unsubscribeCategories = onCategoriesChange(
       (data) => setCategories(data),
-      (error) => console.error('Error loading categories:', error)
+      () => {
+        // Error loading categories
+      }
     )
 
     return () => {

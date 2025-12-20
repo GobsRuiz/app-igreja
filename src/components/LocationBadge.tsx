@@ -27,8 +27,7 @@ export function LocationBadge() {
   useEffect(() => {
     loadFromCache()
       .then(() => setCacheLoaded(true))
-      .catch((error) => {
-        console.error('[LocationBadge] Error loading cache:', error)
+      .catch(() => {
         setCacheLoaded(true) // Marca como carregado mesmo com erro
       })
   }, [loadFromCache])

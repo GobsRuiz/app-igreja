@@ -1,6 +1,6 @@
-import React from 'react'
-import { YStack, Spinner } from 'tamagui'
 import { Pencil, Trash2 } from '@tamagui/lucide-icons'
+import React from 'react'
+import { XStack } from 'tamagui'
 import { Button } from './button'
 
 export interface AdminActionButtonsProps {
@@ -10,9 +10,14 @@ export interface AdminActionButtonsProps {
   disabled?: boolean
 
   /**
-   * Shows loading state on this specific item's buttons
+   * Shows loading state on EDIT button specifically
    */
-  isProcessing?: boolean
+  isEditProcessing?: boolean
+
+  /**
+   * Shows loading state on DELETE button specifically
+   */
+  isDeleteProcessing?: boolean
 
   /**
    * Handler for edit button click
@@ -33,35 +38,36 @@ export interface AdminActionButtonsProps {
 
 export function AdminActionButtons({
   disabled = false,
-  isProcessing = false,
+  isEditProcessing = false,
+  isDeleteProcessing = false,
   onEdit,
   onDelete,
   deleteVariant = 'danger',
 }: AdminActionButtonsProps) {
-  const isDisabled = disabled || isProcessing
+  const isEditDisabled = disabled || isEditProcessing
+  const isDeleteDisabled = disabled || isDeleteProcessing
 
   return (
-    <YStack gap="$2">
+    <XStack gap="$2">
+      {/* Edit Button */}
       <Button
         variant="outlined"
-        icon={isProcessing ? undefined : Pencil}
+        icon={Pencil}
         onPress={onEdit}
         circular
-        disabled={isDisabled}
-        opacity={isDisabled ? 0.5 : 1}
-      >
-        {isProcessing && <Spinner size="small" color="$color11" />}
-      </Button>
+        disabled={isEditDisabled}
+        opacity={isEditDisabled ? 0.5 : 1}
+      />
+
+      {/* Delete Button */}
       <Button
         variant={deleteVariant}
-        icon={isProcessing ? undefined : Trash2}
+        icon={Trash2}
         onPress={onDelete}
         circular
-        disabled={isDisabled}
-        opacity={isDisabled ? 0.5 : 1}
-      >
-        {isProcessing && <Spinner size="small" color="white" />}
-      </Button>
-    </YStack>
+        disabled={isDeleteDisabled}
+        opacity={isDeleteDisabled ? 0.5 : 1}
+      />
+    </XStack>
   )
 }

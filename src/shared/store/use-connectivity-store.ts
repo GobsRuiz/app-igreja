@@ -40,7 +40,6 @@ export const useConnectivityStore = create<ConnectivityState>((set) => ({
   setConnectionState: (state) => {
     // Validação de segurança
     if (!state || typeof state !== 'object') {
-      console.warn('[ConnectivityStore] Invalid connection state')
       return
     }
 
@@ -63,7 +62,6 @@ export const useConnectivityStore = create<ConnectivityState>((set) => ({
         details: state.details,
       })
     } catch (error) {
-      console.error('[ConnectivityStore] Error checking connection:', error)
       // Em caso de erro, assume desconectado
       set({
         isConnected: false,
@@ -97,11 +95,6 @@ export function useConnectivityListener() {
 
     // ✅ SINGLETON: Verifica se já existe listener ativo
     if (store._listenerActive) {
-      console.warn(
-        '[ConnectivityStore] Listener já está ativo. ' +
-        'useConnectivityListener() deve ser chamado apenas uma vez (em _layout.tsx). ' +
-        'Esta chamada será ignorada.'
-      )
       return
     }
 

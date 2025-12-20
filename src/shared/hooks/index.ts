@@ -7,3 +7,6 @@ export { useThemeColor } from './use-theme-color'
 
 // Location hooks
 export { useUserLocation } from './use-user-location'
+
+// Admin hooks
+export { useAdminDelete } from './use-admin-delete'

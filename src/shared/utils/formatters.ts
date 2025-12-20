@@ -39,7 +39,6 @@ export class Formatters {
 
       return format(date, 'dd/MM/yyyy', { locale: ptBR })
     } catch (error) {
-      console.warn('[Formatters] Error formatting date:', error)
       return dateString
     }
   }
@@ -63,7 +62,6 @@ export class Formatters {
 
       return format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
     } catch (error) {
-      console.warn('[Formatters] Error formatting full date:', error)
       return dateString
     }
   }
@@ -84,7 +82,6 @@ export class Formatters {
     // Validação e extração de hora/minuto
     const match = timeString.match(/^(\d{1,2}):(\d{2})$/)
     if (!match) {
-      console.warn('[Formatters] Invalid time format:', timeString)
       return timeString
     }
 
@@ -120,7 +117,6 @@ export class Formatters {
 
       return `${fullDate} às ${formattedTime}`
     } catch (error) {
-      console.warn('[Formatters] Error formatting date time:', error)
       return `${dateString} às ${timeString}`
     }
   }
@@ -156,7 +152,6 @@ export class Formatters {
 
       return `${dayOfWeek}, ${shortDate} às ${formattedTime}`
     } catch (error) {
-      console.warn('[Formatters] Error formatting date time:', error)
       return `${dateString} às ${timeString}`
     }
   }

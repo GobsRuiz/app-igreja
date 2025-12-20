@@ -54,9 +54,6 @@ export class MapService {
         await Linking.openURL(webUrl)
       }
     } catch (error) {
-      if (__DEV__) {
-        console.error('[MapService] Erro ao abrir Google Maps:', error)
-      }
       throw new Error('Não foi possível abrir o Google Maps')
     }
   }
@@ -81,9 +78,6 @@ export class MapService {
         throw new Error('Waze não está disponível')
       }
     } catch (error) {
-      if (__DEV__) {
-        console.error('[MapService] Erro ao abrir Waze:', error)
-      }
       throw new Error('Não foi possível abrir o Waze')
     }
   }
@@ -111,9 +105,6 @@ export class MapService {
     try {
       await Linking.openURL(url)
     } catch (error) {
-      if (__DEV__) {
-        console.error('[MapService] Erro ao abrir Apple Maps:', error)
-      }
       throw new Error('Não foi possível abrir o Apple Maps')
     }
   }
@@ -173,9 +164,6 @@ export class MapService {
         await Linking.openURL(googleMapsUrl)
       }
     } catch (error) {
-      if (__DEV__) {
-        console.error('[MapService] Erro ao abrir mapas com endereço:', error)
-      }
       throw new Error('Não foi possível abrir o aplicativo de mapas')
     }
   }

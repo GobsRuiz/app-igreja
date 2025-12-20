@@ -28,7 +28,6 @@ export async function listStates(): Promise<{
 
     return { states, error: null }
   } catch (error: any) {
-    console.error('[StateService] Erro ao listar estados:', error)
     return { states: [], error: 'Erro ao carregar estados' }
   }
 }
@@ -53,7 +52,6 @@ export async function getStateByCode(
     const state = mapFirestoreState(snapshot.docs[0])
     return { state, error: null }
   } catch (error: any) {
-    console.error('[StateService] Erro ao buscar estado:', error)
     return { state: null, error: 'Erro ao buscar estado' }
   }
 }
@@ -82,7 +80,6 @@ export function onStatesChange(
         callback(states)
       },
       (error) => {
-        console.error('[StateService] Erro no listener:', error)
         if (onError) {
           onError(error)
         }

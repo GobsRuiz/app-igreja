@@ -1,4 +1,5 @@
 export * from './admin-action-buttons'
+export * from './admin-filter-modal'
 export * from './admin-loading-state'
 export * from './admin-modal-footer'
 export * from './badge'

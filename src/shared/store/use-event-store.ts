@@ -158,7 +158,6 @@ export const useEventStore = create<EventState>((set, get) => ({
     // Sanitização: trim e validação básica
     const sanitizedCity = city.trim()
     if (!sanitizedCity) {
-      console.warn('[EventStore] Invalid city name')
       return
     }
 
@@ -169,7 +168,6 @@ export const useEventStore = create<EventState>((set, get) => ({
   toggleCategoryId: (categoryId) => {
     // Validação do ID
     if (!categoryId || typeof categoryId !== 'string') {
-      console.warn('[EventStore] Invalid category ID')
       return
     }
 
@@ -188,7 +186,6 @@ export const useEventStore = create<EventState>((set, get) => ({
     const result = SearchQuerySchema.safeParse(query)
 
     if (!result.success) {
-      console.warn('[EventStore] Invalid search query:', result.error.errors)
       return
     }
 
@@ -201,7 +198,6 @@ export const useEventStore = create<EventState>((set, get) => ({
     const result = DateRangeSchema.safeParse({ start, end })
 
     if (!result.success) {
-      console.warn('[EventStore] Invalid date range:', result.error.errors)
       set({ error: 'Data inicial deve ser anterior ou igual à data final' })
       return
     }
@@ -219,7 +215,6 @@ export const useEventStore = create<EventState>((set, get) => ({
     const result = RadiusSchema.safeParse(radius)
 
     if (!result.success) {
-      console.warn('[EventStore] Invalid radius:', result.error.errors)
       return
     }
 
@@ -313,7 +308,6 @@ export const useEventStore = create<EventState>((set, get) => ({
   toggleFavorite: (eventId) => {
     // Validação do ID
     if (!eventId || typeof eventId !== 'string') {
-      console.warn('[EventStore] Invalid event ID for favorite toggle')
       return
     }
 
@@ -336,13 +330,11 @@ export const useEventStore = create<EventState>((set, get) => ({
   toggleNotification: async (eventId) => {
     // Validação do ID
     if (!eventId || typeof eventId !== 'string') {
-      console.warn('[EventStore] Invalid event ID for notification toggle')
       return
     }
 
     const event = get().getEventById(eventId)
     if (!event) {
-      console.warn('[EventStore] Event not found for notification toggle')
       return
     }
 
@@ -353,7 +345,6 @@ export const useEventStore = create<EventState>((set, get) => ({
       const { success, error } = await cancelEventNotifications(eventId)
 
       if (!success) {
-        console.error('[EventStore] Failed to cancel notifications:', error)
         return
       }
 
@@ -363,21 +354,17 @@ export const useEventStore = create<EventState>((set, get) => ({
           e.id === eventId ? { ...e, isNotifying: false } : e
         ),
       }))
-
-      console.log(`[EventStore] Notifications deactivated for event ${eventId}`)
     } else {
       // ACTIVATE: Check limits and schedule notifications
 
       // Check if event is too close
       if (!canEnableNotification(event)) {
-        console.warn('[EventStore] Event too close to enable notifications')
         return
       }
 
       // Check limit
       const limitReached = await hasReachedNotificationLimit()
       if (limitReached) {
-        console.warn('[EventStore] Notification limit reached')
         return
       }
 
@@ -385,7 +372,6 @@ export const useEventStore = create<EventState>((set, get) => ({
       const { success, error, scheduledCount } = await scheduleEventNotifications(event)
 
       if (!success) {
-        console.error('[EventStore] Failed to schedule notifications:', error)
         return
       }
 
@@ -395,10 +381,6 @@ export const useEventStore = create<EventState>((set, get) => ({
           e.id === eventId ? { ...e, isNotifying: true } : e
         ),
       }))
-
-      console.log(
-        `[EventStore] Notifications activated for event ${eventId} (${scheduledCount} scheduled)`
-      )
     }
 
     // Reaplica filtros para atualizar filteredEvents
@@ -433,7 +415,6 @@ export const useEventStore = create<EventState>((set, get) => ({
 
       get().applyFilters()
     } catch (error) {
-      console.error('[EventStore] Error refreshing events:', error)
       set({
         error: 'Erro ao carregar eventos. Tente novamente.',
         isLoading: false
@@ -442,8 +423,6 @@ export const useEventStore = create<EventState>((set, get) => ({
   },
 
   initializeFirestoreListener: () => {
-    console.log('[EventStore] Initializing Firestore listeners')
-
     // Closures para manter dados atualizados entre listeners
     let categories: Category[] = []
     let locations: Location[] = []
@@ -453,7 +432,6 @@ export const useEventStore = create<EventState>((set, get) => ({
     // Carregar favoritos do cache ANTES de inicializar listeners
     get().loadFavoritesFromCache().then(ids => {
       cachedFavoriteIds = ids
-      console.log(`[EventStore] Loaded ${ids.size} favorites from cache`)
     })
 
     // Função helper para adaptar todos os eventos
@@ -473,39 +451,35 @@ export const useEventStore = create<EventState>((set, get) => ({
     // 1. Listener de categories
     const unsubscribeCategories = onCategoriesChange(
       (cats) => {
-        console.log(`[EventStore] Received ${cats.length} categories from Firestore`)
         categories = cats
         set({ categories: cats })
         adaptAllEvents()
       },
       (error) => {
-        console.error('[EventStore] Categories listener error:', error)
+        // Listener error
       }
     )
 
     // 2. Listener de locations
     const unsubscribeLocations = onLocationsChange(
       (locs) => {
-        console.log(`[EventStore] Received ${locs.length} locations from Firestore`)
         locations = locs
         set({ locations: locs })
         adaptAllEvents()
       },
       (error) => {
-        console.error('[EventStore] Locations listener error:', error)
+        // Listener error
       }
     )
 
     // 3. Listener de events
     const unsubscribeEvents = onEventsChange(
       (events) => {
-        console.log(`[EventStore] Received ${events.length} events from Firestore`)
         rawEvents = events
         set({ isLoading: false, error: undefined })
         adaptAllEvents()
       },
       (error) => {
-        console.error('[EventStore] Events listener error:', error)
         set({
           error: 'Erro ao sincronizar eventos',
           isLoading: false
@@ -515,7 +489,6 @@ export const useEventStore = create<EventState>((set, get) => ({
 
     // Retorna função que cancela todos os listeners
     return () => {
-      console.log('[EventStore] Cleaning up all Firestore listeners')
       unsubscribeCategories()
       unsubscribeLocations()
       unsubscribeEvents()
@@ -533,7 +506,6 @@ export const useEventStore = create<EventState>((set, get) => ({
   getEventById: (id) => {
     // Validação do ID
     if (!id || typeof id !== 'string') {
-      console.warn('[EventStore] Invalid event ID for getById')
       return undefined
     }
     return get().allEvents.find((event) => event.id === id)
@@ -559,7 +531,6 @@ export const useEventStore = create<EventState>((set, get) => ({
       const cached = await AsyncStorage.getItem(FAVORITES_STORAGE_KEY)
 
       if (!cached) {
-        console.log('[EventStore] No cached favorites found')
         return new Set<string>()
       }
 
@@ -569,7 +540,6 @@ export const useEventStore = create<EventState>((set, get) => ({
       const result = FavoriteIdsSchema.safeParse(parsed)
 
       if (!result.success) {
-        console.warn('[EventStore] Invalid cached favorites, clearing cache:', result.error.errors)
         await AsyncStorage.removeItem(FAVORITES_STORAGE_KEY)
         return new Set<string>()
       }
@@ -580,10 +550,8 @@ export const useEventStore = create<EventState>((set, get) => ({
         allEvents.some(event => event.id === id)
       )
 
-      console.log(`[EventStore] Loaded ${validIds.length} valid favorites from cache`)
       return new Set(validIds)
     } catch (error) {
-      console.error('[EventStore] Error loading favorites from cache:', error)
       return new Set<string>()
     }
   },
@@ -598,10 +566,8 @@ export const useEventStore = create<EventState>((set, get) => ({
         FAVORITES_STORAGE_KEY,
         JSON.stringify(favoriteIds)
       )
-
-      console.log(`[EventStore] Saved ${favoriteIds.length} favorites to cache`)
     } catch (error) {
-      console.error('[EventStore] Error saving favorites to cache:', error)
+      // Error saving to cache
     }
   },
 }))

@@ -75,7 +75,6 @@ export async function requestNotificationPermissions(): Promise<boolean> {
     }
 
     if (finalStatus !== 'granted') {
-      console.warn('[NotificationService] Permission not granted')
       return false
     }
 
@@ -91,7 +90,6 @@ export async function requestNotificationPermissions(): Promise<boolean> {
 
     return true
   } catch (error) {
-    console.error('[NotificationService] Permission error:', error)
     return false
   }
 }
@@ -105,7 +103,6 @@ async function loadNotificationStorage(): Promise<NotificationStorage> {
     const stored = await AsyncStorage.getItem(NOTIFICATION_STORAGE_KEY)
     return stored ? JSON.parse(stored) : {}
   } catch (error) {
-    console.error('[NotificationService] Load storage error:', error)
     return {}
   }
 }
@@ -114,7 +111,7 @@ async function saveNotificationStorage(storage: NotificationStorage): Promise<vo
   try {
     await AsyncStorage.setItem(NOTIFICATION_STORAGE_KEY, JSON.stringify(storage))
   } catch (error) {
-    console.error('[NotificationService] Save storage error:', error)
+    // Error saving notification storage
   }
 }
 
@@ -247,9 +244,6 @@ export async function scheduleEventNotifications(event: Event): Promise<{
 
       // Safety check: ensure positive delay
       if (secondsUntilTrigger <= 0) {
-        console.warn(
-          `[NotificationService] Skipping ${notification.type} - calculated time is in the past`
-        )
         continue
       }
 
@@ -272,10 +266,6 @@ export async function scheduleEventNotifications(event: Event): Promise<{
         daysBefore: notification.daysBefore,
         hoursBefore: notification.hoursBefore,
       })
-
-      console.log(
-        `[NotificationService] Scheduled ${notification.type} notification for ${event.title} in ${(secondsUntilTrigger / 3600).toFixed(1)}h`
-      )
     }
 
     // 5. Save metadata to AsyncStorage
@@ -294,7 +284,6 @@ export async function scheduleEventNotifications(event: Event): Promise<{
       scheduledCount: validNotifications.length,
     }
   } catch (error) {
-    console.error('[NotificationService] Schedule error:', error)
     return {
       success: false,
       error: 'Erro ao agendar notificações. Tente novamente.',
@@ -317,16 +306,12 @@ export async function cancelEventNotifications(eventId: string): Promise<{
     const metadata = storage[eventId]
 
     if (!metadata) {
-      console.warn(`[NotificationService] No notifications found for event ${eventId}`)
       return { success: true } // Not an error, just nothing to cancel
     }
 
     // 2. Cancel each notification
     for (const notification of metadata.scheduledNotifications) {
       await Notifications.cancelScheduledNotificationAsync(notification.id)
-      console.log(
-        `[NotificationService] Cancelled ${notification.type} notification ${notification.id}`
-      )
     }
 
     // 3. Remove from storage
@@ -335,7 +320,6 @@ export async function cancelEventNotifications(eventId: string): Promise<{
 
     return { success: true }
   } catch (error) {
-    console.error('[NotificationService] Cancel error:', error)
     return {
       success: false,
       error: 'Erro ao cancelar notificações. Tente novamente.',
@@ -351,7 +335,6 @@ export async function getNotifyingEventsCount(): Promise<number> {
     const storage = await loadNotificationStorage()
     return Object.keys(storage).length
   } catch (error) {
-    console.error('[NotificationService] Count error:', error)
     return 0
   }
 }
@@ -364,7 +347,6 @@ export async function getAllNotifyingEvents(): Promise<EventNotificationMetadata
     const storage = await loadNotificationStorage()
     return Object.values(storage)
   } catch (error) {
-    console.error('[NotificationService] Get all error:', error)
     return []
   }
 }
@@ -379,7 +361,6 @@ export async function getEventNotificationMetadata(
     const storage = await loadNotificationStorage()
     return storage[eventId] || null
   } catch (error) {
-    console.error('[NotificationService] Get metadata error:', error)
     return null
   }
 }
@@ -406,12 +387,11 @@ export async function cleanupExpiredNotifications(): Promise<void> {
 
       // If event has passed, remove notifications
       if (eventDate < now) {
-        console.log(`[NotificationService] Cleaning expired notifications for ${eventId}`)
         await cancelEventNotifications(eventId)
       }
     }
   } catch (error) {
-    console.error('[NotificationService] Cleanup error:', error)
+    // Error cleaning up expired notifications
   }
 }
 

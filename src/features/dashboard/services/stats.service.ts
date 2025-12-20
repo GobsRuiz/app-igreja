@@ -30,7 +30,6 @@ export async function fetchDashboardStats(): Promise<{
 
     return { stats, error: null }
   } catch (error: any) {
-    console.error('[StatsService] Erro ao buscar estatísticas:', error)
     return { stats: null, error: 'Erro ao carregar estatísticas' }
   }
 }
