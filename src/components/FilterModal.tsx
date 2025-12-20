@@ -180,6 +180,7 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
                   cityValue={localCity}
                   onStateChange={setLocalState}
                   onCityChange={setLocalCity}
+                  showFavoriteButton={true}
                 />
 
                 <YStack gap="$1">

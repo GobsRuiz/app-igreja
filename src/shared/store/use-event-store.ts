@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { z } from 'zod'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import type { Event } from '@shared/types'
 import { listEvents, onEventsChange } from '@features/events/services/event.service'
 import type { Event as FirebaseEvent } from '@features/events/types/event.types'
@@ -16,8 +17,16 @@ import { MAX_NOTIFYING_EVENTS } from '@shared/constants/notification-config'
 import { shouldShowInHome } from '@shared/utils/event-helpers'
 
 // ========================================
+// CONSTANTS
+// ========================================
+
+const FAVORITES_STORAGE_KEY = '@app-igreja:favorite-events'
+
+// ========================================
 // SCHEMAS DE VALIDAÇÃO
 // ========================================
+
+const FavoriteIdsSchema = z.array(z.string().min(1)).max(100)
 
 const DateRangeSchema = z.object({
   start: z.date().optional(),
@@ -111,6 +120,10 @@ interface EventState {
   toggleNotification: (eventId: string) => Promise<void>
   refreshEvents: () => Promise<void>
   initializeFirestoreListener: () => () => void
+
+  // Actions - Cache (persistência local)
+  loadFavoritesFromCache: () => Promise<Set<string>>
+  saveFavoritesToCache: () => Promise<void>
 
   // Selectors otimizados
   getNotifyingEvents: () => Event[]
@@ -315,6 +328,9 @@ export const useEventStore = create<EventState>((set, get) => ({
     // Atualiza favoritos e reaplica filtros
     get().updateFavorites()
     get().applyFilters()
+
+    // Persiste favoritos no AsyncStorage
+    get().saveFavoritesToCache()
   },
 
   toggleNotification: async (eventId) => {
@@ -432,12 +448,24 @@ export const useEventStore = create<EventState>((set, get) => ({
     let categories: Category[] = []
     let locations: Location[] = []
     let rawEvents: FirebaseEvent[] = []
+    let cachedFavoriteIds: Set<string> = new Set()
+
+    // Carregar favoritos do cache ANTES de inicializar listeners
+    get().loadFavoritesFromCache().then(ids => {
+      cachedFavoriteIds = ids
+      console.log(`[EventStore] Loaded ${ids.size} favorites from cache`)
+    })
 
     // Função helper para adaptar todos os eventos
     const adaptAllEvents = () => {
-      const adaptedEvents = rawEvents.map(event =>
-        adaptFirebaseEventToUI(event, categories, locations)
-      )
+      const adaptedEvents = rawEvents.map(event => {
+        const baseEvent = adaptFirebaseEventToUI(event, categories, locations)
+        return {
+          ...baseEvent,
+          // MERGE: Preservar favoritos do cache
+          isFavorite: cachedFavoriteIds.has(event.id)
+        }
+      })
       set({ allEvents: adaptedEvents })
       get().applyFilters()
     }
@@ -520,6 +548,61 @@ export const useEventStore = create<EventState>((set, get) => ({
       state.endDate !== undefined ||
       state.radiusKm !== 10
     )
+  },
+
+  // ========================================
+  // ACTIONS - CACHE (Persistência Local)
+  // ========================================
+
+  loadFavoritesFromCache: async () => {
+    try {
+      const cached = await AsyncStorage.getItem(FAVORITES_STORAGE_KEY)
+
+      if (!cached) {
+        console.log('[EventStore] No cached favorites found')
+        return new Set<string>()
+      }
+
+      const parsed = JSON.parse(cached)
+
+      // Validação com Zod
+      const result = FavoriteIdsSchema.safeParse(parsed)
+
+      if (!result.success) {
+        console.warn('[EventStore] Invalid cached favorites, clearing cache:', result.error.errors)
+        await AsyncStorage.removeItem(FAVORITES_STORAGE_KEY)
+        return new Set<string>()
+      }
+
+      // Filtrar apenas IDs válidos (eventos que existem)
+      const { allEvents } = get()
+      const validIds = result.data.filter(id =>
+        allEvents.some(event => event.id === id)
+      )
+
+      console.log(`[EventStore] Loaded ${validIds.length} valid favorites from cache`)
+      return new Set(validIds)
+    } catch (error) {
+      console.error('[EventStore] Error loading favorites from cache:', error)
+      return new Set<string>()
+    }
+  },
+
+  saveFavoritesToCache: async () => {
+    try {
+      const favoriteIds = get().allEvents
+        .filter(event => event.isFavorite)
+        .map(event => event.id)
+
+      await AsyncStorage.setItem(
+        FAVORITES_STORAGE_KEY,
+        JSON.stringify(favoriteIds)
+      )
+
+      console.log(`[EventStore] Saved ${favoriteIds.length} favorites to cache`)
+    } catch (error) {
+      console.error('[EventStore] Error saving favorites to cache:', error)
+    }
   },
 }))
 

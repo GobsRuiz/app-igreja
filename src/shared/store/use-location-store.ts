@@ -5,19 +5,33 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 // TYPES
 // ========================================
 
+export type PermissionStatus = 'granted' | 'denied' | 'undetermined'
+
+export type LocationErrorType =
+  | 'permissionDenied'
+  | 'gpsDisabled'
+  | 'timeout'
+  | 'networkError'
+  | 'notFound'
+  | 'offline'
+  | null
+
 interface LocationState {
   // State
   city: string | null
   state: string | null // Código do estado (ex: 'SP', 'RJ')
   isLoading: boolean
   error: string | null
+  errorType: LocationErrorType // Tipo específico de erro
+  permissionStatus: PermissionStatus
   lastUpdated: number | null // timestamp
 
   // Actions
   setLocation: (city: string, state: string) => void
   setCity: (city: string) => void // @deprecated - use setLocation
   setLoading: (loading: boolean) => void
-  setError: (error: string | null) => void
+  setError: (error: string | null, errorType?: LocationErrorType) => void
+  setPermissionStatus: (status: PermissionStatus) => void
   clearError: () => void
   loadFromCache: () => Promise<void>
   saveToCache: (city: string, state: string) => Promise<void>
@@ -43,6 +57,8 @@ export const useLocationStore = create<LocationState>((set, get) => ({
   state: null,
   isLoading: false,
   error: null,
+  errorType: null,
+  permissionStatus: 'undetermined',
   lastUpdated: null,
 
   // ========================================
@@ -103,15 +119,20 @@ export const useLocationStore = create<LocationState>((set, get) => ({
     set({ isLoading: loading })
   },
 
-  setError: (error) => {
+  setError: (error, errorType = null) => {
     set({
       error,
+      errorType,
       isLoading: false,
     })
   },
 
+  setPermissionStatus: (status) => {
+    set({ permissionStatus: status })
+  },
+
   clearError: () => {
-    set({ error: null })
+    set({ error: null, errorType: null })
   },
 
   loadFromCache: async () => {
@@ -173,6 +194,8 @@ export const useLocationStore = create<LocationState>((set, get) => ({
       state: null,
       isLoading: false,
       error: null,
+      errorType: null,
+      permissionStatus: 'undetermined',
       lastUpdated: null,
     })
     AsyncStorage.removeItem(STORAGE_KEY).catch((error) => {
@@ -227,3 +250,18 @@ export const selectCacheAgeMinutes = (state: LocationState) => {
   const age = Date.now() - state.lastUpdated
   return Math.floor(age / 60000)
 }
+
+/**
+ * Selector para tipo de erro
+ */
+export const selectErrorType = (state: LocationState) => state.errorType
+
+/**
+ * Selector para status de permissão
+ */
+export const selectPermissionStatus = (state: LocationState) => state.permissionStatus
+
+/**
+ * Selector para verificar se tem localização
+ */
+export const selectHasLocation = (state: LocationState) => !!state.city

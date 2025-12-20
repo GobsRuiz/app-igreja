@@ -14,8 +14,6 @@ import {
   DAYS_BEFORE_NOTIFICATIONS,
   HOURS_BEFORE_FINAL_NOTIFICATION,
   MIN_HOURS_TO_ENABLE_NOTIFICATION,
-  DEBUG_NOTIFICATION_DELAY_SECONDS,
-  ENABLE_DEBUG_NOTIFICATIONS,
   NOTIFICATION_STORAGE_KEY,
 } from '@shared/constants/notification-config'
 
@@ -25,7 +23,7 @@ import {
 
 interface ScheduledNotification {
   id: string // Expo notification ID
-  type: 'days_before' | 'hours_before' | 'debug'
+  type: 'days_before' | 'hours_before'
   scheduledDate: Date
   daysBefore?: number
   hoursBefore?: number
@@ -280,34 +278,7 @@ export async function scheduleEventNotifications(event: Event): Promise<{
       )
     }
 
-    // 5. 🚨 DEBUG ONLY - Schedule test notification
-    // This notification uses the same format as production notifications for testing
-    if (ENABLE_DEBUG_NOTIFICATIONS) {
-      const debugDate = new Date(Date.now() + DEBUG_NOTIFICATION_DELAY_SECONDS * 1000)
-      const debugNotificationId = await Notifications.scheduleNotificationAsync({
-        content: {
-          title: 'Lembrete de Evento',
-          body: `${event.title} - Teste em ${DEBUG_NOTIFICATION_DELAY_SECONDS} segundos (debug)`,
-          data: { eventId: event.id, type: 'debug' },
-          sound: true,
-        },
-        trigger: {
-          seconds: DEBUG_NOTIFICATION_DELAY_SECONDS,
-        },
-      })
-
-      scheduledNotifications.push({
-        id: debugNotificationId,
-        type: 'debug',
-        scheduledDate: debugDate,
-      })
-
-      console.log(
-        `[NotificationService] 🚨 DEBUG: Scheduled test notification for ${event.title} in ${DEBUG_NOTIFICATION_DELAY_SECONDS} seconds`
-      )
-    }
-
-    // 6. Save metadata to AsyncStorage
+    // 5. Save metadata to AsyncStorage
     const storage = await loadNotificationStorage()
     storage[event.id] = {
       eventId: event.id,

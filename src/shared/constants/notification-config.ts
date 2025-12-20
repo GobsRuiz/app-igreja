@@ -45,23 +45,6 @@ export const HOURS_BEFORE_FINAL_NOTIFICATION = 3
 export const MIN_HOURS_TO_ENABLE_NOTIFICATION = 3
 
 // ========================================
-// DEBUG (WILL BE REMOVED IN PRODUCTION)
-// ========================================
-
-/**
- * 🚨 DEBUG ONLY - REMOVE IN PRODUCTION
- * Seconds after activation to send debug notification
- * Used for testing notification flow
- */
-export const DEBUG_NOTIFICATION_DELAY_SECONDS = 65
-
-/**
- * 🚨 DEBUG ONLY - REMOVE IN PRODUCTION
- * Enable debug notifications for testing
- */
-export const ENABLE_DEBUG_NOTIFICATIONS = false
-
-// ========================================
 // STORAGE KEYS
 // ========================================
 

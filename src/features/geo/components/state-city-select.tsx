@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Dropdown } from 'react-native-element-dropdown'
-import { Text, useTheme, YStack } from 'tamagui'
+import { Text, useTheme, YStack, XStack, Button } from 'tamagui'
+import { Star } from '@tamagui/lucide-icons'
+import { toast } from 'sonner-native'
 
 import { onStatesChange, onCitiesChange, onCitiesByStateChange, type State, type City } from '../services'
+import { useFavoriteCitiesStore } from '@shared/store'
 
 interface StateCitySelectProps {
   stateValue: string
@@ -13,6 +16,7 @@ interface StateCitySelectProps {
   showCityLabel?: boolean
   statePlaceholder?: string
   cityPlaceholder?: string
+  showFavoriteButton?: boolean // Nova prop opcional
 }
 
 export function StateCitySelect({
@@ -24,12 +28,17 @@ export function StateCitySelect({
   showCityLabel = true,
   statePlaceholder = 'Selecione o estado',
   cityPlaceholder = 'Selecione a cidade',
+  showFavoriteButton = false,
 }: StateCitySelectProps) {
   const theme = useTheme()
 
   // Dados do Firestore
   const [states, setStates] = useState<State[]>([])
   const [cities, setCities] = useState<City[]>([])
+
+  // Favorite Cities Store
+  const toggleFavorite = useFavoriteCitiesStore((state) => state.toggleFavorite)
+  const isFavorite = useFavoriteCitiesStore((state) => state.isFavorite(stateValue, cityValue))
 
   // Listener de estados (monta UMA VEZ)
   useEffect(() => {
@@ -85,6 +94,23 @@ export function StateCitySelect({
       if (selectedCity) {
         onStateChange(selectedCity.state)
       }
+    }
+  }
+
+  // Handler para favoritar cidade
+  const handleToggleFavorite = () => {
+    if (!stateValue || !cityValue || cityValue === '') {
+      toast.warning('Selecione uma cidade válida para favoritar')
+      return
+    }
+
+    const wasFavorite = isFavorite
+    toggleFavorite(stateValue, cityValue)
+
+    if (wasFavorite) {
+      toast.success('Cidade removida dos favoritos')
+    } else {
+      toast.success('Cidade adicionada aos favoritos')
     }
   }
 
@@ -156,21 +182,47 @@ export function StateCitySelect({
             Cidade
           </Text>
         )}
-        <Dropdown
-          style={dropdownStyles.dropdown}
-          placeholderStyle={dropdownStyles.placeholderStyle}
-          selectedTextStyle={dropdownStyles.selectedTextStyle}
-          inputSearchStyle={dropdownStyles.inputSearchStyle}
-          data={cityItems}
-          search
-          maxHeight={300}
-          labelField="label"
-          valueField="value"
-          placeholder={cityPlaceholder}
-          searchPlaceholder="Buscar..."
-          value={cityValue}
-          onChange={(item) => handleCityChange(item.value)}
-        />
+        <XStack gap="$2" alignItems="flex-end">
+          <YStack flex={1}>
+            <Dropdown
+              style={dropdownStyles.dropdown}
+              placeholderStyle={dropdownStyles.placeholderStyle}
+              selectedTextStyle={dropdownStyles.selectedTextStyle}
+              inputSearchStyle={dropdownStyles.inputSearchStyle}
+              data={cityItems}
+              search
+              maxHeight={300}
+              labelField="label"
+              valueField="value"
+              placeholder={cityPlaceholder}
+              searchPlaceholder="Buscar..."
+              value={cityValue}
+              onChange={(item) => handleCityChange(item.value)}
+            />
+          </YStack>
+
+          {/* Botão Favoritar (condicional) */}
+          {showFavoriteButton && cityValue && cityValue !== '' && (
+            <Button
+              size="$3"
+              circular
+              onPress={handleToggleFavorite}
+              backgroundColor={isFavorite ? '$yellow9' : '$background'}
+              borderColor={isFavorite ? '$yellow9' : '$borderColor'}
+              borderWidth={1}
+              pressStyle={{
+                backgroundColor: isFavorite ? '$yellow10' : '$color3',
+              }}
+              icon={
+                <Star
+                  size={16}
+                  color={isFavorite ? '$color1' : '$color11'}
+                  fill={isFavorite ? '$color1' : 'transparent'}
+                />
+              }
+            />
+          )}
+        </XStack>
       </YStack>
     </YStack>
   )
